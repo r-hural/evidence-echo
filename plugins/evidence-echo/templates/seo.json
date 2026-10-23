@@ -1,0 +1,22 @@
+{
+  "id": "seo",
+  "name": "SEO Echo",
+  "domain": "SEO and AI search",
+  "scope": "Organic search: rankings, CTR, traffic, indexing, technical SEO, content, links, SERP features, AI Overviews and LLM/AI-search citations. Out of scope: PPC/paid ads, social media, email marketing.",
+  "subtopics": ["Title tags & meta", "Internal links", "Content depth & updates", "Structured data", "Core Web Vitals & speed", "Crawling & indexing", "Backlinks", "AI Overviews & AI search", "SERP features & CTR", "Local", "E-E-A-T & authorship", "Programmatic & AI content", "International", "Site migrations", "Other"],
+  "subtopic_renames": {"AI search / GEO": "AI Overviews & AI search"},
+  "metrics": ["Clicks", "Impressions", "Rankings", "Organic traffic", "CTR", "Conversions & revenue", "Crawling & indexing", "Engagement", "AI citations", "AI share of voice & mentions", "AI Overview presence", "AI referral traffic", "Other"],
+  "metric_legacy": {"clicks": "Clicks", "impressions": "Impressions", "rankings": "Rankings", "traffic": "Organic traffic", "ctr": "CTR", "conversions": "Conversions & revenue", "revenue": "Conversions & revenue", "crawl_index": "Crawling & indexing", "engagement": "Engagement"},
+  "sources": [
+    { "type": "rss",      "name": "Ahrefs Blog",              "url": "https://ahrefs.com/blog/feed/" },
+    { "type": "rss",      "name": "Search Engine Journal",    "url": "https://www.searchenginejournal.com/feed/" },
+    { "type": "rss",      "name": "Search Engine Roundtable", "url": "https://www.seroundtable.com/index.rdf" },
+    { "type": "rss",      "name": "SEO Sherpa Blog",          "url": "https://seosherpa.com/feed/" },
+    { "type": "rss",      "name": "Semrush Blog",             "url": "https://www.semrush.com/blog/feed/" },
+    { "type": "rss",      "name": "Siege Media Blog",         "url": "https://www.siegemedia.com/feed" },
+    { "type": "rss",      "name": "Growth Memo", "url": "https://www.growth-memo.com/feed" },
+    { "type": "rss",      "name": "SE Ranking Blog",          "url": "https://seranking.com/blog/feed/" },
+    { "type": "rss",      "name": "Seer Interactive",         "url": "https://www.seerinteractive.com/insights/rss.xml" },
+    { "type": "page",     "name": "Conductor Academy",        "url": "https://www.conductor.com/academy/" }
+  ]
+}

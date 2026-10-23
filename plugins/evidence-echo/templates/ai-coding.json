@@ -1,0 +1,18 @@
+{
+  "id": "ai-coding",
+  "name": "AI Coding Echo",
+  "domain": "AI coding tools",
+  "scope": "Measured effects of AI coding tools (completion, chat assistants, coding agents) on software work: productivity studies, benchmarks such as SWE-bench, quality and security of AI-written code, AI code review, adoption surveys with data. Out of scope: general LLM news, model launches without coding results, tool tutorials, opinion pieces.",
+  "subtopics": ["Developer productivity", "Coding agents", "Code completion & chat assistants", "Benchmarks & evaluations", "Code quality & maintainability", "Security of AI-generated code", "AI code review", "Testing & debugging", "Adoption & usage", "Developer experience & trust", "Learning & skills", "Cost & efficiency", "Other"],
+  "metrics": ["Task completion time", "Throughput (PRs & commits)", "Benchmark score", "Task success rate", "Defect & bug rate", "Vulnerability rate", "Code churn & duplication", "Suggestion acceptance rate", "Adoption & usage share", "Developer satisfaction & trust", "Cost per task", "Other"],
+  "sources": [
+    { "type": "rss",   "name": "Stack Overflow Blog",                                       "url": "https://stackoverflow.blog/feed/" },
+    { "type": "rss",   "name": "JetBrains Research",                                        "url": "https://blog.jetbrains.com/research/feed/" },
+    { "type": "page",  "name": "DX Research",                                               "url": "https://getdx.com/research/" },
+    { "type": "rss",   "name": "Sonar Blog",                                                "url": "https://www.sonarsource.com/blog/rss.xml" },
+    { "type": "rss",   "name": "Qodo Blog",                                                 "url": "https://www.qodo.ai/blog/feed/" },
+    { "type": "page",  "name": "CodeRabbit Blog",                                           "url": "https://www.coderabbit.ai/blog" },
+    { "type": "page",  "name": "Swarmia Blog",                                              "url": "https://www.swarmia.com/blog/" },
+    { "type": "page",  "name": "Cursor Blog",                                               "url": "https://cursor.com/blog" }
+  ]
+}

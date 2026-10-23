@@ -1,0 +1,55 @@
+# Exact pins for the engine's venv: scripts/ev.py passes this file to pip/uv with -c,
+# and the venv digest covers it, so changing a pin builds a fresh venv.
+# Generated 2026-10-22 from a fresh venv (Windows, Python 3.13.15). Constraints apply
+# only to packages actually installed, so a platform-only entry is harmless elsewhere.
+#
+# Regenerate (from the repo root, Python 3.12+):
+#   python -m venv <scratch>/pinvenv
+#   <scratch>/pinvenv/bin/python -m pip install plugins/evidence-echo   # Windows: Scripts\python
+#   <scratch>/pinvenv/bin/python -m pip freeze --exclude-editable | grep -vi '^evidence-echo'
+# Replace the pin lines below with that output and keep this header. Then check every
+# pin still installs on Python 3.11 (pyproject's floor): a pin whose Requires-Python
+# drops 3.11 gets a marker split like numpy's below, e.g. from
+#   uv pip compile --universal --python-version 3.11 plugins/evidence-echo/pyproject.toml
+# Finally run pytest and pytest -m slow (the slow tests build a real venv with these pins).
+
+annotated-types==0.8.0
+anthropic==2.1.0
+anyio==4.15.1
+babel==2.18.0
+certifi==2026.10.19
+charset-normalizer==3.5.2
+courlan==1.4.0
+dateparser==1.4.3
+docstring_parser==0.18.0
+feedparser==6.0.14
+feedparser-sgmllib==2.1.0
+h11==0.16.0
+htmldate==1.11.0
+httpcore==1.0.9
+httpcore2==2.16.0
+httpx==0.28.1
+httpx2==2.16.0
+idna==3.20
+jiter==0.17.0
+jusText==3.0.2
+lxml==6.1.3
+lxml_html_clean==0.4.5
+numpy==2.4.6; python_version < "3.12"
+numpy==2.5.4; python_version >= "3.12"
+opentelemetry-api==1.45.1
+pydantic==2.14.1
+pydantic_core==2.50.1
+python-dateutil==3.0.0
+pytz==2026.5
+regex==2026.9.29
+six==1.17.0
+sniffio==1.3.1
+tld==0.13.2
+trafilatura==2.3.1
+truststore==0.10.5
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+tzdata==2026.5
+tzlocal==5.4.5
+urllib3==2.8.0

@@ -1,0 +1,19 @@
+{
+  "id": "exercise",
+  "name": "Exercise Echo",
+  "domain": "Exercise science",
+  "scope": "Exercise science: training studies, RCTs and meta-analyses on strength, hypertrophy, endurance, recovery and injury. Research tracking only, not training, medical or rehabilitation advice. Out of scope: workout programs, gear reviews, athlete news, opinion without data.",
+  "subtopics": ["Strength", "Hypertrophy", "Training volume & frequency", "Intensity & proximity to failure", "Endurance training", "HIIT & sprint training", "Concurrent training", "Recovery & sleep", "Injury prevention & rehab", "Flexibility & mobility", "Ageing & sarcopenia", "Exercise & health outcomes", "Sports performance", "Ergogenic aids", "Other"],
+  "metrics": ["Maximal strength", "Muscle size", "Power & speed", "VO2max", "Endurance performance", "Body composition", "Injury rate", "Pain & function", "Recovery markers", "Health & mortality outcomes", "Adherence", "Other"],
+  "sources": [
+    { "type": "rss",   "name": "European Journal of Applied Physiology",              "url": "https://link.springer.com/search.rss?facet-journal-id=421" },
+    { "type": "rss",   "name": "BMC Sports Science, Medicine and Rehabilitation",     "url": "https://link.springer.com/search.rss?facet-journal-id=13102" },
+    { "type": "rss",   "name": "International Journal of Strength and Conditioning",  "url": "https://journal.iusca.org/index.php/Journal/gateway/plugin/WebFeedGatewayPlugin/rss2" },
+    { "type": "rss",   "name": "Journal of Science in Sport and Exercise",            "url": "https://link.springer.com/search.rss?facet-journal-id=42978" },
+    { "type": "rss",   "name": "Sport Sciences for Health",                           "url": "https://link.springer.com/search.rss?facet-journal-id=11332" },
+    { "type": "rss",   "name": "ScienceDaily: Fitness",                               "url": "https://www.sciencedaily.com/rss/health_medicine/fitness.xml" },
+    { "type": "rss",   "name": "ScienceDaily: Sports Medicine",                       "url": "https://www.sciencedaily.com/rss/health_medicine/sports_medicine.xml" },
+    { "type": "rss",   "name": "Barbell Medicine",                                    "url": "https://www.barbellmedicine.com/feed/" },
+    { "type": "rss",   "name": "Sweat Science",                                       "url": "https://sweatscience.substack.com/feed" }
+  ]
+}

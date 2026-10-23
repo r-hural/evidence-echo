@@ -1,0 +1,17 @@
+{
+  "id": "cro",
+  "name": "CRO Echo",
+  "domain": "Conversion rate optimization and experimentation",
+  "scope": "Conversion rate optimization and online experimentation: A/B and multivariate tests, UX studies with measured outcomes, checkout and funnel research, pricing tests, experimentation methods and statistics. Out of scope: SEO, paid-ads bidding, email deliverability, best-practice lists and opinion without test data.",
+  "subtopics": ["Landing pages", "Checkout & cart", "Forms & sign-up", "Pricing & plans", "Copy & messaging", "CTAs & buttons", "Navigation & search", "Product pages", "Social proof & trust", "Personalization", "Onboarding & activation", "Mobile UX", "Page speed", "Experimentation methods & statistics", "Other"],
+  "metrics": ["Conversion rate", "Revenue per visitor", "Average order value", "Click-through rate", "Sign-ups & leads", "Cart abandonment", "Bounce & engagement", "Activation rate", "Retention & churn", "Task success & usability", "Statistical power & error rates", "Other"],
+  "sources": [
+    { "type": "page",  "name": "Baymard Institute",                                "url": "https://baymard.com/blog" },
+    { "type": "rss",   "name": "Nielsen Norman Group",                             "url": "https://www.nngroup.com/feed/rss/" },
+    { "type": "rss",   "name": "MeasuringU",                                       "url": "https://measuringu.com/feed/" },
+    { "type": "page",  "name": "VWO Blog",                                         "url": "https://wingify.com/blog/" },
+    { "type": "page",  "name": "Optimizely Insights",                              "url": "https://www.optimizely.com/insights/blog/" },
+    { "type": "page",  "name": "Kameleoon Blog",                                   "url": "https://www.kameleoon.com/blog" },
+    { "type": "rss",   "name": "Conversion Rate Experts",                          "url": "https://conversion-rate-experts.com/feed/" }
+  ]
+}

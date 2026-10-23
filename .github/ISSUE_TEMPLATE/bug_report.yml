@@ -1,0 +1,38 @@
+name: Bug report
+description: Something did not work as described
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Evidence Echo version
+      description: "`claude plugin list` shows it"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Windows 11, macOS 15, Ubuntu 24.04, ..."
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.4"
+  - type: textarea
+    id: command
+    attributes:
+      label: What you ran or asked
+      description: The command, or what you asked Claude (for example "Evidence Echo report for seo").
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What happened
+      description: The output or error. Remove API keys and any private paths before posting.
+      render: text
+    validations:
+      required: true

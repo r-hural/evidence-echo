@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>Example Blog</title>
+  <item>
+    <title>Fresh split test results</title>
+    <link>https://example.com/fresh</link>
+    <description>We tested 12k pages and saw +4.2% clicks.</description>
+    <pubDate>REPLACED_AT_TEST_TIME</pubDate>
+  </item>
+  <item>
+    <title>Old post outside window</title>
+    <link>https://example.com/old</link>
+    <description>Ancient news.</description>
+    <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+  </item>
+</channel></rss>

@@ -1,0 +1,11 @@
+# Secrets — never commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Claude Code local settings (per-machine permissions)
+.claude/settings.local.json

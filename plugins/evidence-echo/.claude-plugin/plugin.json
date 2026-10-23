@@ -1,0 +1,43 @@
+{
+  "name": "evidence-echo",
+  "displayName": "Evidence Echo",
+  "description": "Evidence-graded research digests from the feeds you follow: keeps only articles with measured results, grades each study, checks quotes and the original study. Templates for SEO, AI coding, A/B testing and exercise science.",
+  "version": "0.15.0",
+  "author": {
+    "name": "r-hural"
+  },
+  "homepage": "https://github.com/r-hural/evidence-echo",
+  "repository": "https://github.com/r-hural/evidence-echo",
+  "license": "MIT",
+  "keywords": ["research", "evidence", "evidence-based", "digest", "rss", "studies", "seo", "ab-testing", "ai-coding", "exercise-science", "obsidian"],
+  "skills": "./skills/",
+  "agents": [
+    "./agents/skeptic.md",
+    "./agents/comparer.md"
+  ],
+  "userConfig": {
+    "data_dir": {
+      "type": "directory",
+      "title": "Data folder (advanced)",
+      "description": "Where topics and databases live. Leave empty for ~/.evidence-echo. Do not use a cloud-synced folder."
+    },
+    "anthropic_api_key": {
+      "type": "string",
+      "title": "Anthropic API key",
+      "sensitive": true,
+      "description": "Optional; enables the api backend (faster, no in-session judging)"
+    },
+    "voyage_api_key": {
+      "type": "string",
+      "title": "Voyage API key",
+      "sensitive": true,
+      "description": "Optional; enables embeddings (free tier is ample at this volume)"
+    },
+    "apify_api_token": {
+      "type": "string",
+      "title": "Apify API token",
+      "sensitive": true,
+      "description": "Optional; enables LinkedIn sources"
+    }
+  }
+}
