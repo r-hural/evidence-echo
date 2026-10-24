@@ -174,17 +174,33 @@ _BASE = (
     ".ee-index .ee-extent{grid-column:1/-1;height:3px;margin-top:.3rem;background:var(--border)}"
     ".ee-index .ee-extent span{display:block;height:100%;width:var(--w);background:var(--rule)}"
     ".subtopic{scroll-margin-top:1rem}"
-    ".subtopic>h3{margin:2rem 0 .25rem;padding-top:.5rem;border-top:1px solid var(--rule)}"
+    # a subtopic: its title opens and closes one flat list of questions
+    ".ee-sub>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:.75rem;"
+    "margin:2rem 0 .25rem;padding-top:.5rem;border-top:1px solid var(--rule)}"
+    ".ee-sub>summary::-webkit-details-marker{display:none}"
+    ".ee-sub>summary h3{margin:0;padding:0;border:0}"
+    ".ee-sub>summary h3::before{content:\"▸\";display:inline-block;width:1.1em;color:var(--muted)}"
+    ".ee-sub[open]>summary h3::before{content:\"▾\"}"
+    ".ee-sub>summary:hover h3{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}"
+    ".ee-sub>summary .meta{margin-left:auto;font-size:.85rem;text-align:right}"
     ".ee-legend{margin:0 0 .5rem}"
-    ".ee-questions{list-style:none;margin:.25rem 0 .75rem;padding:0}"
+    ".ee-questions{list-style:none;margin:.5rem 0 .75rem;padding:0}"
     ".ee-question{padding:.6rem 0;border-bottom:1px solid var(--border)}"
     ".ee-cmp{display:block;font-size:.85rem;color:var(--muted)}"
     ".ee-question>strong,.ee-question>details>summary>strong{font-weight:600}"
     ".ee-question>details.ee-studies{margin:0;font-size:1rem}"
-    ".ee-question>details.ee-studies>summary{color:var(--fg);list-style-position:outside}"
+    ".ee-question>details.ee-studies>summary{color:var(--fg);list-style-position:inside;cursor:pointer}"
     ".ee-question>details.ee-studies>summary:hover strong{text-decoration:underline;"
     "text-decoration-thickness:1px;text-underline-offset:.18em}"
     ".ee-question>details.ee-studies>ol{font-size:.9rem}"
+    # a question with 2+ studies stands out; one with a single study shows it under the question
+    ".ee-question.ee-multi{background:var(--card);border-left:3px solid var(--rule);border-bottom:0;"
+    "padding:.6rem .75rem;margin:.5rem 0}"
+    ".ee-question.ee-single{padding:.5rem 0 .5rem calc(.75rem + 3px)}"
+    ".ee-single-q{display:block;font-weight:600}"
+    ".ee-ungrouped{color:var(--muted);font-style:italic}"
+    ".ee-ungrouped::first-letter{text-transform:uppercase}"
+    ".ee-single-row{list-style:none;margin:.2rem 0 0;padding:0;font-size:.85rem;color:var(--muted)}"
     ".ee-reports li .meta{margin-left:.4rem;font-size:.85rem}"
     ".ee-label{color:var(--muted);white-space:nowrap}"
     ".ee-label span{display:inline-block;width:1.1em;font-weight:800}"
@@ -199,8 +215,8 @@ _BASE = (
     ".ee-why li{margin:.5rem 0}"
     ".ee-why blockquote{margin:.5rem 0 .5rem .25rem;padding-left:.9rem;border-left:1px solid var(--rule);"
     "font-family:var(--serif);font-size:1rem;max-width:var(--measure)}"
-    ".ee-studies,.ee-others{margin:.35rem 0;font-size:.9rem}"
-    ".ee-studies summary,.ee-others summary{color:var(--muted)}"
+    ".ee-studies{margin:.35rem 0;font-size:.9rem}"
+    ".ee-studies summary{color:var(--muted)}"
     ".ee-studies ol{margin:.35rem 0;padding-left:1.5rem}"
     # a study entry: tier mark | [question on its own line] name · headline [date]; one link
     ".ee-studies li{margin:.35rem 0}"
@@ -375,4 +391,14 @@ JS = """(function () {
   form.addEventListener('change', apply);
   form.addEventListener('submit', function (event) { event.preventDefault(); });
   apply();
+})();
+// a link to a subtopic (#sub-...) opens its closed question list
+(function () {
+  function open() {
+    var el = location.hash && document.getElementById(location.hash.slice(1));
+    var sub = el && el.classList.contains('subtopic') && el.querySelector('details.ee-sub');
+    if (sub) { sub.open = true; el.scrollIntoView(); }
+  }
+  window.addEventListener('hashchange', open);
+  open();
 })();"""

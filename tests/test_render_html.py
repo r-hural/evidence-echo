@@ -780,12 +780,12 @@ def test_chart_shows_the_skeptic_grade_and_printed_marks():
 
 
 def test_study_rows_lead_with_the_grade():
-    from tests.test_render_html_subtopics import other, sub
-    out = html_render.other_studies(sub([], [other(3)]), {})
+    from tests.test_render_html_subtopics import other
+    out = html_render.single_item(other(3), {}, unsorted=False)
     item = out.split("<li>", 1)[1]
     assert item.startswith('<span class="ee-row"><span class="tier tier-')
-    question, line = item.index('class="ee-q"'), item.index('class="ee-row-line"')
-    assert question < line < item.index('<span class="ee-date">[')
+    assert out.index('class="ee-single-q') < out.index("<li>")          # the question sits above its study
+    assert item.index('class="ee-row-line"') < item.index('<span class="ee-date">[')
 
 
 def test_filters_are_closed_with_a_hidden_reset_and_cards_are_zebra():

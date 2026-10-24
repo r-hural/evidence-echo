@@ -86,6 +86,13 @@ def test_setup_skill_steps_use_engine_commands():
     assert "one question at a time" in SETUP.lower()
 
 
+def test_setup_skill_suggests_demo_topics_and_adds_none_by_default():
+    step3 = SETUP.split("## 3. Topics")[1].split("## 4.")[0]
+    assert "multiSelect" in step3 and "Nothing is added unless the user picks it" in step3
+    assert "None chosen → add none" in step3
+    assert "Add a topic of your own?" in step3 and "--blank" in step3
+
+
 def test_setup_skill_never_asks_for_keys():
     assert "Never ask for a key" in SETUP or "never ask the user to paste a key" in SETUP.lower()
     assert "plugin's settings" in SETUP
@@ -290,7 +297,7 @@ def test_report_skill_classify_rounds():
 
 def test_setup_skill_mentions_metric_proposals():
     text = (PLUGIN_DIR / "skills" / "setup" / "SKILL.md").read_text(encoding="utf-8")
-    blank = next(line for line in text.splitlines() if line.startswith("- Blank:"))
+    blank = next(line for line in text.splitlines() if "A topic of your own starts with" in line)
     assert '"Other"' in blank and "proposes a metric list" in blank
 
 

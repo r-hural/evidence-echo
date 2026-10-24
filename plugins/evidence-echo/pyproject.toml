@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "evidence-echo"
-version = "0.15.0"
+version = "0.15.1"
 description = "Evidence-graded research digests from the feeds you follow (engine of the Evidence Echo Claude Code plugin)"
 requires-python = ">=3.11"
 license = "MIT"

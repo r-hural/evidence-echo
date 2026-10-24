@@ -22,8 +22,8 @@ Rules:
 
 `ev setup status` → `configured`, `reports_dir`, `topics`, `templates`, `config_error`.
 - `config_error` set: show it; offer to set the reported setting again with `ev config set`.
-- Configured: ask what to do — add a topic (steps 3, 4, then 7) / edit a topic's sources (step 4) / change settings (step 5) / done.
-- Not configured: steps 1–7. If some steps are already done (e.g. a reports folder or a topic exists), start at the first missing one.
+- Configured: ask what to do — add topics (step 3, step 4 for each new topic, then 7) / edit a topic's sources (step 4) / change settings (step 5) / done.
+- Not configured: steps 1–7 (step 4 for each topic added in step 3). If some steps are already done (e.g. a reports folder or a topic exists), start at the first missing one.
 
 ## 1. Welcome
 
@@ -34,12 +34,14 @@ Two lines: Evidence Echo watches sources for a topic, keeps only content with me
 Options: the user's Documents folder + `Evidence Echo` (recommended; resolve the real Documents path, e.g. via `echo ~/Documents` or `$USERPROFILE/Documents`) / inside the data folder (`ev setup status` → `data_dir` + `/reports`) / another folder (ask for the full path).
 Run `ev config set reports_dir "<absolute path>"`.
 
-## 3. Topic
+## 3. Topics
 
-`ev templates` → offer each template plus "Blank topic".
-- Template: confirm the topic id (default: the template id) → `ev topic add <id> --from <template>`.
-- Blank: a blank topic starts with one metric, "Other"; once it has enough studies the engine proposes a metric list (and splits of an overloaded subtopic) during a report, and the user decides then. Ask the user to describe the topic in a sentence or two. Draft: id (lowercase, digits, hyphens), name, domain (a short field name) and scope (what is in and out). Show the draft and let the user correct it → `ev topic add <id> --blank --name "<name>" --domain "<domain>" --scope "<scope>"`.
-- With several topics, every later command for this topic carries `--topic <id>` (before the command).
+Two questions. Nothing is added unless the user picks it.
+1. Demo topics: `ev templates` → one AskUserQuestion with `multiSelect`, one option per template (its name), leaving out templates whose id is already a topic id (`ev setup status` → `topics`). More than four → split them over several questions. No template left → skip this question. For each chosen template: `ev topic add <template id> --from <template id>`. None chosen → add none.
+2. Own topics: ask "Add a topic of your own?" (Yes / No). Yes → draft it as below, then ask again; No → go on.
+   A topic of your own starts with one metric, "Other"; once it has enough studies the engine proposes a metric list (and splits of an overloaded subtopic) during a report, and the user decides then. Ask the user to describe the topic in a sentence or two. Draft: id (lowercase, digits, hyphens), name, domain (a short field name) and scope (what is in and out). Show the draft and let the user correct it → `ev topic add <id> --blank --name "<name>" --domain "<domain>" --scope "<scope>"`.
+- No topic exists after both questions: say reports need at least one topic, then ask the two questions again or end the setup.
+- With several topics, every later command for a topic carries `--topic <id>` (before the command).
 
 ## 4. Sources
 
@@ -65,4 +67,4 @@ One line, nothing to do now: adding an Anthropic API key in the plugin's setting
 
 ## 7. Done
 
-Summarize: reports folder, topics with source counts (for a topic added just now, name its sources). Ask "Run the first report now?" — yes → use the `evidence-echo:report` skill for this topic.
+Summarize: reports folder, topics with source counts (for a topic added just now, name its sources). Ask "Run the first report now?" — yes → use the `evidence-echo:report` skill for the topics added just now.

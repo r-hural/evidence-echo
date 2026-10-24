@@ -95,8 +95,9 @@ def test_unsorted_lists_its_studies_without_questions_or_badges():
     unsorted = sub(key=knowledge.UNSORTED, subtopic_id=None, name="Unsorted", others=[other(1), other(2)])
     text = page([unsorted])
     section = text.split('id="ee-evidence"', 1)[1].split("</section>", 1)[0]
-    assert "Unsorted studies (2)" in section and 'class="badge"' not in section
-    assert "not grouped yet" not in section and 'class="ee-questions"' not in section
+    assert '<span class="meta">2 studies</span></summary>' in section and 'class="badge"' not in section
+    assert "not grouped yet" not in section and "ee-single-q" not in section
+    assert section.count('<li class="ee-question ee-single"><ol class="ee-single-row">') == 2
 
 
 def test_unsorted_studies_still_match_the_unsorted_filter():
@@ -109,7 +110,7 @@ def test_unsorted_studies_still_match_the_unsorted_filter():
 
 def test_label_markup_has_symbol_and_bar():
     text = page([sub([question()])])
-    assert 'class="ee-question ee-q-contested"' in text
+    assert 'class="ee-question ee-multi ee-q-contested"' in text
     assert '<span aria-hidden="true">⇅</span> contested' in text
     assert f"<strong>{QUESTION}</strong>" in text
     assert 'ee-q-none' in page([sub([question(label=None)])])
@@ -253,3 +254,27 @@ def test_block_links_are_page_anchors_only():
         [topic_study(entry(1, subtopic=SUBTOPIC)), topic_study(entry(2, subtopic=SUBTOPIC))],
         evidence=[sub([_explained([_line()])])])))
     assert refs.hrefs == ["#s2"] and refs.srcs == []
+
+
+# --- flat question list: subtopic title opens it, 2+ study questions stand out ----------------
+
+def test_subtopic_title_opens_one_flat_question_list():
+    text = page([sub([question()], others=[other(3, question="Lone?")])])
+    section = text.split('id="ee-evidence"', 1)[1].split("</section>", 1)[0]
+    assert ('<details class="ee-sub"><summary><h3>Title tags &amp; meta</h3>'
+            '<span class="meta">2 questions · ') in section
+    assert '<details class="ee-sub" open' not in section                      # closed by default
+    questions = section.split('<ul class="ee-questions">', 1)[1].split("</ul></details>", 1)[0]
+    assert questions.index("ee-multi") < questions.index("ee-single")       # one level, 2+ first
+    assert "ee-others" not in section and "Other studies" not in section
+
+
+def test_multi_study_questions_are_highlighted_and_single_questions_bold():
+    css = html_assets.CSS
+    assert ".ee-question.ee-multi{background:var(--card);border-left:3px solid var(--rule)" in css
+    assert ".ee-single-q{display:block;font-weight:600}" in css
+    assert ".ee-question>strong,.ee-question>details>summary>strong{font-weight:600}" in css
+
+
+def test_a_link_to_a_subtopic_opens_it():
+    assert "details.ee-sub" in html_assets.JS and "addEventListener('hashchange'" in html_assets.JS

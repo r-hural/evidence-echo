@@ -64,12 +64,13 @@ def test_section_order_labelled_one_group_others(subtopiced, topic):
     reported(subtopiced, *ids)
     _, text = topic_page(subtopiced, topic)
     body = section(text)
-    assert body.index("Labelled?") < body.index("Series?") < body.index("Other studies (2)")
+    assert body.index("Labelled?") < body.index("Series?") < body.index("Lone?") < body.index("not grouped yet")
     assert '<strong>Labelled?</strong>' in body and 'ee-q-consistent' in body
     assert "<strong>Series?</strong> <span class=\"meta\">1 independent study · 2 articles" in body
-    others = body[body.index("Other studies (2)"):]
-    assert '<span class="ee-q">Lone?</span>' in others
-    assert '<span class="ee-q">not grouped yet</span>' in others
+    assert "Other studies" not in body and body.count('class="ee-question ee-multi') == 2
+    assert '<li class="ee-question ee-single"><span class="ee-single-q">Lone?</span>' in body
+    assert '<span class="ee-single-q ee-ungrouped">not grouped yet</span>' in body
+    assert '<span class="meta">3 questions · 6 studies</span></summary>' in body
 
 
 def test_ungrouped_studies_stay_on_the_page(subtopiced, topic):
@@ -81,7 +82,7 @@ def test_ungrouped_studies_stay_on_the_page(subtopiced, topic):
     assert "2 studies wait to be grouped" in body                   # the Unsorted study is never grouped
     for sid in ids:
         assert f'href="#s{sid}"' in body
-    assert "Unsorted studies (1)" in body and 'class="ee-questions"' not in body
+    assert '<span class="meta">1 study</span></summary>' in body and "Unsorted studies" not in body
     assert t.waiting == 2
 
 

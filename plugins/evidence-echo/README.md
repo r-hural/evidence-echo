@@ -31,9 +31,9 @@ plugin update changes the dependencies.
 1. Install the plugin and start a Claude Code session. The first session shows a
    one-line hint that Evidence Echo is not set up (once).
 2. Say "set up Evidence Echo" or run `/evidence-echo:setup`. The setup skill asks
-   one question at a time: where reports go, your first topic (from a template
-   or described in your own words), its sources (every feed is checked), and the
-   report defaults. It works without any API key.
+   one question at a time: where reports go, which demo topics to import (none are
+   added unless you pick them), any topics of your own (described in your own
+   words), their sources (every feed is checked), and the report defaults. It works without any API key.
 3. Ask for an "Evidence Echo report" (skill `evidence-echo:report`). With several
    topics it asks which one to run, or all of them. Run `/evidence-echo:setup`
    again at any time to add a topic, change sources or change settings.
@@ -242,14 +242,17 @@ question asks how much, how often or what share (prevalence, benchmarks, ranking
 carries a direction (up, down, no change, mixed) per study and a label, so directions are only
 compared between studies that were compared the same way. Studies in Unsorted are never grouped.
 
-The topic page opens with "What the evidence says": per subtopic, the questions with studies from
+The topic page opens with "What the evidence says": per subtopic, a title that opens and closes its
+questions (closed at first; a link to the subtopic opens it). All questions sit in one list: those with
+studies from
 two or more independent organisations first (studies run by the same organisation count once),
 each with how many independent studies and articles it has; a difference question also shows what it
 compares ("Compared: pages with an updated date vs pages without") and, after the counts, a small
 label as a secondary signal: consistent (all in one direction), contested (up and down results) or
 varied (any other mix). Level and capability questions have no label. Then the questions
-with several studies from one organisation, and a closed list "Other studies" with every other study
-(alone on its question, or "not grouped yet"). A question with one independent study has no label.
+with several studies from one organisation. These questions with several studies are highlighted and
+open their study list on click. Then every other study under its question, on the same level (alone on
+its question, or "not grouped yet"; the Obsidian note lists these under "Other studies"). A question with one independent study has no label.
 A study's card says when it is one study repeated by several articles ("1 study · 4 articles") or
 "corroborated by" other independent studies. For contested questions the engine asks two blind
 comparers why the results differ (for contested and varied questions: any studies whose results

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.15.1
+
+- **Setup:** the first setup suggests the demo topics (SEO, AI coding tools, conversion
+  optimization, exercise science) in one multi-select question and adds only the ones you pick;
+  a second question adds topics of your own. Nothing is added by default.
+- **Topic page:** in "What the evidence says" every question sits on one level. A subtopic's
+  title opens and closes its questions (closed at first; a link to the subtopic opens it).
+  Questions with several studies are highlighted and open their study list on click; a question
+  with one study shows it right under the question. The "Other studies" list is gone.
+
 ## 0.15.0 (first public release)
 
 Evidence Echo turns the feeds and sites you follow into evidence-graded digests, one topic at a

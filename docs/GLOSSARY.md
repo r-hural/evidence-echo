@@ -149,7 +149,7 @@ publication date raise AI citations?"). One question exists once per topic; it s
 and its studies follow it there. Studies that answer the same question are compared; a label and
 explanations exist only on a difference question. Assigned automatically by the group step; the
 owner renames, merges and moves studies (`ev questions`), also across subtopics. Code: `questions`,
-`question_id`, `question_direction`. A study not grouped yet is listed under "Other studies".
+`question_id`, `question_direction`. A study not grouped yet is listed as "Not grouped yet" (Obsidian: under "Other studies").
 
 **Question kind** — `difference`, `level` or `capability`: what a question asks. Decided by the
 group step (or the owner with `--kind`); a question created before kinds existed has none until an

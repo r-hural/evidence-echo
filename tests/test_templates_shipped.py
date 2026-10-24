@@ -21,7 +21,7 @@ def test_template_is_complete(tid):
     assert 7 <= len(t.sources) <= 30
     assert {s["type"] for s in t.sources} <= {"rss", "page"}
     assert len({s["url"] for s in t.sources}) == len(t.sources)
-    # "Growth Memo", not "Growth Memo (Kevin Indig)": demo pages and reports show source names
+    # a newsletter name, not "Name (Author Name)": demo pages and reports show source names
     assert [s["name"] for s in t.sources if re.search(r"\([A-Z][a-z]+ [A-Z][a-z]+\)", s["name"])] == []
 
 

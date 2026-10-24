@@ -362,17 +362,16 @@ def study_rows(c, titles: dict, summary_html: str) -> str:
             f"<ol>{items}</ol>{changes}</details>")
 
 
-def other_studies(sub, titles: dict) -> str:
-    """The subtopic's other studies (alone on their question, or not grouped yet) in one closed list;
-    Unsorted lists its studies with no question part."""
-    if not sub.others:
-        return ""
-    unsorted = sub.key == knowledge.UNSORTED
-    items = "".join(_row_item(o.row, titles, "" if unsorted else (o.question or et.NOT_GROUPED))
-                    for o in sub.others)
-    label = "Unsorted studies" if unsorted else "Other studies"
-    return (f'<details class="ee-studies ee-others"><summary>{label} ({len(sub.others)})</summary>'
-            f"<ol>{items}</ol></details>")
+def single_item(o, titles: dict, unsorted: bool) -> str:
+    """A study alone on its question (or not grouped yet) as a question entry on the same level as
+    the questions with 2+ studies: the question, then its one study, always shown. Unsorted studies
+    have no question part."""
+    head = ""
+    if not unsorted:
+        cls = "ee-single-q" + ("" if o.question else " ee-ungrouped")
+        head = f'<span class="{cls}">{esc(o.question or et.NOT_GROUPED)}</span>'
+    return (f'<li class="ee-question ee-single">{head}'
+            f'<ol class="ee-single-row">{_row_item(o.row, titles)}</ol></li>')
 
 
 def question_explanation(g, titles: dict) -> str:
@@ -414,16 +413,30 @@ def question_item(g, titles: dict) -> str:
             f'<span class="meta">{esc(counts_text(g, best=False))}{label}</span>'
             + (f'<span class="ee-cmp">{esc(compared)}</span>' if compared else ""))
     head = study_rows(g, titles, head) or head
-    return (f'<li class="ee-question ee-q-{esc(g.label or "none")}" data-question="q{g.question_id}">'
+    return (f'<li class="ee-question ee-multi ee-q-{esc(g.label or "none")}" data-question="q{g.question_id}">'
             + head + question_explanation(g, titles) + "</li>")
+
+
+def _study_count(sub) -> int:
+    return len({sid for g in sub.questions for grp in g.groups for sid in grp}
+               | {r.study_id for g in sub.questions for r in g.rows}
+               | {o.row.study_id for o in sub.others})
+
+
+def _subtopic_counts(sub, unsorted: bool) -> str:
+    """'N questions · M studies' for a subtopic's summary; Unsorted has no questions."""
+    n = len(sub.questions) + sum(1 for o in sub.others if o.question)
+    m = _study_count(sub)
+    studies = f'{m} {"study" if m == 1 else "studies"}'
+    if unsorted or not n:
+        return studies
+    return f'{n} {"question" if n == 1 else "questions"} · {studies}'
 
 
 def subtopic_index(t: Topic) -> str:
     """The subtopics as a contents list, each with its study count drawn as a rule in proportion
     to the largest subtopic. Empty with fewer than two subtopics."""
-    counts = [(sub, len({sid for g in sub.questions for grp in g.groups for sid in grp}
-                        | {r.study_id for g in sub.questions for r in g.rows}
-                        | {o.row.study_id for o in sub.others})) for sub in t.evidence]
+    counts = [(sub, _study_count(sub)) for sub in t.evidence]
     if len(counts) < 2:
         return ""
     top = max(n for _, n in counts) or 1
@@ -435,9 +448,11 @@ def subtopic_index(t: Topic) -> str:
 
 
 def evidence_section(t: Topic) -> str:
-    """'What the evidence says': per subtopic (seed order, then confirmed, then Unsorted) its
-    questions with 2+ studies (labelled ones first, each with counts, agreed explanations and study
-    list), then a closed list of every other study. Empty without studies."""
+    """'What the evidence says': per subtopic (seed order, then confirmed, then Unsorted) a closed
+    <details> whose title opens one flat list of questions: those with 2+ studies first (labelled
+    ones first, highlighted, each with counts, agreed explanations and a closed study list), then
+    every question with one study (shown under it) and the studies not grouped yet. Empty without
+    studies."""
     if not t.evidence and not t.waiting:
         return ""
     titles = {ts.entry.study_id: ts.entry.title for ts in t.studies}
@@ -449,11 +464,12 @@ def evidence_section(t: Topic) -> str:
         parts.append(f'<p class="meta ee-waiting">{esc(note)}</p>')
     parts.append(subtopic_index(t))
     for sub in t.evidence:
+        unsorted = sub.key == knowledge.UNSORTED
         parts.append(f'<div class="subtopic" id="sub-{esc(sub.key)}" data-subtopic="{esc(sub.key)}">'
-                     f"<h3>{esc(sub.name)}</h3>")
-        if sub.questions:
-            parts += ['<ul class="ee-questions">', *[question_item(g, titles) for g in sub.questions], "</ul>"]
-        parts += [other_studies(sub, titles), "</div>"]
+                     f'<details class="ee-sub"><summary><h3>{esc(sub.name)}</h3>'
+                     f'<span class="meta">{esc(_subtopic_counts(sub, unsorted))}</span></summary>')
+        parts += ['<ul class="ee-questions">', *[question_item(g, titles) for g in sub.questions],
+                  *[single_item(o, titles, unsorted) for o in sub.others], "</ul></details></div>"]
     parts.append("</section>")
     return "\n".join(parts)
 
