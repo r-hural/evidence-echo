@@ -20,7 +20,9 @@ from evidence_echo.render import html as html_render
 from evidence_echo.render import model as render_model
 from evidence_echo.render import obsidian as obsidian_render
 from evidence_echo.render import rejections as rejections_render
+from evidence_echo.render import sources_page as sources_render
 from evidence_echo.stages import embed as embed_stage
+from evidence_echo.sources import cache as fetch_cache
 from evidence_echo.stages import extract as extract_stage
 from evidence_echo.sources import base as source_base
 from evidence_echo.sources import get_kind
@@ -78,9 +80,9 @@ def _pick(stage: str, table: dict):
     return table[stage]
 
 
-def fetch(cfg, fetch_all: bool = False) -> dict:
+def fetch(cfg, fetch_all: bool = False, fresh: bool = False) -> dict:
     with _connect(cfg) as conn:
-        return fetch_stage.run(conn, cfg, fetch_all=fetch_all)
+        return fetch_stage.run(conn, cfg, fetch_all=fetch_all, fresh=fresh)
 
 
 def _fetch_every(raw):
@@ -155,6 +157,8 @@ def emit(cfg, stage: str) -> str:
             return report.emit(conn, cfg.topic, cfg.output_language)
         if mod is classify:
             return classify.emit(conn, cfg.topic, cap=cfg.classify_batch)
+        if mod is primary_stage:
+            return mod.emit(conn, cfg.topic, primary_stage.default_ctx(fetch_cache.for_config(cfg)))
         return mod.emit(conn, cfg.topic)
 
 
@@ -200,12 +204,15 @@ def run_api(cfg, stage: str) -> dict:
     with _topic_db(cfg) as conn:
         if mod is classify:
             return classify.run_api(conn, backend, cfg.topic, cap=cfg.classify_batch)
+        if mod is primary_stage:
+            return mod.run_api(conn, backend, cfg.topic,
+                               primary_stage.default_ctx(fetch_cache.for_config(cfg)))
         return mod.run_api(conn, backend, cfg.topic)
 
 
 def extract(cfg) -> dict:
     with _connect(cfg) as conn:
-        return extract_stage.run(conn)
+        return extract_stage.run(conn, cache=fetch_cache.for_config(cfg))
 
 
 def embed(cfg) -> dict:
@@ -238,8 +245,12 @@ def render_report(cfg, payload: str, rejections: bool = False) -> dict:
     if cfg.html_reports == "on":
         try:
             topic_model = _topic_model(cfg)
+            with _connect(cfg) as conn:
+                sources = sources_render.build_sources(conn, cfg.topic, datetime.now(timezone.utc),
+                                                       cfg.fetch_horizon_days)
             written = _json_safe(html_render.write_report(rep, topic_model, cfg.reports_dir,
-                                                          cfg.overview_dir, Path(out["path"])))
+                                                          cfg.overview_dir, Path(out["path"]),
+                                                          sources_page=sources))
             if written:
                 out["html"] = written
             more = _json_safe(html_render.write_overview(_summaries(config.workspace()),
@@ -390,6 +401,7 @@ def status_all(ws) -> dict:
 
 def _summaries(ws) -> list:
     out = []
+    depth = config.workspace_setting("overview_studies", ws)
     for tid in topics.topic_ids(ws.topics_dir):
         try:
             t = topics.load_topic(ws.topics_dir, tid)
@@ -397,15 +409,16 @@ def _summaries(ws) -> list:
             out.append(overview_mod.TopicSummary(tid, tid, error=str(exc)))
             continue
         db = ws.topics_dir / tid / "echo.db"
-        report_row = None
+        report_row = recent = None
         if db.exists():
             try:
                 with closing(store.connect(db)) as conn:
                     report_row = store.latest_report(conn)
+                    recent = store.recent_studies(conn, depth) if report_row else None
             except sqlite3.Error as exc:
                 out.append(overview_mod.TopicSummary(t.id, t.name, error=f"{db}: {exc}"))
                 continue
-        out.append(overview_mod.TopicSummary(t.id, t.name, report=report_row))
+        out.append(overview_mod.TopicSummary(t.id, t.name, report=report_row, recent=recent))
     return out
 
 
@@ -519,10 +532,16 @@ def _add_source(ws, topic_id, source: dict) -> None:
 
 
 def sources_add(ws, topic_id, target, kind=None, name=None, scan_depth=None,
-                fetch_every=None) -> dict:
+                fetch_every=None, site_url=None) -> dict:
+    if site_url is not None:
+        problem = source_base.optional_site_url(site_url)
+        if problem:
+            raise ConfigError(f"{problem}, got '{site_url}'")
     if kind == "linkedin":
         slug = linkedin_slug(target)
         source = {"type": "linkedin", "name": name or slug, "slug": slug}
+        if site_url:
+            source["site_url"] = site_url
         if scan_depth:
             source["scan_depth"] = scan_depth
         _pin(source, fetch_every)
@@ -545,6 +564,9 @@ def sources_add(ws, topic_id, target, kind=None, name=None, scan_depth=None,
         taken = {s["name"] for s in topics.load_topic(ws.topics_dir, topic_id).sources}
         name = _default_name(info["title"] or _host(info["url"]), info["url"], taken)
     source = {"type": info["kind"], "name": name, "url": info["url"]}
+    site = site_url or info["discovered_from"]
+    if site:
+        source["site_url"] = site
     if scan_depth:
         source["scan_depth"] = scan_depth
     _pin(source, fetch_every)
@@ -577,10 +599,17 @@ def sources_add_legacy(ws, topic_id, kind, name, target, fetch_every=None) -> di
     return out
 
 
-def sources_set(ws, topic_id, name, scan_depth=None, fetch_every=None) -> dict:
-    if scan_depth is None and fetch_every is None:
-        raise ConfigError("sources set needs --scan-depth or --fetch-every")
-    days = _fetch_every(fetch_every)  # validate both before writing either
+def sources_set(ws, topic_id, name, scan_depth=None, fetch_every=None, site_url=None) -> dict:
+    if scan_depth is None and fetch_every is None and site_url is None:
+        raise ConfigError("sources set needs --scan-depth, --fetch-every or --site-url")
+    days = _fetch_every(fetch_every)  # validate all before writing any
+    if site_url is not None and site_url != "default":
+        problem = source_base.optional_site_url(site_url)
+        if problem:
+            raise ConfigError(f"{problem}, got '{site_url}'")
+    if site_url is not None:
+        topics.set_source_option(ws.topics_dir, topic_id, name, "site_url",
+                                 None if site_url == "default" else site_url)
     if scan_depth is not None:
         value = None if scan_depth == "default" else scan_depth
         topics.set_source_option(ws.topics_dir, topic_id, name, "scan_depth", value)

@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
-from evidence_echo.core import grading, knowledge
+from evidence_echo.core import grading, knowledge, store
 from evidence_echo.core import overview as overview_mod
 from evidence_echo.render import clock
 from evidence_echo.render import evidence_text as et
@@ -302,7 +302,7 @@ def ratings_chart(entries: list[Entry]) -> str:
             + f'<p class="meta ee-key">{RATINGS_KEY}</p>')
 
 
-def report_page(r: Report, topic_href: str, overview_href: str) -> str:
+def report_page(r: Report, topic_href: str, overview_href: str, sources_href: str | None = None) -> str:
     title = f"{r.topic_name} Report - {r.date}"
     counts = [f"{len(r.new)} new {'study' if len(r.new) == 1 else 'studies'}"]
     if r.disputed:
@@ -311,7 +311,7 @@ def report_page(r: Report, topic_href: str, overview_href: str) -> str:
         counts.append(f"{len(r.seen)} more coverage of earlier studies")
     mast = masthead(crumbs([("Evidence Echo", overview_href), (r.topic_name, topic_href),
                             (f"Report {r.label or r.date}", None)]),
-                    [("All studies", topic_href)])
+                    [("All studies", topic_href)] + ([("Sources", sources_href)] if sources_href else []))
     body = [f'<header class="ee-head"><h1>{esc(title)}</h1>',
             f'<p class="meta">{esc(" · ".join(counts))}</p></header>',
             ratings_chart(r.new + r.disputed),
@@ -491,12 +491,12 @@ def _report_list(t: Topic, from_dir: Path) -> list[str]:
 
 
 def _topic_header(t: Topic, overview_href: str, report_href: str,
-                  topic_href: str) -> tuple[str, list[str]]:
+                  topic_href: str, sources_href: str | None = None) -> tuple[str, list[str]]:
     """The masthead and the page head."""
     updated = clock.local_minute(t.generated_at)
     mast = masthead(crumbs([("Evidence Echo", overview_href), (t.topic_name, topic_href),
                             ("All studies", None)]),
-                    [("Latest report", report_href)])
+                    [("Latest report", report_href)] + ([("Sources", sources_href)] if sources_href else []))
     return mast, [f'<header class="ee-head"><h1>{esc(t.topic_name)} — all studies</h1>',
                   f'<p class="meta">Updated {esc(updated)}</p></header>']
 
@@ -510,10 +510,49 @@ def _subtopic_keys(t: Topic) -> dict[int, tuple[str, str]]:
     return out
 
 
+def source_slug(name: str) -> str:
+    """The #source= value of a source name: store.subtopic_slug's rule ('source' when nothing is left)."""
+    return store.subtopic_slug(name) or "source"
+
+
+def source_slugs(names) -> dict[str, str]:
+    """name -> unique slug within one topic: a clash gets -2, -3 ... in name order."""
+    out: dict[str, str] = {}
+    taken: set[str] = set()
+    for name in sorted(set(names), key=lambda n: (n.casefold(), n)):
+        slug = base = source_slug(name)
+        n = 1
+        while slug in taken:
+            n += 1
+            slug = f"{base}-{n}"
+        taken.add(slug)
+        out[name] = slug
+    return out
+
+
+def source_href(topic_href: str, slug: str) -> str:
+    """Link to the topic page filtered by one source (the page's script reads the hash)."""
+    return f"{topic_href}#source={quote(slug, safe='-')}"
+
+
+def _source_options(t: Topic) -> list[tuple[str, str]]:
+    """(slug, 'name (count)'), most studies first, then name; empty unless two or more sources."""
+    slugs = source_slugs(s.name for s in t.sources)
+    ordered = sorted(t.sources, key=lambda s: (-len(s.study_ids), s.name.casefold(), s.name))
+    if len(ordered) < 2:
+        return []
+    return [(slugs[s.name], f"{s.name} ({len(s.study_ids)})") for s in ordered]
+
+
 def filter_data(t: Topic) -> dict:
     """What the topic page's JS filters on; pos = position in the newest-first list."""
     rows = []
     where = _subtopic_keys(t)
+    slugs = source_slugs(s.name for s in t.sources)
+    by_study: dict[int, list[str]] = {}
+    for s in t.sources:
+        for sid in s.study_ids:
+            by_study.setdefault(sid, []).append(slugs[s.name])
     for pos, ts in enumerate(t.studies):
         e = ts.entry
         row = {"id": e.study_id, "pos": pos, "tier": e.tier,
@@ -526,6 +565,7 @@ def filter_data(t: Topic) -> dict:
             row["subtopic"] = key
         if e.view.get("metric_slug"):
             row["metric"] = e.view["metric_slug"]
+        row["sources"] = sorted(by_study.get(e.study_id, []))
         names = e.view.get("entities") or []
         if names:
             row["entities"] = [slug for slug, _ in names]
@@ -590,6 +630,7 @@ def filters_form(t: Topic) -> str:
     subtopics = [(sub.key, sub.name) for sub in t.evidence if (sub.key, sub.name) in listed]
     metrics = _metric_options(t, entries)
     entities = _entity_options(entries)
+    sources = _source_options(t)
     return ('<details class="ee-filter-box" id="ee-filter-box" hidden>'
             '<summary>Filter and sort <span id="ee-active"></span></summary>'
             '<form id="ee-filters" class="filters" hidden>'
@@ -601,6 +642,7 @@ def filters_form(t: Topic) -> str:
             + (_select("subtopic", "Subtopic", "Any subtopic", subtopics) if subtopics else "")
             + (_select("metric", "Metric", "Any metric", metrics) if metrics else "")
             + (_select("entity", "Entity", "Any entity", entities) if entities else "")
+            + (_select("source", "Source", "Any source", sources) if sources else "")
             + '<label><input type="checkbox" name="disputed"> Disputed only</label>'
             + '<label>Search <input type="search" name="q" placeholder="title or summary"></label>'
             + '<label>Sort <select name="sort"><option value="newest" selected>Newest</option>'
@@ -615,9 +657,10 @@ def _reported(ts: TopicStudy) -> str:
 
 
 def topic_page(t: Topic, overview_href: str, report_href: str, topic_href: str | None = None,
-               reports_dir: Path | None = None) -> str:
+               reports_dir: Path | None = None, sources_href: str | None = None) -> str:
     title = f"{t.topic_name} — all studies"
-    mast, body = _topic_header(t, overview_href, report_href, topic_href or f"{t.topic_id}.html")
+    mast, body = _topic_header(t, overview_href, report_href, topic_href or f"{t.topic_id}.html",
+                               sources_href)
     body += _report_list(t, reports_dir or Path("."))
     n = len(t.studies)
     if not n:
@@ -634,8 +677,10 @@ def topic_page(t: Topic, overview_href: str, report_href: str, topic_href: str |
     return page(title, "\n".join(body), script, mast=mast)
 
 
-def write_report(report: Report, topic: Topic, reports_dir, overview_dir, md_path) -> dict:
-    """<md stem>.html next to the Markdown report, and the topic page <topic_id>.html."""
+def write_report(report: Report, topic: Topic, reports_dir, overview_dir, md_path,
+                 sources_page=None) -> dict:
+    """<md stem>.html next to the Markdown report, and the topic page <topic_id>.html; with a
+    sources_page (render.sources_page.SourcesPage) also <topic_id>-sources.html."""
     md_path, reports_dir = Path(md_path), Path(reports_dir)
     report_path = md_path.with_suffix(".html")
     topic_path = reports_dir / f"{topic.topic_id}.html"
@@ -644,12 +689,25 @@ def write_report(report: Report, topic: Topic, reports_dir, overview_dir, md_pat
         if topic_path.resolve() == other.resolve():
             raise ValueError(f"the topic page {topic_path} would overwrite {other.name}; "
                              "give the topic its own reports_dir")
+    sources_path = reports_dir / f"{topic.topic_id}-sources.html" if sources_page else None
+    if sources_path and sources_path.resolve() in (overview_path.resolve(), report_path.resolve()):
+        raise ValueError(f"the sources page {sources_path} would overwrite another page; "
+                         "give the topic its own reports_dir")
     _write(report_path, report_page(report, href(topic_path, report_path.parent),
-                                    href(overview_path, report_path.parent)))
+                                    href(overview_path, report_path.parent),
+                                    href(sources_path, report_path.parent) if sources_path else None))
     _write(topic_path, topic_page(topic, href(overview_path, topic_path.parent),
                                   href(report_path, topic_path.parent), topic_path.name,
-                                  topic_path.parent))
-    return {"report": str(report_path), "topic": str(topic_path)}
+                                  topic_path.parent,
+                                  href(sources_path, topic_path.parent) if sources_path else None))
+    out = {"report": str(report_path), "topic": str(topic_path)}
+    if sources_path:
+        from evidence_echo.render import sources_page as sources_render   # it imports this module
+        _write(sources_path, sources_render.sources_html(
+            sources_page, href(overview_path, sources_path.parent), topic_path.name,
+            href(report_path, sources_path.parent)))
+        out["sources"] = str(sources_path)
+    return out
 
 
 def _topic_card(s, out_dir: Path) -> str:
@@ -659,14 +717,27 @@ def _topic_card(s, out_dir: Path) -> str:
     if not s.report:
         return f'{head}<p class="meta">not run yet</p></section>'
     md = Path(s.report["path"])
-    entries = s.report["entries"]
-    n = len(entries)
+    latest, earlier, more = overview_mod.select(s)
+    n = len(latest) + more
     parts = [head, f'<p class="meta">{esc("last run " + clock.local_date(s.report["rendered_at"]))}'
                    f" · {n} new finding{'' if n == 1 else 's'}</p>"]
-    top = overview_mod.rank(entries)
-    if top:
-        parts.append("<ul>" + "".join(f"<li>{tier_badge(e.get('tier'))} {esc(e.get('title'))}</li>"
-                                      for e in top) + "</ul>")
+
+    def report_target(path: str) -> Path:
+        target = Path(path)
+        sibling = target.with_suffix(".html")
+        return sibling if target.suffix == ".md" and sibling.exists() else target
+
+    def study_list(rows, extra=""):
+        return "<ul>" + "".join(
+            f'<li>{tier_badge(e.get("tier"))} <a href="{esc(href(report_target(e["report_path"]), out_dir))}">'
+            f'{esc(e.get("title"))}</a></li>' for e in rows) + extra + "</ul>"
+
+    if latest or more:
+        more_link = (f'<li class="ee-more"><a href="{esc(href(report_target(s.report["path"]), out_dir))}">'
+                     f"+{more} more in the report</a></li>") if more else ""
+        parts.append(study_list(latest, more_link))
+    if earlier:
+        parts += ['<h3 class="ee-earlier">Earlier</h3>', study_list(earlier)]
     report_html, topic_html = md.with_suffix(".html"), md.parent / f"{s.id}.html"
     nav = [f'<a href="{esc(href(report_html, out_dir))}">Latest report</a>' if report_html.exists()
            else f'<a href="{esc(href(md, out_dir))}">Latest report (Markdown)</a>']
@@ -677,7 +748,7 @@ def _topic_card(s, out_dir: Path) -> str:
 
 
 def overview_page(summaries: list, overview_dir: Path, now: datetime) -> str:
-    """One card per topic: last run, top three findings, links to the latest report and topic page."""
+    """One card per topic: last run, its newest studies, links to the latest report and topic page."""
     title = "Evidence Echo — Overview"
     body = [f'<header class="ee-head"><h1>{esc(title)}</h1>',
             f'<p class="meta">Updated {esc(clock.local_minute(now))}</p></header>']

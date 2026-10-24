@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from evidence_echo.core import store
 from evidence_echo.core.urls import canonical_url
 from evidence_echo.sources import base, get_kind, linkedin
+from evidence_echo.sources import cache as fetch_cache
 from evidence_echo.stages import schedule
 
 FIRST_RUN_UNDATED = 20   # R1
@@ -50,12 +51,13 @@ def _load_full_texts(conn, kind, ctx, item_ids: list[int]) -> None:
         # "error": triage reads the excerpt; extract tries again after triage
 
 
-def context_for(cfg, backfill=None) -> base.FetchContext:
+def context_for(cfg, backfill=None, fresh: bool = False) -> base.FetchContext:
     days = backfill.days if backfill else cfg.fetch_horizon_days
     return base.FetchContext(cutoff=datetime.now(timezone.utc) - timedelta(days=days),
                              client=base.make_client(), limiter=base.RateLimiter(),
                              apify_token=cfg.apify_api_token,
-                             apify_actor=cfg.topic.linkedin_apify_actor, backfill=backfill)
+                             apify_actor=cfg.topic.linkedin_apify_actor, backfill=backfill,
+                             cache=fetch_cache.for_config(cfg, fresh))
 
 
 def _date_from_page(url: str, ctx) -> datetime | None:
@@ -236,8 +238,9 @@ def _cursor(state) -> dict:
         return {}
 
 
-def run(conn, cfg, apify_token: str = "", backfill=None, ctx=None, fetch_all: bool = False) -> dict:
-    ctx = ctx or context_for(cfg, backfill)
+def run(conn, cfg, apify_token: str = "", backfill=None, ctx=None, fetch_all: bool = False,
+        fresh: bool = False) -> dict:
+    ctx = ctx or context_for(cfg, backfill, fresh)
     if apify_token:
         ctx.apify_token = apify_token
     store.log_run(conn, "fetch")

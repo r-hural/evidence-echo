@@ -6,11 +6,11 @@
   "subtopics": ["Developer productivity", "Coding agents", "Code completion & chat assistants", "Benchmarks & evaluations", "Code quality & maintainability", "Security of AI-generated code", "AI code review", "Testing & debugging", "Adoption & usage", "Developer experience & trust", "Learning & skills", "Cost & efficiency", "Other"],
   "metrics": ["Task completion time", "Throughput (PRs & commits)", "Benchmark score", "Task success rate", "Defect & bug rate", "Vulnerability rate", "Code churn & duplication", "Suggestion acceptance rate", "Adoption & usage share", "Developer satisfaction & trust", "Cost per task", "Other"],
   "sources": [
-    { "type": "rss",   "name": "Stack Overflow Blog",                                       "url": "https://stackoverflow.blog/feed/" },
-    { "type": "rss",   "name": "JetBrains Research",                                        "url": "https://blog.jetbrains.com/research/feed/" },
+    { "type": "rss",   "name": "Stack Overflow Blog",                                       "url": "https://stackoverflow.blog/feed/", "site_url": "https://stackoverflow.blog/" },
+    { "type": "rss",   "name": "JetBrains Research",                                        "url": "https://blog.jetbrains.com/research/feed/", "site_url": "https://blog.jetbrains.com/research/" },
     { "type": "page",  "name": "DX Research",                                               "url": "https://getdx.com/research/" },
-    { "type": "rss",   "name": "Sonar Blog",                                                "url": "https://www.sonarsource.com/blog/rss.xml" },
-    { "type": "rss",   "name": "Qodo Blog",                                                 "url": "https://www.qodo.ai/blog/feed/" },
+    { "type": "rss",   "name": "Sonar Blog",                                                "url": "https://www.sonarsource.com/blog/rss.xml", "site_url": "https://www.sonarsource.com/blog/" },
+    { "type": "rss",   "name": "Qodo Blog",                                                 "url": "https://www.qodo.ai/blog/feed/", "site_url": "https://www.qodo.ai/blog/" },
     { "type": "page",  "name": "CodeRabbit Blog",                                           "url": "https://www.coderabbit.ai/blog" },
     { "type": "page",  "name": "Swarmia Blog",                                              "url": "https://www.swarmia.com/blog/" },
     { "type": "page",  "name": "Cursor Blog",                                               "url": "https://cursor.com/blog" }

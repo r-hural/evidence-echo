@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.16.0
+
+- **Sources page:** every topic gets a Sources page next to its topic page. Each source shows
+  how many studies it produced against how many entries were fetched, for all reports and for
+  the last one, when it was last fetched, and its site and feed links. Failing or blocked
+  sources are marked; a source that fetches fine but delivers nothing gets a quiet note.
+  Removed sources stay listed at the bottom while they still have entries.
+- **Source filter:** the topic page can be filtered by source; a source's name on the Sources
+  page opens the topic page filtered to it.
+- **Site links:** a source can carry a `site_url` (the page a person opens) next to the address
+  that is fetched. `sources add` fills it when a feed is found from a blog page;
+  `sources set --site-url` changes it. The templates include it.
+- **Fewer downloads:** fetched pages and feeds are kept for `fetch_cache_minutes` (default 60,
+  `0` = off), so a source used by several topics, or a page needed twice, is downloaded once.
+  `ev fetch --fresh` skips the saved copies. LinkedIn profiles are cached one by one, so only
+  uncached profiles are requested.
+- **Overview:** each topic lists its `overview_studies` most recently reported studies (default
+  10): the last report's new studies first, then earlier ones under "Earlier". `0` shows only the
+  last report. A study counts for the report that first included it.
+- **Plugin icon.**
+
 ## 0.15.1
 
 - **Setup:** the first setup suggests the demo topics (SEO, AI coding tools, conversion

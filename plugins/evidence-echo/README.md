@@ -101,7 +101,7 @@ as it publishes and quiet sources are skipped until due; no source waits longer 
 `html_reports` (`on|off`, default `on`, also per topic or `EV_ECHO_HTML_REPORTS`: each report
 also gets HTML pages; during a report run `overview.html` follows the topic's `html_reports`, while `ev overview` follows the workspace setting), `rejections_report` (`on|off`, default `off`, also per topic or `EV_ECHO_REJECTIONS_REPORT`: every report also writes the rejections report, see "Rejections report"), `obsidian_dir` (your Obsidian vault's folder, or empty; default empty = no
 export; also `EV_ECHO_OBSIDIAN_DIR`; `ev config set` refuses a folder that does not exist and
-never creates one), `relate` (`on|off`, default `on`, also per topic or `EV_ECHO_RELATE`: two blind comparers explain contested evidence, see "What the evidence says"; `off` skips the relate step), `classify_batch` (default `40`, `0` = off, also per topic or `EV_ECHO_CLASSIFY_BATCH`: how many older studies the classify step fills in per run). `auto` picks `api` when an Anthropic key is set,
+never creates one), `relate` (`on|off`, default `on`, also per topic or `EV_ECHO_RELATE`: two blind comparers explain contested evidence, see "What the evidence says"; `off` skips the relate step), `classify_batch` (default `40`, `0` = off, also per topic or `EV_ECHO_CLASSIFY_BATCH`: how many older studies the classify step fills in per run), `overview_studies` (default `10`, `0` = latest report only, also `EV_ECHO_OVERVIEW_STUDIES`, global only: how many recently reported studies each topic lists in the overview), `fetch_cache_minutes` (default `60`, `0` = off, also `EV_ECHO_FETCH_CACHE_MINUTES`, global only: feed and page downloads are kept this long and shared by every topic; `ev fetch --fresh` downloads again). `auto` picks `api` when an Anthropic key is set,
 else `session` (judged by Claude in the session); the embedder picks `voyage`
 when a Voyage key is set, else `none`.
 
@@ -117,6 +117,7 @@ absent means "use `config.json`". Sources are `{"type": "rss", "name", "url"}`,
 items), `{"type": "once", "name", "url"}` (one document, analysed once; versions by content
 hash) or `{"type": "linkedin", "name", "slug"}` with names unique within the topic.
 Any source may carry `fetch_every` (whole days 1–60): a pinned interval used when `adaptive_fetch` is on.
+Any source may carry `site_url` (an http(s) URL): the source's home page, shown on the Sources page next to the feed URL. `ev sources add` fills it when it discovers the feed from a page; `ev sources set <name> --site-url <url|default>` changes it.
 Only `http(s)` source URLs are accepted. A typo in a hand-edited file is
 reported with file and field and affects only that topic.
 
@@ -137,16 +138,20 @@ page's learned link pattern or clears an error count, and `ev sources doctor` pr
 source. `ev backfill [--source N] [--days 365] [--max 200]` is the research spike: it loads
 older entries once, with a per-source cap. Pages the engine cannot fetch (blocked, junk) are
 handed to the session: `ev fetch-fallback emit` lists them, `ev apply --stage fetch <file>`
-takes the results. `ev fetch --all` fetches every source even when adaptive fetch would skip it;
+takes the results. `ev fetch --all` fetches every source even when adaptive fetch would skip it; `ev fetch --fresh` ignores the fetch cache;
 `ev sources set <name> --fetch-every <days|default>` pins or unpins one source's interval. Page
 sources read up to 5 index pages while every link is new; feeds where every entry is new are
 flagged as a possible gap. Requests are limited to one per second per host; `robots.txt` is not read.
 
 ### Overview
 
-`overview.md` lists, per topic, the last run, the number of new findings and the
-top three findings (best tier first, then newest) with links to the report. It
-is rebuilt after every `report --render` and by `ev overview`; it needs no LLM.
+`overview.md` lists, per topic, the last run, the number of new findings (studies the newest report showed
+for the first time) and the studies most recently reported: with
+`overview_studies` (default `10`, `0` = latest report only, also
+`EV_ECHO_OVERVIEW_STUDIES`, global only) at most that many, the newest report's
+best-graded first, then a line "Earlier" and the studies of older reports, each
+linked to the report that first showed it. A newest report with more studies
+than that adds "+K more in the report". It is rebuilt after every `report --render` and by `ev overview`; it needs no LLM.
 A topic with an invalid `topic.json` shows `setup error: <message>` there.
 
 ### Rejections report
@@ -177,12 +182,16 @@ from elsewhere. Open them in any browser.
   reported, rewritten on each run. "What the evidence says" groups studies by
   subtopic and question (click a question to open its studies). A closed
   "Filter and sort" box filters by tier, red flag, relation, series, subtopic,
-  metric (shown once two or more metrics are in use), entity (shown once a study has one) and disputed, searches titles and summaries, and sorts (newest, tier, first
+  metric (shown once two or more metrics are in use), entity (shown once a study has one), source (shown once two or more sources have studies) and disputed, searches titles and summaries, and sorts (newest, tier, first
   reported); active fields are highlighted and a reset button appears. A closed
   "Reports (N)" list links every report with its study count.
   Without JavaScript it is a plain list.
-- `overview.html` beside `overview.md`: one card per topic with its top three
-  findings and links to the latest report and the topic page. `ev overview`
+- `<id>-sources.html` beside the topic page: one row per source with the studies it produced and
+  the entries it fetched (all reports, and the newest report), when it was last fetched, a red
+  marker for a source that fails, and links to its site and feed. A source name opens the topic
+  page filtered to that source. Studies count once, in the report that first showed them.
+- `overview.html` beside `overview.md`: one card per topic with its newest
+  studies (same rule as `overview.md`) and links to the latest report and the topic page. `ev overview`
   rebuilds it too.
 
 Times are shown in your local time zone (stored in UTC); report file names keep

@@ -159,6 +159,13 @@ _BASE = (
     "th{border-bottom:1px solid var(--rule);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;"
     "color:var(--muted)}"
     "td{border-bottom:1px solid var(--border)}"
+    # sources page
+    ".ee-src .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}"
+    ".ee-src .ee-sub-h{text-transform:none;letter-spacing:0;font-weight:400}"
+    ".ee-src .ee-src-links{font-size:.85rem}"
+    ".ee-src .ee-broken{color:var(--warn-fg);font-weight:600}"
+    ".ee-src tr.ee-gone td{color:var(--muted)}"
+    ".ee-src tr.ee-gone-head th{padding-top:1.25rem;text-align:left}"
     # topic page
     ".ee-reports{margin:0 0 1rem}"
     ".ee-reports summary{color:var(--muted);font-size:.9rem}"
@@ -266,6 +273,9 @@ _BASE = (
     "section.card ul{list-style:none;margin:.5rem 0;padding:0}"
     "section.card li{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:0 .5rem;padding:.45rem 0;"
     "border-bottom:1px solid var(--border)}"
+    "section.card h3.ee-earlier{font:700 .8rem/1.2 var(--sans);text-transform:uppercase;letter-spacing:.05em;"
+    "color:var(--muted);margin:1.25rem 0 0}"
+    "section.card li.ee-more{display:block;padding-left:3.5rem}"
     "section.card nav{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;margin:.75rem 0 0;font-weight:600}"
     # narrow screens: the write-up folds to one column, the chart to stacked rows
     "@media (max-width:58rem){.ee-card{grid-template-columns:minmax(0,1fr);grid-template-rows:none}"
@@ -331,6 +341,7 @@ JS = """(function () {
     if (f.subtopic && s.subtopic !== f.subtopic) return false;
     if (f.metric && s.metric !== f.metric) return false;
     if (f.entity && (s.entities || []).indexOf(f.entity) < 0) return false;
+    if (f.source && (s.sources || []).indexOf(f.source) < 0) return false;
     if (f.disputed && !s.disputed) return false;
     if (f.q && s.text.indexOf(f.q) < 0) return false;
     return true;
@@ -366,7 +377,7 @@ JS = """(function () {
   }
   function apply() {
     var f = {tiers: tiers(), flag: value('flag'), relation: value('relation'),
-             series: value('series'), subtopic: value('subtopic'), metric: value('metric'), entity: value('entity'), disputed: form.elements['disputed'].checked,
+             series: value('series'), subtopic: value('subtopic'), metric: value('metric'), entity: value('entity'), source: value('source'), disputed: form.elements['disputed'].checked,
              q: value('q').trim().toLowerCase()};
     var shown = 0;
     ordered(value('sort')).forEach(function (s) {
@@ -390,7 +401,24 @@ JS = """(function () {
   form.addEventListener('input', apply);
   form.addEventListener('change', apply);
   form.addEventListener('submit', function (event) { event.preventDefault(); });
+  // a link to a source (#source=<slug>) preselects the Source filter and shows the list
+  function fromHash() {
+    var m = /^#source=(.+)$/.exec(location.hash);
+    var select = form.elements['source'];
+    if (!m || !select) return;
+    var slug;
+    try { slug = decodeURIComponent(m[1]); } catch (e) { return; }
+    var found = Array.prototype.some.call(select.options, function (o) { return o.value === slug; });
+    if (!found) return;
+    select.value = slug;
+    if (box) box.open = true;
+    apply();
+    var all = document.getElementById('ee-all');
+    if (all) all.scrollIntoView();
+  }
+  window.addEventListener('hashchange', fromHash);
   apply();
+  fromHash();
 })();
 // a link to a subtopic (#sub-...) opens its closed question list
 (function () {

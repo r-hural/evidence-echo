@@ -211,3 +211,18 @@ def test_adaptive_fetch_precedence(workspace, monkeypatch):
     assert config.load().adaptive_fetch == "off"                       # topic beats config
     _env(monkeypatch, EV_ECHO_ADAPTIVE_FETCH="on")
     assert config.load().adaptive_fetch == "on"                        # env beats topic
+
+
+def test_fetch_cache_minutes_default_and_validation(workspace, monkeypatch):
+    assert config.load().fetch_cache_minutes == 60
+    monkeypatch.setenv("EV_ECHO_FETCH_CACHE_MINUTES", "0")
+    assert config.load().fetch_cache_minutes == 0
+    for bad in ("-1", "x", "10081"):
+        monkeypatch.setenv("EV_ECHO_FETCH_CACHE_MINUTES", bad)
+        with pytest.raises(ConfigError, match="EV_ECHO_FETCH_CACHE_MINUTES"):
+            config.load()
+    monkeypatch.delenv("EV_ECHO_FETCH_CACHE_MINUTES")
+    for bad in (-1, "x", True):
+        with pytest.raises(ConfigError, match="fetch_cache_minutes"):
+            settings.check_value("fetch_cache_minutes", bad, "f")
+    assert "fetch_cache_minutes" not in settings.OVERRIDES

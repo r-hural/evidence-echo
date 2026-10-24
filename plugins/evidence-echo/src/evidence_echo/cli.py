@@ -19,7 +19,9 @@ def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="evidence-echo", description="Evidence Echo pipeline")
     p.add_argument("--topic", metavar="ID", help="topic to work on (needed with several topics)")
     sub = p.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("fetch").add_argument("--all", dest="fetch_all", action="store_true")
+    fp = sub.add_parser("fetch")
+    fp.add_argument("--all", dest="fetch_all", action="store_true")
+    fp.add_argument("--fresh", action="store_true")
     for name in api.LLM_STAGES:
         sp = sub.add_parser(name)
         sp.add_argument("--emit", action="store_true")
@@ -86,10 +88,12 @@ def _parser() -> argparse.ArgumentParser:
     sa.add_argument("--name")
     sa.add_argument("--scan-depth", choices=["headlines", "full"])
     sa.add_argument("--fetch-every", metavar="DAYS")
+    sa.add_argument("--site-url", metavar="URL")
     ss = sp.add_parser("set")
     ss.add_argument("name")
     ss.add_argument("--scan-depth", choices=["headlines", "full", "default"])
     ss.add_argument("--fetch-every", metavar="DAYS|default")
+    ss.add_argument("--site-url", metavar="URL|default")
     sp.add_parser("reset").add_argument("name")
     sp.add_parser("remove").add_argument("name")
 
@@ -214,9 +218,10 @@ def _dispatch(args):
                 raise ConfigError("usage: sources add <url> [--kind K] [--name N]  or  "
                                   "sources add rss|linkedin <name> <url|slug>")
             return api.sources_add(ws, tid, args.first, args.kind, args.name, args.scan_depth,
-                                   args.fetch_every)
+                                   args.fetch_every, args.site_url)
         if args.action == "set":
-            return api.sources_set(ws, tid, args.name, args.scan_depth, args.fetch_every)
+            return api.sources_set(ws, tid, args.name, args.scan_depth, args.fetch_every,
+                                   args.site_url)
         if args.action == "reset":
             return api.sources_reset(ws, tid, args.name)
         return api.sources_remove(ws, tid, args.name)
@@ -287,7 +292,7 @@ def _dispatch(args):
         return api.questions_move(cfg, args.sid, args.qid, args.new, args.measure, args.kind,
                                  args.comparison)
     if args.cmd == "fetch":
-        return api.fetch(cfg, args.fetch_all)
+        return api.fetch(cfg, args.fetch_all, args.fresh)
     if args.cmd == "backfill":
         return api.backfill(cfg, args.source, args.days, args.max_items)
     if args.cmd == "fetch-fallback":

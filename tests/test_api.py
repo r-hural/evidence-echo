@@ -35,15 +35,17 @@ def test_status(cfg):
 def test_fetch_passes_cfg_and_token(cfg, monkeypatch):
     seen = {}
 
-    def fake_run(conn, c, fetch_all=False):
-        seen.update(cfg=c, fetch_all=fetch_all)
+    def fake_run(conn, c, fetch_all=False, fresh=False):
+        seen.update(cfg=c, fetch_all=fetch_all, fresh=fresh)
         return {"rss": {}, "linkedin": {}}
 
     monkeypatch.setattr(fetch_stage, "run", fake_run)
     assert api.fetch(cfg) == {"rss": {}, "linkedin": {}}
-    assert seen == {"cfg": cfg, "fetch_all": False}
+    assert seen == {"cfg": cfg, "fetch_all": False, "fresh": False}
     api.fetch(cfg, True)
     assert seen["fetch_all"] is True
+    api.fetch(cfg, fresh=True)
+    assert seen["fresh"] is True
 
 
 def test_emit_apply_roundtrip(cfg):

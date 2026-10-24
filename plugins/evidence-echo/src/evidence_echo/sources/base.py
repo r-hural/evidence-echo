@@ -12,12 +12,15 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import htmldate
 import httpcore
 import httpx
 import trafilatura
+
+if TYPE_CHECKING:
+    from .cache import FetchCache
 
 try:
     _VERSION = version("evidence-echo")
@@ -115,6 +118,7 @@ class FetchContext:
     cursors: dict = field(default_factory=dict)  # source name -> cursor dict
     backfill: Backfill | None = None
     first_run: set = field(default_factory=set)  # source names on their first run
+    cache: "FetchCache | None" = None  # sources/cache.py; shared by every topic
 
 
 def make_client() -> httpx.Client:
@@ -231,6 +235,17 @@ class PublicOnlyBackend(httpcore.SyncBackend):
 
 
 def http_get(url: str, ctx: FetchContext) -> Fetched:
+    if ctx.cache is not None:
+        hit = ctx.cache.get(url)  # a hit makes no request: no host check, no rate limit wait
+        if hit is not None:
+            return hit
+    fetched = _download(url, ctx)
+    if ctx.cache is not None:
+        ctx.cache.put(url, fetched)
+    return fetched
+
+
+def _download(url: str, ctx: FetchContext) -> Fetched:
     cur_host = ""
     for _ in range(2):
         current = url
@@ -331,4 +346,13 @@ def optional_fetch_every(value) -> str | None:
     return None
 
 
-COMMON_FIELDS = {"scan_depth": optional_scan_depth, "fetch_every": optional_fetch_every}
+def optional_site_url(value) -> str | None:
+    if value is None:
+        return None
+    if http_url(value) is not None:
+        return "site_url must be an http(s) URL"
+    return None
+
+
+COMMON_FIELDS = {"scan_depth": optional_scan_depth, "fetch_every": optional_fetch_every,
+                 "site_url": optional_site_url}

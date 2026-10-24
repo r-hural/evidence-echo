@@ -157,3 +157,16 @@ def test_validate_rejects_old_theme_fields_and_accepts_subtopics():
         topics.validate(dict(BASE, subtopic_renames={"A": "B"}), "f", "x")
     t = topics.validate(dict(BASE, subtopics=["A"], subtopic_renames={"C": "A"}), "f", "x", template=True)
     assert t.subtopics == ["A"]
+
+
+def test_source_site_url_accepted():
+    src = {"type": "rss", "name": "A", "url": "https://ahrefs.com/blog/feed/",
+           "site_url": "https://ahrefs.com/blog/"}
+    t = topics.validate(dict(BASE, sources=[src]), "f", "x")
+    assert t.sources[0]["site_url"] == "https://ahrefs.com/blog/"
+
+
+def test_source_site_url_rejects_non_http():
+    src = {"type": "rss", "name": "A", "url": "https://a.com/feed", "site_url": "file:///x"}
+    with pytest.raises(ConfigError, match="site_url"):
+        topics.validate(dict(BASE, sources=[src]), "f", "x")

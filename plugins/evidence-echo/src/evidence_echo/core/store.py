@@ -978,6 +978,38 @@ def first_reports(conn) -> dict[int, dict]:
     return out
 
 
+def first_report_ids(conn) -> dict[int, int]:
+    """study id (merges resolved) -> id of the report that first included it, in first_reports' order."""
+    out: dict[int, int] = {}
+    for row in conn.execute("""SELECT e.study_id, r.id AS report_id FROM report_entries e
+                               JOIN reports r ON r.id = e.report_id
+                               ORDER BY r.rendered_at, r.id, e.rowid"""):
+        out.setdefault(resolve_study(conn, row["study_id"]), row["report_id"])
+    return out
+
+
+def source_item_stats(conn) -> list[dict]:
+    """One row per source_name in the items table, name order:
+    {"name", "type", "fetched_at": [iso, ...], "study_ids": set[int]}. study_ids holds the studies
+    (merges resolved) the source's items belong to, only those some report included, and only through
+    items the topic page reads (STUDY_ITEM_STATES), so both pages agree on a source's studies."""
+    reported = first_report_ids(conn)
+    by_name: dict[str, dict] = {}
+    resolved: dict[int, int] = {}
+    for row in conn.execute("SELECT source_name, source_type, fetched_at, study_id, state FROM items"):
+        entry = by_name.setdefault(row["source_name"], {"name": row["source_name"],
+                                                        "type": row["source_type"],
+                                                        "fetched_at": [], "study_ids": set()})
+        entry["fetched_at"].append(row["fetched_at"])
+        if row["study_id"] is not None and row["state"] in STUDY_ITEM_STATES:
+            if row["study_id"] not in resolved:
+                resolved[row["study_id"]] = resolve_study(conn, row["study_id"])
+            sid = resolved[row["study_id"]]
+            if sid in reported:
+                entry["study_ids"].add(sid)
+    return [by_name[name] for name in sorted(by_name)]
+
+
 def studies_overview(conn, include_merged: bool) -> list[dict]:
     first = first_reports(conn)
     where = "" if include_merged else "WHERE s.merged_into IS NULL"
@@ -1180,6 +1212,50 @@ def latest_report(conn) -> dict | None:
            WHERE e.report_id = ? ORDER BY e.rowid""", (row["id"],))
     return {"path": row["path"], "rendered_at": row["rendered_at"],
             "entries": [dict(e) for e in entries]}
+
+
+_TIER_RANK = {"A": 0, "B": 1, "C": 2, "D": 3}
+
+
+def recent_studies(conn, limit: int) -> dict:
+    """The studies the overview lists for a topic: {"latest": [...], "earlier": [...], "more": int}.
+
+    A study belongs to the report that first included it (merges resolved), so a seen-before study
+    shown again as "More coverage" is never one of a later report's studies. Rows are
+    {"study_id", "title", "tier", "report_path", "rendered_at"}. latest = the newest report's studies
+    (highest report id): all of them when limit == 0, else the best-graded `limit` (ties in report
+    order) and `more` counts the rest. earlier = studies first reported by older reports, the
+    newest first report first (ties by tier), filling `limit` studies in all; empty when limit == 0."""
+    newest = conn.execute("SELECT MAX(id) FROM reports").fetchone()[0]
+    if newest is None:
+        return {"latest": [], "earlier": [], "more": 0}
+    tiers = {r["id"]: r["evidence_tier"] for r in conn.execute("SELECT id, evidence_tier FROM studies")}
+    reports = {r["id"]: (r["path"], r["rendered_at"], n) for n, r in enumerate(conn.execute(
+        "SELECT id, path, rendered_at FROM reports ORDER BY rendered_at, id"))}
+    first: dict[int, dict] = {}
+    for order, row in enumerate(report_history(conn)):
+        sid = resolve_study(conn, row["study_id"])
+        if sid in first:
+            continue
+        path, rendered_at, position = reports[row["report_id"]]
+        first[sid] = {"study_id": sid, "title": row["title"], "tier": tiers.get(sid),
+                      "report_path": path, "rendered_at": rendered_at, "_report": row["report_id"],
+                      "_position": position, "_order": order}
+
+    def tier_key(r):
+        return _TIER_RANK.get(r["tier"], 9)
+
+    def public(rows):
+        return [{k: v for k, v in r.items() if not k.startswith("_")} for r in rows]
+
+    latest = sorted((r for r in first.values() if r["_report"] == newest), key=lambda r: r["_order"])
+    if limit == 0:
+        return {"latest": public(latest), "earlier": [], "more": 0}
+    shown = sorted(latest, key=lambda r: (tier_key(r), r["_order"]))[:limit]
+    older = sorted((r for r in first.values() if r["_report"] != newest),
+                   key=lambda r: (-r["_position"], tier_key(r), r["_order"]))
+    return {"latest": public(shown), "earlier": public(older[:max(0, limit - len(shown))]),
+            "more": len(latest) - len(shown)}
 
 
 # --- SP3b-T: subtopics ---------------------------------------------------------------------------

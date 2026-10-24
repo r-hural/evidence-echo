@@ -64,21 +64,67 @@ def _answered_slugs(raw: list) -> set:
     return out
 
 
+def _entry_to_json(entry) -> dict:
+    return {"url": entry.url, "title": entry.title, "excerpt": entry.excerpt,
+            "published": entry.published.isoformat() if entry.published else None,
+            "date_unknown": entry.date_unknown, "text": entry.text}
+
+
+def _entry_from_json(data: dict):
+    return base.Entry(url=data["url"], title=data["title"], excerpt=data["excerpt"],
+                      published=_parse_iso(data["published"]),
+                      date_unknown=bool(data.get("date_unknown")), text=data["text"])
+
+
+def _cached_entries(ctx, key: str):
+    """The profile's cached entries (possibly none), or None when not cached / unreadable."""
+    if ctx.cache is None:
+        return None
+    try:
+        return [_entry_from_json(d) for d in ctx.cache.get_json(key)]
+    except (TypeError, KeyError, ValueError, AttributeError):
+        return None
+
+
 def list_new(sources: list[dict], ctx: base.FetchContext) -> dict:
     if not ctx.apify_token:
         return {s["name"]: base.SourceResult(error=NO_TOKEN) for s in sources}
     out = {s["name"]: base.SourceResult() for s in sources}
     if not sources:
         return out
+    max_posts = max(ctx.backfill.per_source.values() or [MAX_POSTS]) if ctx.backfill else MAX_POSTS
+    mode = f"backfill:{max_posts}" if ctx.backfill else "week"
+    keys = {s["name"]: f"linkedin:{ctx.apify_actor}:{mode}:{s['slug'].lower()}" for s in sources}
+    todo = []
+    for s in sources:
+        cached = _cached_entries(ctx, keys[s["name"]])
+        if cached is None:
+            todo.append(s)
+        else:
+            out[s["name"]].entries.extend(cached)
+    if not todo:
+        return out
+    fetched = _run_apify(todo, ctx, max_posts)
+    for s in todo:
+        result = fetched[s["name"]]
+        out[s["name"]] = result
+        # a run error or an unanswered profile caches nothing; an answered profile with no
+        # usable posts is a successful (empty) answer
+        if ctx.cache is not None and not result.error:
+            ctx.cache.put_json(keys[s["name"]], [_entry_to_json(e) for e in result.entries])
+    return out
+
+
+def _run_apify(sources: list[dict], ctx: base.FetchContext, max_posts: int) -> dict:
+    out = {s["name"]: base.SourceResult() for s in sources}
     slug_to_name = {s["slug"]: s["name"] for s in sources}
     profile_urls = [f"https://www.linkedin.com/in/{s['slug']}/" for s in sources]
     headers = {"Authorization": f"Bearer {ctx.apify_token}"}
     try:
         if ctx.backfill:
-            body = {"targetUrls": profile_urls,
-                    "maxPosts": max(ctx.backfill.per_source.values() or [MAX_POSTS])}
+            body = {"targetUrls": profile_urls, "maxPosts": max_posts}
         else:
-            body = {"targetUrls": profile_urls, "maxPosts": MAX_POSTS, "postedLimit": "week"}
+            body = {"targetUrls": profile_urls, "maxPosts": max_posts, "postedLimit": "week"}
         run_resp = httpx.post(
             f"https://api.apify.com/v2/acts/{ctx.apify_actor}/runs",
             headers=headers, json=body, timeout=30)

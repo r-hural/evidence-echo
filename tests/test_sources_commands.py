@@ -152,7 +152,7 @@ def test_sources_set_fetch_every(ws_with_topic, probes):
         api.sources_set(ws, tid, "R", fetch_every="0")
     with pytest.raises(ConfigError, match="fetch_every"):
         api.sources_set(ws, tid, "R", fetch_every="2.5")
-    with pytest.raises(ConfigError, match="--scan-depth or --fetch-every"):
+    with pytest.raises(ConfigError, match="--scan-depth, --fetch-every or --site-url"):
         api.sources_set(ws, tid, "R")
 
 
@@ -256,3 +256,25 @@ def test_sources_list_track_record_counts(ws_with_topic, probes):
     conn.close()
     row = api.sources_list(ws, tid)[0]
     assert [row[k] for k in store.TRACK_KEYS] == [3, 1, 2, 1]
+
+
+def test_sources_set_site_url_and_default(ws_with_topic, probes):
+    ws, tid = ws_with_topic
+    api.sources_add(ws, tid, "https://a.com/feed", kind="rss", name="R")
+    assert api.sources_set(ws, tid, "R", site_url="https://x.example/")["site_url"] == "https://x.example/"
+    assert "site_url" not in api.sources_set(ws, tid, "R", site_url="default")
+    with pytest.raises(ConfigError, match="site_url"):
+        api.sources_set(ws, tid, "R", site_url="file:///x")
+
+
+def test_sources_add_discovered_feed_sets_site_url(ws_with_topic, monkeypatch):
+    ws, tid = ws_with_topic
+    monkeypatch.setattr(rss, "discover_feed", lambda url: {
+        "url": "https://a.com/feed", "discovered_from": url, "check": {"status": "ok", "url": "https://a.com/feed"}})
+    monkeypatch.setattr(rss, "check", lambda s, ctx=None: {"status": "ok", "url": s["url"]})
+    out = api.sources_add(ws, tid, "https://a.com/blog/", kind="rss", name="R")
+    assert out["added"]["site_url"] == "https://a.com/blog/"
+    monkeypatch.setattr(rss, "discover_feed", lambda url: {
+        "url": url, "discovered_from": None, "check": {"status": "ok", "url": url}})
+    out = api.sources_add(ws, tid, "https://b.com/feed", kind="rss", name="R2")
+    assert "site_url" not in out["added"]

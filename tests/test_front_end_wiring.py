@@ -26,9 +26,10 @@ def calls(monkeypatch):
     """Replace the three front-end functions with recorders returning a marker dict."""
     seen = {"write_report": [], "write_overview": [], "export": []}
 
-    def write_report(report, topic, reports_dir, overview_dir, md_path):
+    def write_report(report, topic, reports_dir, overview_dir, md_path, sources_page=None):
         seen["write_report"].append(dict(report=report, topic=topic, reports_dir=reports_dir,
-                                         overview_dir=overview_dir, md_path=md_path))
+                                         overview_dir=overview_dir, md_path=md_path,
+                                         sources_page=sources_page))
         return {"report": str(md_path.with_suffix(".html"))}
 
     def write_overview(summaries, overview_dir, now):
@@ -60,6 +61,7 @@ def test_html_on_calls_both_writers_with_the_expected_arguments(workspace, calls
     assert isinstance(rep["topic"], model.Topic) and rep["topic"].topic_id == "seo"
     assert rep["reports_dir"] == cfg.reports_dir and rep["overview_dir"] == cfg.overview_dir
     assert rep["md_path"] == Path(out["path"])
+    assert rep["sources_page"].topic_id == "seo"                        # the Sources page is built too
     [ov] = calls["write_overview"]
     assert ov["overview_dir"] == cfg.overview_dir
     assert [s.id for s in ov["summaries"]] == ["seo"]
@@ -99,7 +101,7 @@ def test_html_output_lists_the_written_pages(workspace, tmp_path):
     _vault(workspace, tmp_path)
     out = api.render_report(config.load(), EMPTY)
     assert set(out) == {"path", "applied", "rejected", "overview", "html", "obsidian"}
-    assert set(out["html"]) == {"report", "topic", "overview"}
+    assert set(out["html"]) == {"report", "topic", "overview", "sources"}
     assert Path(out["html"]["report"]).is_file() and Path(out["html"]["topic"]).is_file()
     assert set(out["obsidian"]) == {"dir", "written", "removed"}
 

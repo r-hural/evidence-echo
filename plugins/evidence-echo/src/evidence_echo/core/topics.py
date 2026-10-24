@@ -277,7 +277,7 @@ def add_source(topics_dir, topic_id, source: dict) -> Topic:
     return updated
 
 
-SOURCE_OPTIONS = ("scan_depth", "fetch_every")
+SOURCE_OPTIONS = ("scan_depth", "fetch_every", "site_url")
 
 
 def set_source_option(topics_dir, topic_id, name, key, value) -> Topic:

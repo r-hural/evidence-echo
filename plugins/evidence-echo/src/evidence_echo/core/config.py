@@ -66,6 +66,7 @@ class Config:
     relate: str
     primary_check: str
     classify_batch: int = 40
+    fetch_cache_minutes: int = 60
 
 
 def _env(var: str) -> str:
@@ -233,4 +234,5 @@ def load(topic_id: str | None = None) -> Config:
         relate=_setting("relate", ws, topic),
         primary_check=_setting("primary_check", ws, topic),
         classify_batch=_setting("classify_batch", ws, topic),
+        fetch_cache_minutes=_setting("fetch_cache_minutes", ws, topic),
     )

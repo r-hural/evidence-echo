@@ -16,7 +16,7 @@ def text_from_html(html: str, url: str = "") -> str:
     return text[:MAX_TEXT_CHARS]
 
 
-def run(conn, ctx=None) -> dict:
+def run(conn, ctx=None, cache=None) -> dict:
     extracted = degraded = waiting = 0
     for it in store.items_ready(conn, "triaged"):
         if it["full_text"]:
@@ -24,7 +24,7 @@ def run(conn, ctx=None) -> dict:
             extracted += 1
             continue
         ctx = ctx or base.FetchContext(cutoff=None, client=base.make_client(),
-                                       limiter=base.RateLimiter())
+                                       limiter=base.RateLimiter(), cache=cache)
         kind = get_kind(it["source_type"])
         try:
             got = kind.full_text(it["url"], ctx)

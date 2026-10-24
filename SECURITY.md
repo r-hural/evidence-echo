@@ -23,7 +23,8 @@ Only the latest release gets fixes.
   checked address), at most 5 MB per response, rate-limited per site. System proxy settings
   are not used.
 - **Local files:** the data folder (default `~/.evidence-echo`: topics, SQLite databases with
-  fetched text and grades), the reports folder, the optional Obsidian export, and the plugin
+  fetched text and grades, and `cache/fetch/` with downloaded pages and LinkedIn posts kept for
+  `fetch_cache_minutes`, deleted when they expire or when the cache is turned off), the reports folder, the optional Obsidian export, and the plugin
   data folder (`keys.json`, the engine's Python environment).
 - **Keys** are kept only in `keys.json` (written from the plugin settings) or in environment
   variables. They are never printed, put on a command line or passed into the session.

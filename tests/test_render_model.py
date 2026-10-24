@@ -214,7 +214,7 @@ def test_signatures_and_remaining_stub_results(tmp_path):
     tmp_path = tmp_path / "out"
     tmp_path.mkdir()
     assert list(inspect.signature(html.write_report).parameters) == [
-        "report", "topic", "reports_dir", "overview_dir", "md_path"]
+        "report", "topic", "reports_dir", "overview_dir", "md_path", "sources_page"]
     assert list(inspect.signature(html.write_overview).parameters) == [
         "summaries", "overview_dir", "now"]
     assert list(inspect.signature(obsidian.export).parameters) == ["topic", "vault_dir"]

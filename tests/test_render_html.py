@@ -386,7 +386,7 @@ def test_filter_data_fields():
     assert [r["id"] for r in rows] == [2, 3, 4] and [r["pos"] for r in rows] == [0, 1, 2]
     assert rows[0] == {"id": 2, "pos": 0, "tier": "C", "flags": ["no_baseline", "cherry_pick"],
                        "relation": "vendor", "series": "Annual CTR study", "disputed": False,
-                       "text": (FULL.title + " " + FULL.summary).lower(),
+                       "text": (FULL.title + " " + FULL.summary).lower(), "sources": [],
                        "first_reported": "2026-09-01T00:00:00+00:00",
                        "last_reported": "2026-10-16T08:00:00+00:00"}
     assert rows[1]["disputed"] is True and rows[1]["relation"] == "agency"
@@ -493,13 +493,13 @@ def _summary(tmp_path, tid="seo", name="SEO", entries=None, html_files=True, ste
                                            "entries": entries})
 
 
-def test_overview_card_with_top_three_and_links(tmp_path):
+def test_overview_card_without_depth_lists_the_report_ranked_with_links(tmp_path):
     out = html_render.overview_page([_summary(tmp_path)], tmp_path / "R", NOW)
     assert "<h1>Evidence Echo — Overview</h1>" in out and "Updated 2026-10-16 10:30" in out
     assert "<h2>SEO</h2>" in out
     assert "last run 2026-10-16 · 4 new findings" in out
-    _sections(out, "A study", "B new", "B old")
-    assert "C study" not in out
+    _sections(out, "A study", "B new", "B old", "C study")
+    assert '<a href="seo/2026-10-16-report.html">A study</a>' in out
     assert '<a href="seo/2026-10-16-report.html">Latest report</a>' in out
     assert '<a href="seo/seo.html">All studies</a>' in out
 
@@ -516,7 +516,8 @@ def test_overview_one_finding_and_empty_report(tmp_path):
     none = _summary(tmp_path, "b", "Beta", entries=[])
     out = html_render.overview_page([one, none], tmp_path / "R", NOW)
     assert "last run 2026-10-16 · 1 new finding</p>" in out
-    assert '<span class="tier tier-x"><span class="sr">Tier </span>?</span> T' in out
+    assert ('<span class="tier tier-x"><span class="sr">Tier </span>?</span> '
+            '<a href="a/2026-10-16-report.html">T</a>') in out
     assert "0 new findings" in out
 
 
@@ -821,3 +822,48 @@ def test_every_page_ends_with_the_footer(tmp_path):
                       html_render.topic_page(topic_model([topic_study(entry(1))]), "o", "r"),
                       html_render.overview_page([], tmp_path, when)):
         assert page_html.count('<footer class="ee-foot">') == 1
+
+
+# --- Source filter (sources page task 4) --------------------------------------------------------
+
+from evidence_echo.render.model import SourceSummary
+
+
+def _with_sources(*summaries):
+    return topic_model([topic_study(entry(1)), topic_study(entry(2))], sources=list(summaries))
+
+
+def test_filter_data_lists_study_sources():
+    t = _with_sources(SourceSummary("Ahrefs Blog", [1, 2], 0, 0),
+                      SourceSummary("Field Notes (Jo Example)", [1], 0, 0))
+    rows = {r["id"]: r for r in _data(html_render.topic_page(t, "o.html", "r.html"))["studies"]}
+    assert rows[1]["sources"] == ["ahrefs-blog", "field-notes-jo-example"]
+    assert rows[2]["sources"] == ["ahrefs-blog"]
+
+
+def test_source_select_shown_for_two_sources_only():
+    one = html_render.topic_page(_with_sources(SourceSummary("Ahrefs Blog", [1, 2], 0, 0)), "o.html", "r.html")
+    assert 'name="source"' not in one
+    two = html_render.topic_page(_with_sources(SourceSummary("Zeta", [1], 0, 0),
+                                               SourceSummary("Ahrefs Blog", [1, 2], 0, 0)), "o.html", "r.html")
+    assert ('<label>Source <select name="source"><option value="">Any source</option>'
+            '<option value="ahrefs-blog">Ahrefs Blog (2)</option>'
+            '<option value="zeta">Zeta (1)</option></select></label>') in two
+    assert refs(two).unlabelled == []
+
+
+def test_js_reads_source_hash():
+    assert "#source=" in html_assets.JS and "'source'" in html_assets.JS
+    assert "sub" in html_assets.JS and "classList.contains('subtopic')" in html_assets.JS
+
+
+def test_source_slugs_resolve_clashes_in_name_order():
+    assert html_render.source_slugs(["A&B", "A B", "a-b", "!!!"]) == {
+        "A B": "a-b", "A&B": "a-b-2", "a-b": "a-b-3", "!!!": "source"}
+
+
+def test_source_href_is_a_working_hash_link():
+    slug = html_render.source_slug("Field Notes (Jo Example)")
+    assert html_render.source_href("seo.html", slug) == "seo.html#source=field-notes-jo-example"
+    assert html_render.source_href("seo.html", html_render.source_slug("Éditions & Co/Études")) == (
+        "seo.html#source=%C3%A9ditions-co-%C3%A9tudes")

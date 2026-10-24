@@ -9,7 +9,7 @@
       "name": "evidence-echo",
       "source": "./plugins/evidence-echo",
       "description": "Evidence-graded research digests from the feeds you follow: keeps only articles with measured results, grades each study, checks quotes and the original study. Templates for SEO, AI coding, A/B testing and exercise science.",
-      "version": "0.15.1",
+      "version": "0.16.0",
       "category": "research",
       "license": "MIT",
       "homepage": "https://github.com/r-hural/evidence-echo"

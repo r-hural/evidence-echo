@@ -8,10 +8,10 @@
   "sources": [
     { "type": "page",  "name": "Baymard Institute",                                "url": "https://baymard.com/blog" },
     { "type": "rss",   "name": "Nielsen Norman Group",                             "url": "https://www.nngroup.com/feed/rss/" },
-    { "type": "rss",   "name": "MeasuringU",                                       "url": "https://measuringu.com/feed/" },
+    { "type": "rss",   "name": "MeasuringU",                                       "url": "https://measuringu.com/feed/", "site_url": "https://measuringu.com/" },
     { "type": "page",  "name": "VWO Blog",                                         "url": "https://wingify.com/blog/" },
     { "type": "page",  "name": "Optimizely Insights",                              "url": "https://www.optimizely.com/insights/blog/" },
     { "type": "page",  "name": "Kameleoon Blog",                                   "url": "https://www.kameleoon.com/blog" },
-    { "type": "rss",   "name": "Conversion Rate Experts",                          "url": "https://conversion-rate-experts.com/feed/" }
+    { "type": "rss",   "name": "Conversion Rate Experts",                          "url": "https://conversion-rate-experts.com/feed/", "site_url": "https://conversion-rate-experts.com/" }
   ]
 }

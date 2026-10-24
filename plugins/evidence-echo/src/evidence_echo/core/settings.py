@@ -13,6 +13,8 @@ STATE_FILE = "state.json"
 VERSION = 1
 MAX_HORIZON_DAYS = 3650
 CLASSIFY_BATCH_MAX = 500
+FETCH_CACHE_MAX_MINUTES = 10080  # one week
+OVERVIEW_STUDIES_MAX = 100
 
 GLOBAL_DEFAULTS = {"reports_dir": None, "triage_backend": "auto",
                    "judgment_backend": "auto", "embedder": "auto",
@@ -20,7 +22,8 @@ GLOBAL_DEFAULTS = {"reports_dir": None, "triage_backend": "auto",
                    "scan_depth": "headlines", "ask_on_disputes": "off",
                    "adaptive_fetch": "off", "html_reports": "on", "rejections_report": "off",
                    "obsidian_dir": None,
-                   "relate": "on", "primary_check": "on", "classify_batch": 40}
+                   "relate": "on", "primary_check": "on", "classify_batch": 40,
+                   "fetch_cache_minutes": 60, "overview_studies": 10}
 OVERRIDES = ("reports_dir", "output_language", "fetch_horizon_days", "scan_depth",
              "adaptive_fetch", "html_reports", "rejections_report", "relate", "primary_check", "classify_batch")
 CHOICES = {"triage_backend": ("auto", "api", "session"),
@@ -73,6 +76,24 @@ def _classify_batch(value, where: str) -> int:
     return number
 
 
+def _fetch_cache_minutes(value, where: str) -> int:
+    number = int(value) if isinstance(value, int) and not isinstance(value, bool) else (
+        int(value) if isinstance(value, str) and value.isascii() and value.isdigit() else None)
+    if number is None or not 0 <= number <= FETCH_CACHE_MAX_MINUTES:
+        raise ConfigError(f"{where}: field 'fetch_cache_minutes' must be a whole number of minutes "
+                          f"from 0 to {FETCH_CACHE_MAX_MINUTES} (0 = off), got '{value}'")
+    return number
+
+
+def _overview_studies(value, where: str) -> int:
+    number = int(value) if isinstance(value, int) and not isinstance(value, bool) else (
+        int(value) if isinstance(value, str) and value.isascii() and value.isdigit() else None)
+    if number is None or not 0 <= number <= OVERVIEW_STUDIES_MAX:
+        raise ConfigError(f"{where}: field 'overview_studies' must be a whole number from 0 to "
+                          f"{OVERVIEW_STUDIES_MAX} (0 = last report only), got '{value}'")
+    return number
+
+
 def check_value(key: str, value, where: str):
     if key in CHOICES:
         if value not in CHOICES[key]:
@@ -83,6 +104,10 @@ def check_value(key: str, value, where: str):
         return _horizon(value, where)
     if key == "classify_batch":
         return _classify_batch(value, where)
+    if key == "fetch_cache_minutes":
+        return _fetch_cache_minutes(value, where)
+    if key == "overview_studies":
+        return _overview_studies(value, where)
     if key == "output_language":
         if not isinstance(value, str) or not value.strip():
             raise ConfigError(f"{where}: field 'output_language' must be a language "

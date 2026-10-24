@@ -2,7 +2,7 @@
   "name": "evidence-echo",
   "displayName": "Evidence Echo",
   "description": "Evidence-graded research digests from the feeds you follow: keeps only articles with measured results, grades each study, checks quotes and the original study. Templates for SEO, AI coding, A/B testing and exercise science.",
-  "version": "0.15.1",
+  "version": "0.16.0",
   "author": {
     "name": "r-hural"
   },

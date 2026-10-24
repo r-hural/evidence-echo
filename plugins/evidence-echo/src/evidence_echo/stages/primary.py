@@ -281,8 +281,9 @@ def envelope(topic, items: list[dict], **extra) -> str:
     return json.dumps(data, ensure_ascii=False, indent=2)
 
 
-def default_ctx() -> base.FetchContext:
-    return base.FetchContext(cutoff=None, client=base.make_client(), limiter=base.RateLimiter())
+def default_ctx(cache=None) -> base.FetchContext:
+    return base.FetchContext(cutoff=None, client=base.make_client(), limiter=base.RateLimiter(),
+                             cache=cache)
 
 
 def emit(conn, topic, ctx=None) -> str:
