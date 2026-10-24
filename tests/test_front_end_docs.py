@@ -56,3 +56,11 @@ def test_readme_explains_the_subtopic_view():
 
 def test_readme_documents_the_subtopic_notes():
     assert "<Topic name>/subtopics/<subtopic>.md" in README and "also has `subtopic` and links" in README
+
+
+def test_setup_skill_asks_for_formats_backfill_days_and_shows_a_table():
+    for text in ("ev config set md_reports on", "ev config set html_reports on", "multiSelect",
+                 "never as JSON", '"7 days" (recommended', '"365 days"', "backfill --days <N>",
+                 "demo or own"):
+        assert text in SETUP, text
+    assert "`md_reports`" in README and "EV_ECHO_MD_REPORTS" in README

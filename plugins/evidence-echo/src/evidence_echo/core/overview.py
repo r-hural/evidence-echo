@@ -45,6 +45,8 @@ def new_count(s: TopicSummary) -> int:
 
 
 def _link(path: Path, out_dir: Path) -> str:
+    if not path.exists() and path.with_suffix(".html").exists():   # md_reports off: the HTML page
+        path = path.with_suffix(".html")
     try:
         return Path(os.path.relpath(path, out_dir)).as_posix() if \
             path.resolve().is_relative_to(out_dir.resolve()) else path.as_uri()

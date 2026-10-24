@@ -233,14 +233,10 @@ def _json_safe(result):
 def render_report(cfg, payload: str, rejections: bool = False) -> dict:
     with _connect(cfg) as conn:
         out, rep, previous = report.render_with_model(conn, payload, cfg.reports_dir, cfg.output_language,
-                                            cfg.topic)
+                                            cfg.topic, md_dir=cfg.md_dir)
     if out.get("skipped"):   # no new studies: nothing was written, so nothing to rebuild
         return out
     # the report is committed: no failure below may invite a re-render (exit code stays 0)
-    try:
-        out["overview"] = overview(config.workspace(), cfg.overview_dir, html=False)["path"]
-    except (OSError, sqlite3.Error) as exc:
-        out["overview_error"] = str(exc)
     topic_model = None
     if cfg.html_reports == "on":
         try:
@@ -249,7 +245,8 @@ def render_report(cfg, payload: str, rejections: bool = False) -> dict:
                 sources = sources_render.build_sources(conn, cfg.topic, datetime.now(timezone.utc),
                                                        cfg.fetch_horizon_days)
             written = _json_safe(html_render.write_report(rep, topic_model, cfg.reports_dir,
-                                                          cfg.overview_dir, Path(out["path"]),
+                                                          cfg.overview_dir,
+                                                          cfg.reports_dir / Path(out["path"]).name,
                                                           sources_page=sources))
             if written:
                 out["html"] = written
@@ -259,6 +256,10 @@ def render_report(cfg, payload: str, rejections: bool = False) -> dict:
                 out.setdefault("html", {}).update(more)
         except FRONT_END_ERRORS as exc:
             out["html_error"] = str(exc)
+    try:   # after the HTML page, so overview.md can link it when the report has no .md
+        out["overview"] = overview(config.workspace(), cfg.overview_dir, html=False)["path"]
+    except (OSError, sqlite3.Error) as exc:
+        out["overview_error"] = str(exc)
     if cfg.obsidian_dir is not None:
         try:
             exported = _json_safe(obsidian_render.export(topic_model or _topic_model(cfg),
@@ -277,8 +278,10 @@ def render_report(cfg, payload: str, rejections: bool = False) -> dict:
 
 def _write_rejections(cfg, out: dict, previous: str | None) -> None:
     """The paired rejections report (Markdown, and HTML when html_reports is on) for the window
-    since the previous report; sets out["rejections"]."""
+    since the previous report; sets out["rejections"]. The Markdown sits next to the report's
+    Markdown, the HTML next to its HTML page."""
     md = Path(out["path"])
+    visible = cfg.reports_dir / md.name
     with _connect(cfg) as conn:
         rows = rejections_render.rows_in_window(store.rejected_items(conn), previous,
                                                 datetime.now(timezone.utc))
@@ -288,11 +291,11 @@ def _write_rejections(cfg, out: dict, previous: str | None) -> None:
         fh.write(rejections_render.markdown(name, previous, rows))
     info = {"path": str(target), "count": len(rows)}
     if cfg.html_reports == "on":
-        html_target = target.with_suffix(".html")
+        html_target = rejections_render.paired_path(visible).with_suffix(".html")
         with open(html_target, "x", encoding="utf-8") as fh:
             topic_page = cfg.reports_dir / f"{cfg.topic.id}.html"
             fh.write(rejections_render.html_page(
-                name, previous, rows, md.with_suffix(".html").name,
+                name, previous, rows, visible.with_suffix(".html").name,
                 html_render.href(cfg.overview_dir / "overview.html", html_target.parent),
                 html_render.href(topic_page, html_target.parent)))
         info["html"] = str(html_target)
@@ -432,9 +435,13 @@ def overview(ws, overview_dir: Path | None = None, html: bool | None = None) -> 
     """overview.md, and overview.html when html (None: the workspace's html_reports) is on."""
     out_dir = overview_dir or _overview_dir(ws)
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / "overview.md"
+    md_dir = config.markdown_dir(ws, out_dir, config.workspace_setting("html_reports", ws))
+    if md_dir != out_dir:   # md_reports off: no overview.md in the reports folder
+        md_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "overview.md").unlink(missing_ok=True)
+    path = md_dir / "overview.md"
     summaries, now = _summaries(ws), datetime.now(timezone.utc)
-    path.write_text(overview_mod.render(summaries, out_dir, now), encoding="utf-8")
+    path.write_text(overview_mod.render(summaries, md_dir, now), encoding="utf-8")
     out = {"path": str(path)}
     if html is None:
         html = config.workspace_setting("html_reports", ws) == "on"

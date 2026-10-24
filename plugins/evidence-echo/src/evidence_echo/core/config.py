@@ -67,6 +67,7 @@ class Config:
     primary_check: str
     classify_batch: int = 40
     fetch_cache_minutes: int = 60
+    md_dir: Path | None = None   # where the Markdown report goes; None: reports_dir
 
 
 def _env(var: str) -> str:
@@ -177,6 +178,15 @@ def workspace_setting(name: str, ws: Workspace):
     return _setting(name, ws, None)
 
 
+def markdown_dir(ws: Workspace, visible: Path, html_reports: str, topic_id: str | None = None) -> Path:
+    """Where Markdown files go: `visible` (the reports folder), or <data>/markdown[/<topic>] when
+    md_reports is off and HTML is on (with HTML off too, the Markdown stays the visible report)."""
+    if workspace_setting("md_reports", ws) == "on" or html_reports == "off":
+        return visible
+    hidden = ws.data_dir / "markdown"
+    return hidden / topic_id if topic_id else hidden
+
+
 def _obsidian_dir(ws: Workspace) -> Path | None:
     """EV_ECHO_OBSIDIAN_DIR > config.json; empty means no export. Existence is checked on use."""
     env = _env("EV_ECHO_OBSIDIAN_DIR")
@@ -215,6 +225,7 @@ def load(topic_id: str | None = None) -> Config:
         return auto if value == "auto" else value
 
     topic_dir = ws.topics_dir / topic.id
+    html_reports = _setting("html_reports", ws, topic)
     return Config(
         data_dir=ws.data_dir, plugin_data_dir=ws.plugin_data_dir, topic=topic,
         topic_dir=topic_dir, db_path=topic_dir / "echo.db",
@@ -228,11 +239,12 @@ def load(topic_id: str | None = None) -> Config:
         adaptive_fetch=_setting("adaptive_fetch", ws, topic),
         anthropic_api_key=anthropic_key, voyage_api_key=voyage_key,
         apify_api_token=_key("APIFY_API_TOKEN", keys),
-        html_reports=_setting("html_reports", ws, topic),
+        html_reports=html_reports,
         rejections_report=_setting("rejections_report", ws, topic),
         obsidian_dir=_obsidian_dir(ws),
         relate=_setting("relate", ws, topic),
         primary_check=_setting("primary_check", ws, topic),
         classify_batch=_setting("classify_batch", ws, topic),
         fetch_cache_minutes=_setting("fetch_cache_minutes", ws, topic),
+        md_dir=markdown_dir(ws, reports_dir, html_reports, topic.id),
     )

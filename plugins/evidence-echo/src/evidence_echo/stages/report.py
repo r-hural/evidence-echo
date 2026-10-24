@@ -58,23 +58,31 @@ def emit(conn, topic, language: str) -> str:
     return interfaces.envelope("report", instructions(topic, language), items, topic)
 
 
-def _write_new(reports_dir: Path, date: str, text: str) -> Path:
+def _write_new(reports_dir: Path, date: str, text: str, md_dir: Path | None = None) -> Path:
     """<date>-report.md, or -2, -3 ...: an earlier report (a re-render the same day,
-    or another topic sharing the folder) is never overwritten."""
+    or another topic sharing the folder) is never overwritten. The name is free when neither the
+    .md nor its .html page is in reports_dir; the file goes to md_dir (default reports_dir)."""
+    md_dir = md_dir or reports_dir
     for n in itertools.count(1):
-        path = reports_dir / (f"{date}-report.md" if n == 1 else f"{date}-report-{n}.md")
+        name = f"{date}-report.md" if n == 1 else f"{date}-report-{n}.md"
+        visible = reports_dir / name
+        if visible.exists() or visible.with_suffix(".html").exists():
+            continue
         try:
-            with open(path, "x", encoding="utf-8") as fh:
+            with open(md_dir / name, "x", encoding="utf-8") as fh:
                 fh.write(text)
-            return path
+            return md_dir / name
         except FileExistsError:
             continue
 
 
 def render_with_model(conn, payload: str, reports_dir: Path, language: str,
-                      topic, now: datetime | None = None) -> tuple[dict, model.Report, str | None]:
-    """Write today's Markdown report; return render's output, the Report it was made from and
-    the previous report's time (None for the first), read before this one is recorded."""
+                      topic, now: datetime | None = None,
+                      md_dir: Path | None = None) -> tuple[dict, model.Report, str | None]:
+    """Write today's Markdown report (into md_dir, default reports_dir); return render's output
+    (`path`: the written file), the Report it was made from and the previous report's time (None
+    for the first), read before this one is recorded. The report is recorded under its
+    reports_dir name, where its HTML page goes."""
     new, seen, _ = model.split(conn)
     if not new:   # nothing new since the last report: no blank report, nothing is marked reported
         last = store.latest_report_time(conn)
@@ -88,7 +96,10 @@ def render_with_model(conn, payload: str, reports_dir: Path, language: str,
     rep = model.build_report(conn, topic, entries, now)
 
     reports_dir.mkdir(parents=True, exist_ok=True)
-    path = _write_new(reports_dir, now.strftime("%Y-%m-%d"), markdown.report_markdown(rep))
+    if md_dir:
+        md_dir.mkdir(parents=True, exist_ok=True)
+    written = _write_new(reports_dir, now.strftime("%Y-%m-%d"), markdown.report_markdown(rep), md_dir)
+    path = reports_dir / written.name
     shown = [(e.study_id, e.title, e.summary)
              for e in sorted(rep.new + rep.disputed, key=model.entry_order)]
     shown += [(s.study_id, s.first_title) for s in rep.seen]   # seen-before: no summary
@@ -99,7 +110,7 @@ def render_with_model(conn, payload: str, reports_dir: Path, language: str,
         for g in group:
             store.set_state(conn, g["id"], "reported")
     store.log_run(conn, "report", str(path))
-    return {"path": str(path), "applied": len(accepted), "rejected": rejected}, rep, previous
+    return {"path": str(written), "applied": len(accepted), "rejected": rejected}, rep, previous
 
 
 def render(conn, payload: str, reports_dir: Path, language: str, topic) -> dict:

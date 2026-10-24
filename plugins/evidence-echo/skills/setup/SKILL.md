@@ -53,13 +53,29 @@ Two questions. Nothing is added unless the user picks it.
 - If the user asks for suggestions, propose well-known sources for the topic of any kind (feeds, blogs, research pages, yearly reports) the same way as for a blank topic.
 - After adding: show a table of every source just added — name, kind (and whether it was detected), URL, `check.status`, and for `page` the `sample_links`. If a page's sample links are not articles, offer: switch to `once` (`ev --topic <id> sources remove "<name>"`, then add again with `--kind once`), try another URL, or remove it. For a source that is not `ok`, say what the check reported and offer to remove it or try another URL.
 - Then ask again: keep all / remove some / add more. Move on only when the user confirms the list and at least one source has status `ok`.
-- New topic only, after the list is confirmed: ask "Load the past year now (research spike)?" — yes → `ev --topic <id> backfill` (365 days, at most 200 items; the user may choose other limits with `--days` and `--max`). Say it can take a few minutes.
+- Every topic added in this setup run (demo or own), after its list is confirmed: ask how far back the first report should look, with AskUserQuestion: "7 days" (recommended: the first report comes fastest) / "21 days" / "90 days" / "365 days" (slow: hundreds of articles to grade). With several new topics, ask once and use the answer for all of them. Run `ev --topic <id> backfill --days <N>` for each (at most 200 items; `--max` changes that). Say 90 or 365 days can take a while.
 
 ## 5. Defaults
 
-Show language (`output_language`, default en), `fetch_horizon_days` (how old an article may be when fetched, default 7) and `scan_depth` (`headlines`: triage reads titles and excerpts; `full`: every new item's text is loaded first — more thorough, more downloads and tokens) from `ev config show`. Mention `adaptive_fetch` (default off; on means each source is fetched about as often as it publishes, and quiet sources are skipped until due). Mention disputed grades (`ask_on_disputes`, default off: the report shows both grades and the skeptic's reason; on: the report asks you to rule on each). Keep or change → `ev config set output_language <code>` / `ev config set fetch_horizon_days <1-3650>` / `ev config set scan_depth headlines|full` (per topic: `ev topic set <id> scan_depth full`; per source: `ev --topic <id> sources set "<name>" --scan-depth full|headlines|default`) / `ev config set ask_on_disputes on|off` / `ev config set adaptive_fetch on|off`.
+Read `ev config show` and show the settings as a Markdown table, never as JSON: columns Setting, Value (the current value; "(default)" after it when its origin is `default`), What it does. One row each, in this order, with these descriptions:
 
-Mention `html_reports` (default on: each report also gets an HTML page next to the `.md`, plus a page per topic and `overview.html`; `ev config set html_reports off` turns them off, per topic `ev topic set <id> html_reports off`). Mention `overview_studies` (default 10; how many recently reported studies each topic lists in the overview, `0` = latest report only) and `fetch_cache_minutes` (default 60; feed and page downloads are kept this long and shared by every topic, `0` = off): `ev config set <key> <value>`. Also mention `rejections_report` (`on`/`off`, default `off`; `on` writes `<date>-rejected.md` with every report, listing what the pipeline turned down since the previous one). Then ask whether the user uses Obsidian. Yes → ask for the vault folder and run `ev config set obsidian_dir "<vault folder>"` (it must be an existing folder; the engine never creates a vault; `ev config set obsidian_dir ""` turns the export off). No → leave `obsidian_dir` empty.
+| Setting | What it does |
+|---|---|
+| `output_language` | Language of reports and summaries (default `en`) |
+| `fetch_horizon_days` | How old an article may be when fetched, in days (default 7) |
+| `scan_depth` | `headlines`: triage reads titles and excerpts; `full`: loads every new article first (more thorough, more downloads and tokens) |
+| `adaptive_fetch` | `on`: each source is fetched about as often as it publishes; quiet sources wait until due |
+| `ask_on_disputes` | `off`: disputed grades show both grades and the reason; `on`: the report asks you to rule on each |
+| `rejections_report` | `on`: every report also lists what was turned down and why |
+| `overview_studies` | How many recently reported studies each topic shows in the overview (`0` = latest report only) |
+| `fetch_cache_minutes` | How long downloaded feeds and pages are reused, shared by all topics (`0` = off) |
+
+Ask "Keep these settings?" (Keep / Change some). Change → ask which and the new values, then `ev config set <setting> <value>` (`fetch_horizon_days` 1-3650; per topic: `ev topic set <id> scan_depth full`; per source: `ev --topic <id> sources set "<name>" --scan-depth full|headlines|default`).
+
+Then ask, with AskUserQuestion and `multiSelect`, "Which formats should reports be written in?": "HTML (Recommended)" (browsable pages: the report, a page per topic, a Sources page and an overview) / "Markdown" (`.md` files in the reports folder) / "Obsidian" (notes in your Obsidian vault). Then:
+- HTML picked → `ev config set html_reports on`, else `off`.
+- Markdown picked → `ev config set md_reports on`, else `off` (Claude still keeps the Markdown in the data folder to show you the report). Neither HTML nor Markdown picked → say a report needs one of them, keep Markdown: `ev config set md_reports on`.
+- Obsidian picked → ask for the vault folder and run `ev config set obsidian_dir "<vault folder>"` (it must be an existing folder; the engine never creates a vault). Not picked → leave `obsidian_dir` empty (`ev config set obsidian_dir ""` turns an existing export off).
 
 ## 6. Keys
 

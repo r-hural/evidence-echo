@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.16.1
+
+- **Setup shows settings as a table:** each setting with its current value and what it does,
+  instead of raw configuration output.
+- **First report window:** every topic added during setup, demo topics included, asks how far
+  back the first report should look: 7 days (the default, fastest first report), 21, 90 or 365.
+- **Report formats:** setup asks which formats to write, HTML (the default), Markdown and
+  Obsidian, in one multiple-choice question. The new `md_reports` setting (`off`) keeps Markdown
+  files out of the reports folder while HTML is on.
+
 ## 0.16.0
 
 - **Sources page:** every topic gets a Sources page next to its topic page. Each source shows
