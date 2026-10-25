@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRO Echo — all studies</title>
+<style>:root{--bg:#ffffff;--fg:#151412;--muted:#58554e;--card:#f2f0ea;--border:#d5d1c7;--rule:#151412;--link:#151412;--mast-bg:#151412;--mast-fg:#ffffff;--mast-muted:#bcb8ae;--red:#ad1328;--warn-bg:#fbeeee;--warn-fg:#8f0f22;--ok-fg:#151412;--bad-fg:#ad1328;--mix-fg:#58554e;--zebra:#f9f8f4;--mark:#fdf0a6;--faint:#7a766d;}@media (prefers-color-scheme: dark){:root{--bg:#161513;--fg:#ecebe6;--muted:#aaa69c;--card:#211f1c;--border:#3b3934;--rule:#ecebe6;--link:#ecebe6;--mast-bg:#0b0b0a;--mast-fg:#ecebe6;--mast-muted:#aaa69c;--red:#ff8593;--warn-bg:#2d1619;--warn-fg:#ffb3bc;--ok-fg:#ecebe6;--bad-fg:#ff8593;--mix-fg:#aaa69c;--zebra:#1c1b18;--mark:#4a4220;--faint:#85817a;}}:root{--sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--cond:Bahnschrift,'DIN Alternate','Avenir Next Condensed','Roboto Condensed','Arial Narrow',system-ui,sans-serif;--serif:Charter,'Bitstream Charter','Sitka Text',Cambria,Georgia,serif;--measure:66ch;--page:78rem}:root{color-scheme:light dark}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 var(--sans);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}::selection{background:var(--fg);color:var(--bg)}main{max-width:var(--page);margin:0 auto;padding:0 2rem 2.5rem}a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:.18em;text-decoration-color:var(--muted)}a:hover{text-decoration-color:currentColor;text-decoration-thickness:2px}:focus-visible{outline:2px solid var(--fg);outline-offset:2px}summary{cursor:pointer}summary:focus-visible{outline-offset:1px}h1,h2,h3{font-family:var(--cond);font-stretch:condensed;letter-spacing:-.01em;text-wrap:balance}h1{font-size:2.6rem;line-height:1.05;font-weight:700;margin:2.25rem 0 .35rem}h2{font-size:1.15rem;line-height:1.2;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:3rem 0 0;padding:.5rem 0 .6rem;border-top:3px solid var(--rule)}h3{font-size:1.4rem;line-height:1.15;font-weight:700;margin:0 0 .5rem}.meta{color:var(--muted);font-size:.9rem;margin:.25rem 0}.empty{color:var(--muted);font-style:italic;font-family:var(--serif)}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}[hidden]{display:none!important}.ee-mast{background:var(--mast-bg);color:var(--mast-fg);border-bottom:3px solid var(--mast-bg)}@media (prefers-color-scheme: dark){.ee-mast{border-bottom-color:var(--rule)}}.ee-mast-in{max-width:var(--page);margin:0 auto;padding:.7rem 2rem;display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem 1.5rem}.ee-mast a{color:var(--mast-fg);text-decoration-color:var(--mast-muted)}.ee-brand,.ee-crumbs li:first-child{font:700 1.35rem/1.2 var(--cond);font-stretch:condensed;letter-spacing:-.005em;color:var(--mast-fg)}.ee-brand a,.ee-crumbs li:first-child a{text-decoration:none}.ee-crumbs ol{display:flex;flex-wrap:wrap;align-items:baseline;list-style:none;margin:0;padding:0;font-size:.875rem;color:var(--mast-muted)}.ee-crumbs li+li::before{content:'\203a';margin:0 .45rem;color:var(--mast-muted)}.ee-crumbs li:first-child+li::before{margin-left:.6rem}.ee-crumbs a{color:var(--mast-fg)}.ee-crumbs [aria-current]{color:var(--mast-fg)}.ee-links{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;margin-left:auto;font-size:.875rem}.ee-head{margin:0 0 1.5rem}.ee-head .meta{font-size:1rem}.tier{display:inline-flex;align-items:baseline;gap:.3em;text-indent:0;font:700 1em/1 var(--cond);font-stretch:condensed;white-space:nowrap;color:var(--fg)}.tier::before{content:'';flex:none;width:1.05em;height:1.05em;border-radius:50%;border:.13em solid currentColor;transform:translateY(.14em);background:conic-gradient(currentColor var(--fill),transparent 0)}.tier-x::before{border-style:dotted}.ee-chart{width:100%;border-collapse:collapse;margin:0 0 1rem;font-size:.95rem}.ee-chart caption{text-align:left;font:700 1.15rem/1.2 var(--cond);font-stretch:condensed;text-transform:uppercase;letter-spacing:.04em;padding:.5rem 0 .6rem;border-top:3px solid var(--rule)}.ee-chart th{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:.4rem .75rem;border-bottom:1px solid var(--rule);white-space:nowrap}.ee-chart td{padding:.65rem .75rem;border-bottom:1px solid var(--border);vertical-align:baseline}.ee-chart tbody tr:nth-child(even) td{background:var(--card)}.ee-chart .tier{font-size:1.15rem}.ee-chart td.ee-c-study{font-weight:600;width:44%}.ee-chart td.ee-c-study a{text-decoration:none}.ee-chart tbody tr{position:relative}.ee-chart td.ee-c-study a::after{content:'';position:absolute;inset:0}.ee-chart td.ee-c-study a:hover,.ee-chart tbody tr:hover td.ee-c-study a{text-decoration:underline}.ee-chart .ee-none{color:var(--muted)}.ee-warn,.ee-chart .ee-warn{color:var(--red);font-weight:600}.ee-mark{font-family:var(--sans);font-weight:800;margin-right:.2em}.ee-key{margin:-.5rem 0 0;font-size:.875rem;display:flex;flex-wrap:wrap;gap:.25rem 1.5rem}.ee-key .tier{font-size:1.1em;margin-right:.35rem}.ee-key .ee-mark{font-size:1.1em}.ee-key-box{margin:-.5rem 0 0;font-size:.875rem}.ee-key-box>summary{color:var(--muted);padding:.2rem 0}.ee-key-box>.ee-key{margin:.4rem 0 0;flex-direction:column;gap:.3rem}article.card{padding:1.75rem 1rem;border-top:1px solid var(--border);scroll-margin-top:1rem}section>article.card:nth-of-type(even),#ee-studies:not(.ee-js)>article.card:nth-child(even),#ee-studies.ee-js>article.ee-alt{background:var(--zebra)}h2+article.card,h2+.ee-chart,#ee-studies>article.card:first-child{border-top:0}.ee-card{display:grid;grid-template-columns:minmax(0,var(--measure)) minmax(16rem,1fr);grid-template-rows:auto 1fr;gap:0 2.5rem}.ee-card-main{grid-column:1;grid-row:1/span 2}.ee-card-rate{grid-column:2;grid-row:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .75rem;padding:0 0 .5rem;margin:0 0 .6rem;border-bottom:1px solid var(--border)}.ee-card-side{grid-column:2;grid-row:2}.ee-grp+.ee-grp{border-top:1px solid var(--border);margin-top:.6rem;padding-top:.6rem}.ee-grp>:last-child{margin-bottom:0}.ee-card-rate .label{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;margin:0;color:var(--muted);font-size:.85rem;line-height:1.35}.ee-card-rate .tier{font-size:1.2rem}.ee-card-rate .ee-warn{font-size:.85rem}.ee-card-main p{font:1.075rem/1.62 var(--serif);margin:0}.ee-f{margin:0 0 .4rem;padding-left:8.8rem;text-indent:-8.8rem;font-size:.9rem;line-height:1.45}.ee-f b{display:inline-block;width:8.5rem;padding-right:.75rem;text-indent:0;vertical-align:top;font-weight:600;color:var(--muted);font-size:.8rem;line-height:1.6}.ee-f.ee-flags{color:var(--red);font-weight:600}.warn{background:var(--warn-bg);color:var(--warn-fg);border:1px solid currentColor;padding:.55rem .75rem;margin:0 0 .9rem;font-size:.9rem}.dispute{background:var(--card);color:var(--fg);border:1px solid var(--border);padding:.55rem .75rem;margin:0 0 .9rem;font-size:.875rem;line-height:1.5}.dispute b{color:var(--muted);font-weight:600}.dispute b:first-child{color:var(--red)}@media (prefers-reduced-motion:no-preference){article.card:target{animation:ee-find 1.6s cubic-bezier(.16,1,.3,1)}}@keyframes ee-find{from{background:var(--card);box-shadow:0 0 0 1rem var(--card)}to{background:transparent;box-shadow:0 0 0 1rem transparent}}.seen{list-style:none;padding:0;margin:0}.seen li{padding:.6rem 0;border-bottom:1px solid var(--border)}footer{margin-top:2.5rem}.table-wrap{overflow-x:auto;max-width:100%}table{border-collapse:collapse}.ee-rej th,.ee-rej td:nth-child(3),.ee-rej td:nth-child(4){white-space:nowrap}.ee-rej td:first-child{min-width:8em}th,td{padding:.45rem .75rem;vertical-align:top;text-align:left}th{border-bottom:1px solid var(--rule);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}td{border-bottom:1px solid var(--border)}.ee-src .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ee-src .ee-sub-h{text-transform:none;letter-spacing:0;font-weight:400}.ee-src{width:100%}.ee-src td{vertical-align:baseline}.ee-src tbody tr:nth-child(even) td{background:var(--card)}.ee-src td.ee-url{font-size:.85rem}.ee-src .ee-none{color:var(--muted)}.ee-src .ee-site,.ee-src .ee-feed{display:block}.ee-src .ee-feed{margin-top:.15rem}.ee-src .ee-nw{white-space:nowrap}.ee-src td b a{text-decoration:none}.ee-src td b a:hover{text-decoration:underline}.table-wrap+.ee-key{margin-top:.75rem}.ee-src .ee-broken{color:var(--warn-fg);font-weight:600}.ee-src tr.ee-gone td{color:var(--muted)}.ee-src tr.ee-gone-head th{padding-top:1.25rem;text-align:left}#ee-evidence>h2,#ee-all>h2{font-size:1.6rem;line-height:1.15;margin-top:6rem;padding:.75rem 0 .8rem}.ee-reports{margin:0 0 1rem}.ee-reports summary{color:var(--muted);font-size:.9rem}.ee-reports ul{columns:12rem;margin:.5rem 0 0;padding:0;list-style:none;font-size:.9rem}.ee-reports li{padding:.15rem 0}.ee-index{margin:0 0 1rem}.ee-index ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:0 2rem}.ee-index li{display:grid;grid-template-columns:minmax(0,1fr) 2.5rem;gap:0 .5rem;align-items:baseline;padding:.35rem 0 .2rem;font-size:.9rem}.ee-index a{text-decoration:none}.ee-index a:hover{text-decoration:underline}.ee-index .ee-n{text-align:right;color:var(--muted)}.ee-index .ee-extent{grid-column:1/-1;height:3px;margin-top:.3rem;background:var(--border)}.ee-index .ee-extent span{display:block;height:100%;width:var(--w);background:var(--rule)}.subtopic{scroll-margin-top:1rem}.ee-sub>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:.75rem;margin:2rem 0 .25rem;padding-top:.5rem;border-top:1px solid var(--rule)}.ee-sub>summary::-webkit-details-marker{display:none}.ee-sub>summary h3{margin:0;padding:0;border:0}.ee-sub>summary h3::before{content:"▸";display:inline-block;width:1.1em;color:var(--muted)}.ee-sub[open]>summary h3::before{content:"▾"}.ee-sub>summary:hover h3{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}.ee-sub>summary .meta{margin-left:auto;font-size:.85rem;text-align:right}.ee-legend{margin:0 0 .5rem}.ee-questions{list-style:none;margin:.5rem 0 .75rem;padding:0}.ee-question{padding:.6rem 0;border-bottom:1px solid var(--border)}.ee-cmp{display:block;font-size:.85rem;color:var(--muted)}.ee-question>strong,.ee-question>details>summary>strong{font-weight:600}.ee-question>details.ee-studies{margin:0;font-size:1rem}.ee-question>details.ee-studies>summary{color:var(--fg);list-style-position:inside;cursor:pointer}.ee-question>details.ee-studies>summary:hover strong{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}.ee-question>details.ee-studies>ol{font-size:.9rem}.ee-question.ee-multi{background:var(--card);border-left:3px solid var(--rule);border-bottom:0;padding:.6rem .75rem;margin:.5rem 0}.ee-question.ee-single{padding:.5rem 0 .5rem calc(.75rem + 3px)}.ee-single-q{display:block;font-weight:600}.ee-ungrouped{color:var(--muted);font-style:italic}.ee-ungrouped::first-letter{text-transform:uppercase}.ee-single-row{list-style:none;margin:.2rem 0 0;padding:0;font-size:.85rem;color:var(--muted)}.ee-reports li .meta{margin-left:.4rem;font-size:.85rem}.ee-label{color:var(--muted);white-space:nowrap}.ee-label span{display:inline-block;width:1.1em;font-weight:800}.ee-label-consistent span{color:var(--ok-fg)}.ee-label-contested span{color:var(--bad-fg)}.ee-label-varied{color:var(--mix-fg)}.ee-why{margin:.5rem 0;font-size:.9rem;border:1px solid var(--border);background:var(--card);padding:.4rem .7rem}.ee-why[open]{padding-bottom:.6rem}.ee-why p{margin:.4rem 0;font-family:var(--serif);font-size:1rem;max-width:var(--measure)}.ee-why ul{margin:.4rem 0;padding-left:1.2rem}.ee-why li{margin:.5rem 0}.ee-why blockquote{margin:.5rem 0 .5rem .25rem;padding-left:.9rem;border-left:1px solid var(--rule);font-family:var(--serif);font-size:1rem;max-width:var(--measure)}.ee-studies{margin:.35rem 0;font-size:.9rem}.ee-studies summary{color:var(--muted)}.ee-studies ol{margin:.35rem 0;padding-left:1.5rem}.ee-studies li{margin:.35rem 0}.ee-row{display:grid;grid-template-columns:2.4em minmax(0,1fr);color:inherit;text-decoration:none}.ee-row>.tier{grid-row:1/span 2;font-size:.95em;align-self:start;margin-top:.1em}.ee-q,.ee-row-line{grid-column:2}.ee-q{font-weight:600}.ee-date{color:var(--muted);white-space:nowrap}a.ee-row:hover .ee-q,a.ee-row:hover .ee-row-line{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}.ee-change{margin:.25rem 0 .25rem 1.5rem}#ee-count{margin:0 0 .5rem;color:var(--muted)}.ee-foot{padding:0 2rem}.ee-foot-in{max-width:calc(var(--page) - 4rem);margin:0 auto;padding:.75rem 0 2.5rem;display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem 1.5rem;border-top:3px solid var(--rule);font-size:.85rem;color:var(--muted)}.ee-foot a{font-weight:600}.ee-foot-end{display:inline-flex;align-items:center;gap:.6rem}.ee-foot a.ee-repo{color:inherit;display:inline-flex}.ee-filter-box{margin:0 0 1rem;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}.ee-filter-box>summary{padding:.6rem 0;font-weight:600}#ee-active{font-weight:400;color:var(--muted)}.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:.9rem 1.5rem;align-items:end;padding:.25rem 0 1rem;font-size:.9rem}.filters label{display:flex;flex-direction:column;gap:.3rem;min-width:0;max-width:100%;color:var(--muted);font-size:.8rem;font-weight:600}.filters label:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:.4rem;color:var(--fg);font-size:.9rem;font-weight:400;padding:.3rem .45rem;border:1px solid transparent}.filters fieldset{grid-column:1/-1;border:1px solid transparent;margin:0;padding:.3rem .45rem;display:flex;flex-wrap:wrap;align-items:center;gap:.25rem 1rem}.filters fieldset label:has(input[type=checkbox]){padding:0;border:0}.filters legend{float:left;padding:0;margin-right:.5rem;color:var(--muted);font-size:.8rem;font-weight:600}.filters select,.filters input[type=search]{width:100%;min-width:0;font:400 .9rem/1.3 var(--sans);color:var(--fg);background:var(--bg);border:1px solid var(--muted);border-radius:0;padding:.4rem .5rem}.filters input[type=checkbox]{accent-color:var(--fg)}.filters .ee-on{color:var(--fg)}.filters .ee-on select,.filters .ee-on input[type=search]{background:var(--mark);border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}.filters label.ee-on:has(input[type=checkbox]),.filters fieldset.ee-on{background:var(--mark);border-color:var(--fg)}#ee-reset{justify-self:start;font:600 .9rem/1.3 var(--sans);padding:.4rem .9rem;color:var(--fg);background:var(--bg);border:1px solid var(--fg);border-radius:0;cursor:pointer}#ee-reset:hover{background:var(--fg);color:var(--bg)}.ee-topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:0 3rem}section.card h2{margin-top:2rem}section.card h2 .ee-echo{color:var(--faint)}section.card ul{list-style:none;margin:.5rem 0;padding:0}section.card li{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:0 .5rem;padding:.45rem 0;border-bottom:1px solid var(--border)}section.card li{position:relative}section.card li a{text-decoration:none}section.card li a::after{content:'';position:absolute;inset:0}section.card li:hover{background:var(--card);box-shadow:-.5rem 0 0 var(--card),.5rem 0 0 var(--card)}@media (prefers-reduced-motion:no-preference){section.card li{transition:background-color .15s,box-shadow .15s}}section.card h2 a{color:inherit;text-decoration:none}section.card h2 a:hover{text-decoration:underline;text-decoration-thickness:2px}section.card h3.ee-earlier{font:700 .8rem/1.2 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:1.25rem 0 0}section.card li.ee-more{display:block;padding-left:3.5rem}section.card nav{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;margin:.75rem 0 0;font-weight:600}@media (max-width:58rem){.ee-card{grid-template-columns:minmax(0,1fr);grid-template-rows:none}.ee-card-main,.ee-card-rate,.ee-card-side{grid-column:1;grid-row:auto}.ee-card-side{margin-top:1rem}}@media (max-width:44rem){main{padding:0 1rem 2rem}.ee-mast-in{padding:.6rem 1rem}.ee-foot{padding:0 1rem}.ee-foot-in{padding-bottom:2rem}.ee-links{margin-left:0}h1{font-size:2rem;margin-top:1.5rem}.ee-f{padding-left:0;text-indent:0}.ee-f b{display:inline;width:auto;padding-right:.25rem}.ee-chart thead{display:none}.ee-chart,.ee-chart tbody,.ee-chart caption{display:block}.ee-chart tr{display:grid;grid-template-columns:3.5rem minmax(0,1fr);gap:.1rem .75rem;padding:.6rem .5rem;border-bottom:1px solid var(--border)}.ee-chart tbody tr:nth-child(even){background:var(--card)}.ee-chart td{display:block;padding:0;border:0;background:none!important;grid-column:2}.ee-chart td.ee-c-grade{grid-column:1;grid-row:1/span 4}.ee-chart td.ee-c-study{width:auto}.ee-chart td[data-name]::before{content:attr(data-name) ': ';color:var(--muted);font-weight:400}}@media print{:root{--bg:#fff;--fg:#000;--rule:#000;--link:#000;--card:#fff;--muted:#444;--border:#bbb}body{background:#fff;color:#000}.ee-mast{background:none;color:#000;border-bottom:3px solid #000}.ee-mast a,.ee-crumbs li:first-child{color:#000}.ee-filter-box,.ee-top-link{display:none}}.tier-a{--fill:100%}.tier-b{--fill:75%}.tier-c{--fill:50%}.tier-d{--fill:25%}.tier-x{--fill:0%}</style>
+</head>
+<body>
+<div class="ee-demo-banner" style="font:14px/1.4 system-ui,sans-serif;background:#fff4d6;color:#3a2c00;border-bottom:1px solid #e6cf8a"><div style="max-width:var(--page,78rem);margin:0 auto;padding:.6em 2rem">Demo run: default settings, the shipped templates, grading in a Claude Code session. Grades, summaries and explanations are written by a language model and can be wrong; check the linked article before relying on a result. Linked articles belong to their authors; people&#x27;s names are left out. This page tracks published research and is not advice of any kind: not medical, health, nutrition or fitness advice, and not financial, legal, safety or other professional advice. Do not base decisions about your health, money, legal matters or safety on it; ask a qualified professional who knows your situation.</div></div>
+<header class="ee-mast" id="ee-top"><div class="ee-mast-in"><nav class="ee-crumbs" aria-label="Breadcrumb"><ol><li><a href="../overview.html">Evidence Echo</a></li><li><a href="cro.html">CRO Echo</a></li><li aria-current="page">All studies</li></ol></nav><nav class="ee-links" aria-label="Pages"><a href="2026-10-25-report.html">Latest report</a><a href="cro-sources.html">Sources</a></nav></div></header>
+<main>
+<header class="ee-head"><h1>CRO Echo — all studies</h1>
+<p class="meta">39 studies · 29 questions · updated 2026-10-25 21:15</p></header>
+<details class="ee-reports"><summary>Reports (1)</summary><ul><li><a href="2026-10-25-report.html">2026-10-25</a> <span class="meta">39 studies</span></li></ul></details>
+<section id="ee-evidence">
+<h2>What the evidence says</h2>
+<p class="meta ee-legend">✓ consistent: all independent studies point the same way · ⇅ contested: some say up, some say down · ≈ varied: any other mix</p>
+<nav class="ee-index" aria-label="Subtopics"><ol><li><a href="#sub-landing-pages">Landing pages</a><span class="ee-n">1</span><span class="ee-extent" aria-hidden="true"><span style="--w:12%"></span></span></li><li><a href="#sub-checkout-cart">Checkout &amp; cart</a><span class="ee-n">5</span><span class="ee-extent" aria-hidden="true"><span style="--w:62%"></span></span></li><li><a href="#sub-forms-sign-up">Forms &amp; sign-up</a><span class="ee-n">1</span><span class="ee-extent" aria-hidden="true"><span style="--w:12%"></span></span></li><li><a href="#sub-pricing-plans">Pricing &amp; plans</a><span class="ee-n">1</span><span class="ee-extent" aria-hidden="true"><span style="--w:12%"></span></span></li><li><a href="#sub-ctas-buttons">CTAs &amp; buttons</a><span class="ee-n">2</span><span class="ee-extent" aria-hidden="true"><span style="--w:25%"></span></span></li><li><a href="#sub-product-pages">Product pages</a><span class="ee-n">2</span><span class="ee-extent" aria-hidden="true"><span style="--w:25%"></span></span></li><li><a href="#sub-personalization">Personalization</a><span class="ee-n">3</span><span class="ee-extent" aria-hidden="true"><span style="--w:38%"></span></span></li><li><a href="#sub-other">Other</a><span class="ee-n">8</span><span class="ee-extent" aria-hidden="true"><span style="--w:100%"></span></span></li><li><a href="#sub-ux-research-methods">UX research methods</a><span class="ee-n">8</span><span class="ee-extent" aria-hidden="true"><span style="--w:100%"></span></span></li><li><a href="#sub-experimentation-tooling-velocity">Experimentation tooling &amp; velocity</a><span class="ee-n">8</span><span class="ee-extent" aria-hidden="true"><span style="--w:100%"></span></span></li></ol></nav>
+<div class="subtopic" id="sub-landing-pages" data-subtopic="landing-pages"><details class="ee-sub"><summary><h3>Landing pages</h3><span class="meta">1 question · 1 study</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-single"><span class="ee-single-q">Does simplifying homepage copy and layout raise sales?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s18"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">Simplified homepage (checklist + shop button) for The Raw Honey Shop: +24% sales vs control · 24% sales vs control homepage <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+</ul></details></div>
+<div class="subtopic" id="sub-checkout-cart" data-subtopic="checkout-cart"><details class="ee-sub"><summary><h3>Checkout &amp; cart</h3><span class="meta">5 questions · 5 studies</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-single"><span class="ee-single-q">Does listing free included services in the order summary raise orders?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s19"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">Free included services listed in the checkout order table: +9% orders vs control · 9% orders vs control checkout <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">What is the average online shopping cart abandonment rate?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s35"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">Average documented cart abandonment rate across 50 studies: 70.22% · 70.22% average cart abandonment rate <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Does applying checkout usability guidelines raise checkout conversion?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s1"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Baymard checkout guidelines across a store portfolio: checkout conversion reported doubled (+100%) · no checked number <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Do research-informed checkout changes create commercial value?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s2"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span class="ee-row-line">Baymard-informed checkout changes at a SaaS/digital services company: customer reports +$1M in value · $1 million customer-reported commercial value <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Does moving add-ons into their own funnel step raise order value?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s22"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">Gift add-ons moved to their own funnel step: +28% revenue per order, no conversion loss · 28% revenue per order vs control <span class="ee-date">[reported 2026-08]</span></span></a></li></ol></li>
+</ul></details></div>
+<div class="subtopic" id="sub-forms-sign-up" data-subtopic="forms-sign-up"><details class="ee-sub"><summary><h3>Forms &amp; sign-up</h3><span class="meta">1 question · 1 study</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-single"><span class="ee-single-q">Does framing a supply-side sign-up page as a job posting raise applications?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s21"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">Tutor sign-up page reframed as a job posting with a real student request: +15% applications · 15% tutor applications vs control <span class="ee-date">[reported 2026-08]</span></span></a></li></ol></li>
+</ul></details></div>
+<div class="subtopic" id="sub-pricing-plans" data-subtopic="pricing-plans"><details class="ee-sub"><summary><h3>Pricing &amp; plans</h3><span class="meta">1 question · 1 study</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-single"><span class="ee-single-q">Does a new subscription pricing variant raise revenue per visitor?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s34"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span class="ee-row-line">AutoTune subscription pricing test: +27% revenue per visitor, +24% AOV (client testimonial) · 27% revenue per visitor from pricing test <span class="ee-date">[reported 2026-08]</span></span></a></li></ol></li>
+</ul></details></div>
+<div class="subtopic" id="sub-ctas-buttons" data-subtopic="ctas-buttons"><details class="ee-sub"><summary><h3>CTAs &amp; buttons</h3><span class="meta">1 question · 2 studies</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-multi ee-q-consistent" data-question="q16"><details class="ee-studies"><summary><strong>Does rewriting CTA button text raise conversions?</strong> <span class="meta">2 independent studies · 2 articles · <span class="ee-label ee-label-consistent"><span aria-hidden="true">✓</span> consistent</span></span><span class="ee-cmp">Compared: rewritten CTA text vs original text</span></summary><ol><li><a class="ee-row" href="#s27"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">CTA text change on Alternative Airlines: +34% purchases · +34% purchases after CTA text change <span class="ee-date">[reported 2026-10]</span></span></a></li><li><a class="ee-row" href="#s33"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">Trial button &#x27;Try it free for 14 days&#x27; vs &#x27;Start free trial&#x27; at Exclaimer: +39% trial sign-ups · 39% trial sign-ups vs control button <span class="ee-date">[reported 2026-09]</span></span></a></li></ol></details></li>
+</ul></details></div>
+<div class="subtopic" id="sub-product-pages" data-subtopic="product-pages"><details class="ee-sub"><summary><h3>Product pages</h3><span class="meta">2 questions · 2 studies</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-single"><span class="ee-single-q">Does adding a comparison tool to product lists raise revenue?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s3"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Comparison tool on product listing pages: apparel brand reports a $16M revenue increase · $16M reported revenue increase <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Does a product page redesign with upfront booking info raise bookings?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s20"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">Redesigned Breakfast Train page with live calendar and menus: +10% bookings vs original · 10% Breakfast Train bookings vs control <span class="ee-date">[reported 2026-09]</span></span></a></li></ol></li>
+</ul></details></div>
+<div class="subtopic" id="sub-personalization" data-subtopic="personalization"><details class="ee-sub"><summary><h3>Personalization</h3><span class="meta">3 questions · 3 studies</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-single"><span class="ee-single-q">Does showing promo codes only to AI-detected hesitant visitors raise conversion?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s28"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">Promo codes shown only to AI-detected hesitant visitors at Orange: +11.6% conversion vs no promo · +11.6% conversion vs no-promo control <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Does AI predictive targeting of a lead pop-in raise leads?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s29"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">AI predictive targeting of Toyota.fr&#x27;s test-drive pop-in: leads reported doubled · no checked number <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Does personalization beat shipping the single best variant to everyone?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s9"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">Personalization vs shipping the best single variant: +18% in one field study, +4% in another · 18% personalization gain over best version <span class="ee-date">[reported 2026-09]</span></span></a></li></ol></li>
+</ul></details></div>
+<div class="subtopic" id="sub-other" data-subtopic="other"><details class="ee-sub"><summary><h3>Other</h3><span class="meta">6 questions · 8 studies</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-multi ee-q-none" data-question="q7"><details class="ee-studies"><summary><strong>How well do ecommerce sites in an industry score on Baymard UX benchmarks?</strong> <span class="meta">1 independent study · 3 articles</span></summary><ol><li><a class="ee-row" href="#s5"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">Mass Merchant UX benchmark of 10 sites: only 1 rated good across 5,600+ UX scores · no checked number <span class="ee-date">[reported 2026-10]</span></span></a></li><li><a class="ee-row" href="#s6"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">E-cigarette &amp; Vaping UX benchmark of 7 sites: none rated decent or better across 3,600+ UX scores · no checked number <span class="ee-date">[reported 2026-10]</span></span></a></li><li><a class="ee-row" href="#s7"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">B2B electronic components UX benchmark of 6 sites: only 1 rated decent across 2,600+ UX scores · no checked number <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></details></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Do research-based UX changes to an app grow digital membership?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s4"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Research-based UX changes to a restaurant app: over 40% digital membership growth since the partnership began · 40% digital app membership growth <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">How many usability issues do event ticketing sites cause in usability testing?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s8"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">Event ticketing usability testing: 463 sessions surfaced 2,800+ medium-to-severe issues · 2,800 medium-to-severe usability issues found <span class="ee-date">[reported 2026-09]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">How do third-party automotive websites score on UX quality and NPS?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s31"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">Third-party automotive websites (11 sites, 561 users): average NPS +6%, trust at the 34th percentile · +6% average NPS of automotive sites <span class="ee-date">[2026-03]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Does a CRO programme raise how full a visitor attraction sells?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s32"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">CRO programme at Churnet Valley Railway: capacity sold rose from ~40% to 80-100% · no checked number <span class="ee-date">[2026]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Are organisations that apply customer insights more likely to grow revenue?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s36"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span class="ee-row-line">Forrester survey of 107 healthcare CX leaders: insight-driven organisations &#x27;5x more likely&#x27; to grow revenue · 5x likelihood of revenue growth <span class="ee-date">[2021]</span></span></a></li></ol></li>
+</ul></details></div>
+<div class="subtopic" id="sub-ux-research-methods" data-subtopic="ux-research-methods"><details class="ee-sub"><summary><h3>UX research methods</h3><span class="meta">6 questions · 8 studies</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-multi ee-q-none" data-question="q26"><details class="ee-studies"><summary><strong>Do participants say less to AI moderators than to human moderators?</strong> <span class="meta">1 independent study · 2 articles</span><span class="ee-cmp">Compared: AI moderator vs human moderator</span></summary><ol><li><a class="ee-row" href="#s15"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span class="ee-row-line">AI vs human interview moderators (randomized, n=20): participants spoke 45% less to AI · 45% participant words to AI moderators <span class="ee-date">[reported 2026-09]</span></span></a></li><li><a class="ee-row" href="#s16"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span class="ee-row-line">Literature review of AI interview moderators: mixed evidence, only two head-to-head studies · 30 interviews in the larger RCT <span class="ee-date">[reported 2026-09]</span></span></a></li></ol></details></li>
+<li class="ee-question ee-multi ee-q-none" data-question="q24"><details class="ee-studies"><summary><strong>Do digital twins give the same SUS scores as the humans they model?</strong> <span class="meta">1 independent study · 2 articles</span><span class="ee-cmp">Compared: digital twin vs human respondent</span></summary><ol><li><a class="ee-row" href="#s14"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">Digital twins of AI-chatbot users overestimated SUS scores by 4.4-6.7 points · 4.4 points summary twin SUS overestimation <span class="ee-date">[reported 2026-09]</span></span></a></li><li><a class="ee-row" href="#s11"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">Digital twins of business-software users overestimated SUS scores by about 10.5 points · 10.6 points twin SUS overestimation <span class="ee-date">[2025-01]</span></span></a></li></ol></details></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Can AI find the usability problems a human researcher finds in test videos?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s12"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span class="ee-row-line">ChatGPT and Gemini vs a human researcher on a failed-task video: 47% and 39% agreement · 47% ChatGPT agreement with human researcher <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Can an LLM code open-ended survey responses as reliably as human coders?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s13"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">ChatGPT-5.6 coding open-ended survey comments: kappa 0.749 vs 0.704 human-to-human · 0.749 human-to-ChatGPT kappa agreement <span class="ee-date">[2026-08]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Does a streamlined questionnaire measure the UX of AI chatbots reliably?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s17"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">Streamlined UX-of-AI questionnaire on 420 chatbot users: reliability alpha 0.81-0.87 · no checked number <span class="ee-date">[2026-05]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Do synthetic respondents answer open-ended questions like human respondents?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s10"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span class="ee-row-line">Synthetic vs human survey respondents: same conclusion, but 14 points more UX terms and far less variety · 14 synthetic vs human UX-term use <span class="ee-date">[2026-02]</span></span></a></li></ol></li>
+</ul></details></div>
+<div class="subtopic" id="sub-experimentation-tooling-velocity" data-subtopic="experimentation-tooling-velocity"><details class="ee-sub"><summary><h3>Experimentation tooling &amp; velocity</h3><span class="meta">3 questions · 8 studies</span></summary>
+<ul class="ee-questions">
+<li class="ee-question ee-multi ee-q-consistent" data-question="q1"><details class="ee-studies"><summary><strong>Does prompt-based experimentation cut the time to build and launch a test?</strong> <span class="meta">3 independent studies · 6 articles · <span class="ee-label ee-label-consistent"><span aria-hidden="true">✓</span> consistent</span></span><span class="ee-cmp">Compared: tests built with prompt-based tooling vs built by hand</span></summary><ol><li><a class="ee-row" href="#s23"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Kameleoon PBX across 17 tests: test creation 89% faster; 94% success on simple vs 63% on complex tests · 89% test creation time <span class="ee-date">[reported 2026-10]</span></span></a></li><li><a class="ee-row" href="#s25"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Kameleoon PBX at Best Western France: twice as many tests, launch in 20 minutes to 4 hours · no checked number <span class="ee-date">[reported 2026-10]</span></span></a></li><li><a class="ee-row" href="#s26"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Kameleoon PBX at Cedars-Sinai: up to 83% faster test builds, 67% more tests per year projected · 83% test build time <span class="ee-date">[reported 2026-10]</span></span></a></li><li><a class="ee-row" href="#s38"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Kameleoon PBX at Graham &amp; Brown: test creation time cut ~90%; sticky add-to-bag +58% · 90% test creation time <span class="ee-date">[reported 2026-10]</span></span></a></li><li><a class="ee-row" href="#s37"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span class="ee-row-line">Kameleoon PBX in five moderated sessions: usable variants reported 5-10x faster · no checked number <span class="ee-date">[reported 2026-10]</span></span></a></li><li><a class="ee-row" href="#s30"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Kameleoon PBX at VeryChic: 87% less time per test build; +31% promo banner clicks · 87% test build time <span class="ee-date">[2025]</span></span></a></li></ol></details></li>
+<li class="ee-question ee-single"><span class="ee-single-q">Does adopting an experimentation platform raise test velocity?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s39"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span class="ee-row-line">Papier&#x27;s experimentation programme on Kameleoon: 4-5 tests a month, winning tests average +5-6% conversion · no checked number <span class="ee-date">[reported 2026-10]</span></span></a></li></ol></li>
+<li class="ee-question ee-single"><span class="ee-single-q">What share of high-performing companies run both web and feature experiments?</span><ol class="ee-single-row"><li><a class="ee-row" href="#s24"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span class="ee-row-line">Kameleoon high-performer survey: 90% run both web and feature experiments · 90% high performers running both experiment types <span class="ee-date">[2025]</span></span></a></li></ol></li>
+</ul></details></div>
+</section>
+<section id="ee-all"><h2>Studies</h2>
+<p id="ee-count" class="meta" aria-live="polite">39 studies</p>
+<details class="ee-filter-box" id="ee-filter-box" hidden><summary>Filter and sort <span id="ee-active"></span></summary><form id="ee-filters" class="filters" hidden><fieldset><legend>Tier</legend><label><input type="checkbox" name="tier" value="A" checked> A</label><label><input type="checkbox" name="tier" value="B" checked> B</label><label><input type="checkbox" name="tier" value="C" checked> C</label><label><input type="checkbox" name="tier" value="D" checked> D</label></fieldset><label>Red flags <select name="flag"><option value="">All studies</option><option value="*">Any red flag</option><option value="correlation_causation">correlation causation</option><option value="cherry_pick">cherry pick</option><option value="anecdote_generalisation">anecdote generalisation</option><option value="stale_data">stale data</option><option value="headline_overclaim">headline overclaim</option><option value="no_baseline">no baseline</option><option value="confounded_window">confounded window</option><option value="vendor_metric">vendor metric</option><option value="multiple_metrics">multiple metrics</option><option value="selection_bias">selection bias</option></select></label><label>Relation <select name="relation"><option value="">Any relation</option><option value="agency">agency</option><option value="independent">independent</option><option value="vendor">vendor</option></select></label><label>Series <select name="series"><option value="">Any series</option><option value="Kameleoon experiment-led growth report">Kameleoon experiment-led growth report</option></select></label><label>Subtopic <select name="subtopic"><option value="">Any subtopic</option><option value="landing-pages">Landing pages</option><option value="checkout-cart">Checkout &amp; cart</option><option value="forms-sign-up">Forms &amp; sign-up</option><option value="pricing-plans">Pricing &amp; plans</option><option value="ctas-buttons">CTAs &amp; buttons</option><option value="product-pages">Product pages</option><option value="personalization">Personalization</option><option value="other">Other</option><option value="ux-research-methods">UX research methods</option><option value="experimentation-tooling-velocity">Experimentation tooling &amp; velocity</option></select></label><label>Metric <select name="metric"><option value="">Any metric</option><option value="conversion-rate">Conversion rate (7)</option><option value="revenue-per-visitor">Revenue per visitor (1)</option><option value="average-order-value">Average order value (1)</option><option value="sign-ups-leads">Sign-ups &amp; leads (4)</option><option value="cart-abandonment">Cart abandonment (1)</option><option value="task-success-usability">Task success &amp; usability (4)</option><option value="other">Other (21)</option></select></label><label>Entity <select name="entity"><option value="">Any entity</option><option value="kameleoon-pbx">Kameleoon PBX (6)</option><option value="chatgpt">ChatGPT (3)</option><option value="churnet-valley-railway">Churnet Valley Railway (2)</option><option value="claude-sonnet-5">Claude Sonnet 5 (2)</option><option value="gemini">Gemini (2)</option><option value="kameleoon-ai-predictive-targeting">Kameleoon AI Predictive Targeting (2)</option><option value="alternative-airlines">Alternative Airlines (1)</option><option value="autotune">AutoTune (1)</option><option value="carfax">CARFAX (1)</option><option value="cars-com">cars.com (1)</option><option value="carvana">Carvana (1)</option><option value="carweek-com">carweek.com (1)</option><option value="claude">Claude (1)</option><option value="exclaimer">Exclaimer (1)</option><option value="grok">Grok (1)</option><option value="kameleoon">Kameleoon (1)</option><option value="kelley-blue-book">Kelley Blue Book (1)</option><option value="orange">Orange (1)</option><option value="seatgeek">SeatGeek (1)</option><option value="stubhub">StubHub (1)</option><option value="synthetic-users">Synthetic Users (1)</option><option value="the-raw-honey-shop">The Raw Honey Shop (1)</option><option value="ticketmaster">Ticketmaster (1)</option><option value="toyota">Toyota (1)</option></select></label><label>Source <select name="source"><option value="">Any source</option><option value="kameleoon-blog">Kameleoon Blog (12)</option><option value="baymard-institute">Baymard Institute (9)</option><option value="conversion-rate-experts">Conversion Rate Experts (8)</option><option value="measuringu">MeasuringU (8)</option><option value="nielsen-norman-group">Nielsen Norman Group (1)</option><option value="vwo-blog">VWO Blog (1)</option></select></label><label><input type="checkbox" name="disputed"> Disputed only</label><label>Search <input type="search" name="q" placeholder="title or summary"></label><label>Sort <select name="sort"><option value="newest" selected>Newest</option><option value="tier">Tier</option><option value="first">First reported (oldest first)</option></select></label><button type="button" id="ee-reset" hidden>Reset filters</button></form></details>
+<div id="ee-studies">
+<article class="card" id="s39" data-study="39"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Papier&#x27;s experimentation programme on Kameleoon: 4-5 tests a month, winning tests average +5-6% conversion</h3>
+<p>Kameleoon reports that Papier, a UK stationery brand with about 1.4M monthly visits, went from 1-2 experiments a quarter to 4-5 a month, with winning tests averaging a 5-6% conversion lift (up to 8%). The average covers winning tests only and there are no control or sample details; the timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick</span></p><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Conversion rate · conversion lift of winning tests</p><p class="ee-f"><b>Baseline:</b> 1–2 experiments per quarter</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Experimentation tooling &amp; velocity</p><p class="ee-f"><b>Question:</b> Does adopting an experimentation platform raise test velocity?</p><p class="ee-f"><b>About:</b> Kameleoon</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/customer/papier-built-a-high-impact-experimentation-program-with-kameleoon" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s38" data-study="38"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Kameleoon PBX at Graham &amp; Brown: test creation time cut ~90%; sticky add-to-bag +58%</h3>
+<p>Kameleoon reports that Graham &amp; Brown cut test creation time by about 90% with PBX, an estimate from the customer, and that a PBX-built sticky add-to-bag test lifted add-to-bag 58%. No control, sample size or significance is given for the test; the timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">vendor metric, multiple metrics</span></p><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> test creation time</p><p class="ee-f"><b>Baseline:</b> days to weeks per test</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Experimentation tooling &amp; velocity</p><p class="ee-f"><b>Question:</b> Does prompt-based experimentation cut the time to build and launch a test? · ✓ consistent (3 independent studies) · corroborated by 2 other independent studies</p><p class="ee-f"><b>About:</b> Kameleoon PBX</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/customer/graham-brown" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s37" data-study="37"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Kameleoon PBX in five moderated sessions: usable variants reported 5-10x faster</h3>
+<p>Guess the Test reports, in a study published by Kameleoon, that across five moderated usability sessions with practitioners PBX produced usable variants 5-10 times faster and got users &#x27;90% of the way there&#x27;. The baseline workflow and timing method are not stated, so the claim rests on a very small sample.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">anecdote generalisation, no baseline</span></p><p class="ee-f"><b>Conflict of interest:</b> Published and promoted by Kameleoon, the vendor of PBX.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> variant production speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Experimentation tooling &amp; velocity</p><p class="ee-f"><b>Question:</b> Does prompt-based experimentation cut the time to build and launch a test? · ✓ consistent (3 independent studies) · corroborated by 2 other independent studies</p><p class="ee-f"><b>About:</b> Kameleoon PBX</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/ebooks/pbx-assessment-report-by-guess-the-test" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s36" data-study="36"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>skeptic: B · vendor</span></p>
+<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>
+</div>
+<div class="ee-card-main">
+<h3>Forrester survey of 107 healthcare CX leaders: insight-driven organisations &#x27;5x more likely&#x27; to grow revenue</h3>
+<p>Forrester, commissioned by Kameleoon, surveyed 107 marketing and CX managers at North American healthcare organisations and reports that those applying customer insights are 5x more likely to grow revenue. The link is correlational, the survey date is unstated (published 2021), and the vendor sponsored the study.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="dispute"><b>Disputed:</b> grades two tiers apart.<br><b>Skeptic&#x27;s doubts:</b> Kameleoon-commissioned Forrester survey of 107 healthcare managers; the line that insight-driven firms are &#x27;5x more likely to grow revenue&#x27; is correlation presented as a causal benefit.</p><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation</span></p><p class="ee-f"><b>Conflict of interest:</b> Commissioned by Kameleoon, which sells optimization software.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> revenue growth likelihood</p><p class="ee-f"><b>Research:</b> unstated (published 2021)</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> Are organisations that apply customer insights more likely to grow revenue?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/ebooks/data-ab-testing-healthcare" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s35" data-study="35"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Average documented cart abandonment rate across 50 studies: 70.22%</h3>
+<p>Baymard Institute averages 50 published studies of online cart abandonment to reach 70.22%. The sources, mostly cart-recovery vendors, use differing methods and go back many years, so the figure is a rough benchmark rather than a current measurement.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">stale data, headline overclaim, vendor metric</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Cart abandonment · cart abandonment rate</p><p class="ee-f"><b>Research:</b> studies from 2006-2025</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Checkout &amp; cart</p><p class="ee-f"><b>Question:</b> What is the average online shopping cart abandonment rate?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/lists/cart-abandonment-rate" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s34" data-study="34"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>agency · judge: C</span></p>
+</div>
+<div class="ee-card-main">
+<h3>AutoTune subscription pricing test: +27% revenue per visitor, +24% AOV (client testimonial)</h3>
+<p>AutoTune&#x27;s CMO reports, in a Conversion Rate Experts testimonial, that one pricing test on a subscription product raised revenue per visitor 27%, average order value 24% and annual-plan conversion 32%, with 17-18% higher LTV. The test design and control are not described, and it is one favourable result from hundreds of tests; the timing is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick, multiple metrics</span></p><p class="ee-f"><b>Conflict of interest:</b> The agency that ran the test publishes it to win clients.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Revenue per visitor · revenue per visitor</p><p class="ee-f"><b>Research:</b> unstated (last two and a half years)</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Pricing &amp; plans</p><p class="ee-f"><b>Question:</b> Does a new subscription pricing variant raise revenue per visitor?</p><p class="ee-f"><b>About:</b> AutoTune</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-13</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://conversion-rate-experts.com/autotune-testimonial/" rel="noopener noreferrer">Conversion Rate Experts</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s33" data-study="33"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>agency</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Trial button &#x27;Try it free for 14 days&#x27; vs &#x27;Start free trial&#x27; at Exclaimer: +39% trial sign-ups</h3>
+<p>Conversion Rate Experts tested a sitewide header button rewritten to state the trial length against the original &#x27;Start free trial&#x27; copy. Trial conversions rose 39%, confirmed by the client. No sample size, duration or significance is given, and it comes from a wins-only series.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick</span></p><p class="ee-f"><b>Conflict of interest:</b> The agency that ran the test publishes it to win clients.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Sign-ups &amp; leads · trial sign-ups</p><p class="ee-f"><b>Baseline:</b> &quot;Start free trial&quot; button (control)</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> CTAs &amp; buttons</p><p class="ee-f"><b>Question:</b> Does rewriting CTA button text raise conversions? · ✓ consistent (2 independent studies) · corroborated by 1 other independent study</p><p class="ee-f"><b>About:</b> Exclaimer</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-28</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://conversion-rate-experts.com/exclaimer-free-trial-cta-copy-win-report/" rel="noopener noreferrer">Conversion Rate Experts</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s32" data-study="32"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>agency</span></p>
+</div>
+<div class="ee-card-main">
+<h3>CRO programme at Churnet Valley Railway: capacity sold rose from ~40% to 80-100%</h3>
+<p>Conversion Rate Experts publishes a client testimonial in which Churnet Valley Railway&#x27;s managers say trains that used to run at 40% capacity on some days now regularly run at 80-100%, and income passed GBP 1 million for the first time in 2026. These are loose before/after figures over a multi-year engagement that also included SEO and other marketing, with no control.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick, confounded window</span></p><p class="ee-f"><b>Conflict of interest:</b> The agency that ran the test publishes it to win clients.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> train capacity filled</p><p class="ee-f"><b>Baseline:</b> 40% capacity some days</p><p class="ee-f"><b>Research:</b> 2026 season</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> Does a CRO programme raise how full a visitor attraction sells?</p><p class="ee-f"><b>About:</b> Churnet Valley Railway</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-06</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://conversion-rate-experts.com/churnet-valley-railway-testimonial/" rel="noopener noreferrer">Conversion Rate Experts</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s31" data-study="31"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Third-party automotive websites (11 sites, 561 users): average NPS +6%, trust at the 34th percentile</h3>
+<p>MeasuringU surveyed 561 US users of 11 third-party automotive sites in March-April 2026 with the SUPR-Q, UX-Lite and NPS. The industry averaged the 51st SUPR-Q percentile and an NPS of +6%, but trust sat at the 34th percentile; Kelley Blue Book led on NPS (+34%) and Carvana trailed (-23%). Results are self-reported ratings, not behavioural data.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, vendor metric</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> SUPR-Q percentile and NPS</p><p class="ee-f"><b>Baseline:</b> SUPR-Q database of ~200 websites</p><p class="ee-f"><b>Research:</b> March-April 2026</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> How do third-party automotive websites score on UX quality and NPS?</p><p class="ee-f"><b>About:</b> Kelley Blue Book, Carvana, CARFAX, cars.com, carweek.com</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-13</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://measuringu.com/ux-and-nps-benchmarks-of-third-party-automotive-websites-2026/?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=ux-and-nps-benchmarks-of-third-party-automotive-websites-2026" rel="noopener noreferrer">MeasuringU</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s30" data-study="30"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Kameleoon PBX at VeryChic: 87% less time per test build; +31% promo banner clicks</h3>
+<p>Kameleoon reports that VeryChic, a premium travel flash-sale platform, cut test build time by 87% with PBX from summer 2025 and saw 31% more clicks on promotional banners and 7% more quote-page visits. The banner result compares a summer run with an earlier test, so seasonality is uncontrolled, and the page also quotes 7% time saved.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick, confounded window</span></p><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> test build time</p><p class="ee-f"><b>Baseline:</b> half a day per test</p><p class="ee-f"><b>Research:</b> summer 2025</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Experimentation tooling &amp; velocity</p><p class="ee-f"><b>Question:</b> Does prompt-based experimentation cut the time to build and launch a test? · ✓ consistent (3 independent studies) · corroborated by 2 other independent studies</p><p class="ee-f"><b>About:</b> Kameleoon PBX</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/customer/verychic-increase-test-velocity-with-pbx" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s29" data-study="29"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>
+</div>
+<div class="ee-card-main">
+<h3>AI predictive targeting of Toyota.fr&#x27;s test-drive pop-in: leads reported doubled</h3>
+<p>Kameleoon reports that Toyota.fr doubled the number of test-drive leads after switching its pop-in from manual scoring to Kameleoon AI Predictive Targeting. No control group, absolute numbers or lead-quality measures (show-ups, sales) are given, though lead quality was the stated problem. The timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="dispute"><b>Disputed:</b> no quoted number found in the text.<br><b>Skeptic&#x27;s doubts:</b> Says AI targeting &#x27;doubled&#x27; leads against earlier manual scoring, with no control group or absolute numbers, and never measures lead quality (show-ups or sales), which was the stated problem.</p><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim, no baseline</span></p><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Sign-ups &amp; leads · test drive leads</p><p class="ee-f"><b>Baseline:</b> manual-scoring pop-in targeting</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Personalization</p><p class="ee-f"><b>Question:</b> Does AI predictive targeting of a lead pop-in raise leads?</p><p class="ee-f"><b>About:</b> Kameleoon AI Predictive Targeting, Toyota</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/customer/toyota-turbocharges-its-lead-generation-ai-doubling-its-success" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s28" data-study="28"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Promo codes shown only to AI-detected hesitant visitors at Orange: +11.6% conversion vs no promo</h3>
+<p>Kameleoon reports a three-arm test at Orange: no promo code (control), a promo code for everyone, and a promo code only for visitors its AI flagged as hesitant. The AI-targeted arm raised conversion 11.6% vs control and 7.6% vs promo-for-all, while the share of purchases using a code fell from 68% to 25%. No sample size or significance is reported; the timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Conversion rate · conversion rate</p><p class="ee-f"><b>Baseline:</b> no promo code (control)</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Personalization</p><p class="ee-f"><b>Question:</b> Does showing promo codes only to AI-detected hesitant visitors raise conversion?</p><p class="ee-f"><b>About:</b> Kameleoon AI Predictive Targeting, Orange</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/customer/how-orange-delivers-the-right-offer-at-the-right-time-with-ai" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s27" data-study="27"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>CTA text change on Alternative Airlines: +34% purchases</h3>
+<p>Kameleoon reports that Alternative Airlines increased purchases by 34% by changing CTA text on a product, one of several highlighted wins from 100+ tests a year. No control details, sample size or significance are given, and the timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick</span></p><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Conversion rate · purchases</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> CTAs &amp; buttons</p><p class="ee-f"><b>Question:</b> Does rewriting CTA button text raise conversions? · ✓ consistent (2 independent studies) · corroborated by 1 other independent study</p><p class="ee-f"><b>About:</b> Alternative Airlines</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/customer/alternative-airlines" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s26" data-study="26"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Kameleoon PBX at Cedars-Sinai: up to 83% faster test builds, 67% more tests per year projected</h3>
+<p>Kameleoon reports that Cedars-Sinai&#x27;s single optimization engineer cut test build time by up to 83% with a hybrid PBX workflow and projects 60 tests a year instead of 36. The body gives 67% (simple) and 20% (complex) time reductions, and the volume gain is a projection, not a measured result. Data are from 2025-2026.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim, vendor metric</span></p><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> test build time</p><p class="ee-f"><b>Baseline:</b> 36 tests per year</p><p class="ee-f"><b>Research:</b> 2025-2026</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Experimentation tooling &amp; velocity</p><p class="ee-f"><b>Question:</b> Does prompt-based experimentation cut the time to build and launch a test? · ✓ consistent (3 independent studies) · corroborated by 2 other independent studies</p><p class="ee-f"><b>About:</b> Kameleoon PBX</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/customer/cedars-sinai" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s25" data-study="25"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Kameleoon PBX at Best Western France: twice as many tests, launch in 20 minutes to 4 hours</h3>
+<p>Kameleoon reports that Best Western Hotels &amp; Resorts France doubled the number of experiments run with the same team after adopting its PBX tool, launching tests in 20 minutes to 4 hours instead of several days and saving up to EUR 2,000 per test. The figures are before/after from a vendor success story with no control; the timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick, vendor metric</span></p><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> experiment velocity</p><p class="ee-f"><b>Baseline:</b> several days per test launch</p><p class="ee-f"><b>Research:</b> 2026 (unstated)</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Experimentation tooling &amp; velocity</p><p class="ee-f"><b>Question:</b> Does prompt-based experimentation cut the time to build and launch a test? · ✓ consistent (3 independent studies) · corroborated by 2 other independent studies</p><p class="ee-f"><b>About:</b> Kameleoon PBX</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/customer/best-western-france" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s24" data-study="24"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Kameleoon high-performer survey: 90% run both web and feature experiments</h3>
+<p>Kameleoon reports, in its 2025 experiment-led growth report, that 90% of high-performing companies run both web and feature experiments and 74% of leaders regularly check cross-team metric effects. No sample size or method is stated, and the link between team structure and growth is correlational; treat the figures as indicative.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, no baseline</span></p><p class="ee-f"><b>Conflict of interest:</b> Kameleoon sells the platform credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> share running web and feature experiments</p><p class="ee-f"><b>Research:</b> 2025</p><p class="ee-f"><b>Part of:</b> Kameleoon experiment-led growth report (editions 2025)</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Experimentation tooling &amp; velocity</p><p class="ee-f"><b>Question:</b> What share of high-performing companies run both web and feature experiments?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/ebooks/what-high-performers-do-differently-with-experiment-led-growth-in-2025" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s23" data-study="23"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Kameleoon PBX across 17 tests: test creation 89% faster; 94% success on simple vs 63% on complex tests</h3>
+<p>Henkan &amp; Partners, in a study published by Kameleoon, evaluated Kameleoon&#x27;s Prompt-Based Experimentation on 17 tests. Build time fell from about 9 hours to under one, but success was 94% on simple tests and only 63% on complex ones, with non-deterministic output. There is no control and the test set was chosen by the evaluators; the timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">selection bias</span></p><p class="ee-f"><b>Conflict of interest:</b> Published and promoted by Kameleoon, the vendor of PBX.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> test creation time</p><p class="ee-f"><b>Baseline:</b> 9 hours per test</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Experimentation tooling &amp; velocity</p><p class="ee-f"><b>Question:</b> Does prompt-based experimentation cut the time to build and launch a test? · ✓ consistent (3 independent studies) · corroborated by 2 other independent studies</p><p class="ee-f"><b>About:</b> Kameleoon PBX</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.kameleoon.com/ebooks/research-henkan-partners-impact-of-pbx-technology" rel="noopener noreferrer">Kameleoon Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s22" data-study="22"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>agency</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Gift add-ons moved to their own funnel step: +28% revenue per order, no conversion loss</h3>
+<p>Conversion Rate Experts moved a gift retailer&#x27;s add-ons from the bottom of the product page to an interstitial step and tested it against the original. Revenue per order rose 28%, with no impact on overall conversion. No sample size, duration or significance is reported.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick</span></p><p class="ee-f"><b>Conflict of interest:</b> The agency that ran the test publishes it to win clients.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Average order value · revenue per order</p><p class="ee-f"><b>Baseline:</b> add-ons at bottom of product page (control)</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Checkout &amp; cart</p><p class="ee-f"><b>Question:</b> Does moving add-ons into their own funnel step raise order value?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-18</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://conversion-rate-experts.com/add-on-page-win-report/" rel="noopener noreferrer">Conversion Rate Experts</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s21" data-study="21"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>agency</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Tutor sign-up page reframed as a job posting with a real student request: +15% applications</h3>
+<p>Conversion Rate Experts tested a tutoring marketplace&#x27;s recruitment page rewritten as a job ad (subject and city headline, a real student request, pay range) against the plain registration form. Tutor applications rose 15%, about 20,000 more in the first year by the agency&#x27;s extrapolation. No sample size or significance is stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick</span></p><p class="ee-f"><b>Conflict of interest:</b> The agency that ran the test publishes it to win clients.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Sign-ups &amp; leads · tutor applications</p><p class="ee-f"><b>Baseline:</b> original registration page (control)</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Forms &amp; sign-up</p><p class="ee-f"><b>Question:</b> Does framing a supply-side sign-up page as a job posting raise applications?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-28</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://conversion-rate-experts.com/real-job-listing-win-report/" rel="noopener noreferrer">Conversion Rate Experts</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s20" data-study="20"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>agency</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Redesigned Breakfast Train page with live calendar and menus: +10% bookings vs original</h3>
+<p>Conversion Rate Experts tested a rebuilt Churnet Valley Railway dining-train page (price and next date upfront, availability calendar, detailed menus, repeated booking buttons) against the original. Bookings rose 10%. Many changes were bundled, so no single element can be credited, and no sample size or significance is reported.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick</span></p><p class="ee-f"><b>Conflict of interest:</b> The agency that ran the test publishes it to win clients.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Conversion rate · bookings</p><p class="ee-f"><b>Baseline:</b> original page (control)</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Product pages</p><p class="ee-f"><b>Question:</b> Does a product page redesign with upfront booking info raise bookings?</p><p class="ee-f"><b>About:</b> Churnet Valley Railway</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-01</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://conversion-rate-experts.com/closing-competitor-gap-win-report/" rel="noopener noreferrer">Conversion Rate Experts</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s19" data-study="19"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>agency</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Free included services listed in the checkout order table: +9% orders vs control</h3>
+<p>Conversion Rate Experts added two rows to a gift retailer&#x27;s order table naming services already included (premium service, satisfaction guarantee) priced FREE, and tested it against the original checkout. Orders rose 9%. No sample size, duration or significance is given, and the timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick, anecdote generalisation</span></p><p class="ee-f"><b>Conflict of interest:</b> The agency that ran the test publishes it to win clients.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Conversion rate · orders</p><p class="ee-f"><b>Baseline:</b> original checkout page (control)</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Checkout &amp; cart</p><p class="ee-f"><b>Question:</b> Does listing free included services in the order summary raise orders?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-06</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://conversion-rate-experts.com/two-free-services-win-report/" rel="noopener noreferrer">Conversion Rate Experts</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s18" data-study="18"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>agency</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Simplified homepage (checklist + shop button) for The Raw Honey Shop: +24% sales vs control</h3>
+<p>Conversion Rate Experts tested a homepage that replaced long brand storytelling with a claims checklist and a shop button against the original, after scrollmaps showed 50% of desktop users never reached the products. The variation lifted sales 24%, with a larger gain in revenue per visitor. No sample size, duration or significance is reported, and the result comes from a wins-only series.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick, multiple metrics</span></p><p class="ee-f"><b>Conflict of interest:</b> The agency that ran the test publishes it to win clients.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Conversion rate · sales</p><p class="ee-f"><b>Baseline:</b> original homepage (control)</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Landing pages</p><p class="ee-f"><b>Question:</b> Does simplifying homepage copy and layout raise sales?</p><p class="ee-f"><b>About:</b> The Raw Honey Shop</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-19</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://conversion-rate-experts.com/the-raw-honey-shop-simpler-homepage-win-report/" rel="noopener noreferrer">Conversion Rate Experts</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s17" data-study="17"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Streamlined UX-of-AI questionnaire on 420 chatbot users: reliability alpha 0.81-0.87</h3>
+<p>MeasuringU tested 34 candidate items on 420 US users of ChatGPT, Claude, Gemini and Grok (May 2026). Factor analysis confirmed six constructs (such as AI Productivity and AI Trust), and the streamlined two-to-three-item scales reached coefficient alpha of 0.81-0.87. Claude led on AI Productivity and ChatGPT lagged on AI Trust.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> scale reliability (coefficient alpha)</p><p class="ee-f"><b>Research:</b> May 2026</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> UX research methods</p><p class="ee-f"><b>Question:</b> Does a streamlined questionnaire measure the UX of AI chatbots reliably?</p><p class="ee-f"><b>About:</b> ChatGPT, Claude, Gemini, Grok</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-18</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://measuringu.com/streamlined-measurement-of-the-ux-of-ai/?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=streamlined-measurement-of-the-ux-of-ai" rel="noopener noreferrer">MeasuringU</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s16" data-study="16"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>skeptic: B · independent</span></p>
+<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>
+</div>
+<div class="ee-card-main">
+<h3>Literature review of AI interview moderators: mixed evidence, only two head-to-head studies</h3>
+<p>MeasuringU reviewed ten sources on AI-led interviewing published between 2024 and mid-2026. Evidence on whether participants say less or give shallower answers to AI was mixed, and only two studies compared AI and human moderators directly (5 vs 6 and 30 vs 30 interviews). The authors conclude AI matches humans on procedure but trails on judgment-dependent moderation.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="dispute"><b>Disputed:</b> grades two tiers apart.<br><b>Skeptic&#x27;s doubts:</b> Structured literature review of about ten AI-interview studies with stated sample sizes (including a 60-participant RCT and samples of 381-399), tagging findings pro/neutral/anti; it contains no original data and its own conclusions are suitably hedged.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> moderation quality</p><p class="ee-f"><b>Research:</b> 2024 to mid-2026 publications</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> UX research methods</p><p class="ee-f"><b>Question:</b> Do participants say less to AI moderators than to human moderators? · 1 study · 2 articles</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-09</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://measuringu.com/effectiveness-of-ai-moderators-a-literature-review/?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=effectiveness-of-ai-moderators-a-literature-review" rel="noopener noreferrer">MeasuringU</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s15" data-study="15"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>AI vs human interview moderators (randomized, n=20): participants spoke 45% less to AI</h3>
+<p>MeasuringU randomly assigned 20 participants to AI- or human-moderated in-depth interviews with the same script. AI sessions were 37% shorter, participants spoke 45% less per minute to AI moderators, and AI moderators took 64% of the words. The sample is small and no inferential statistics are reported; the study date is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> participant words per minute</p><p class="ee-f"><b>Baseline:</b> human-moderated sessions</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> UX research methods</p><p class="ee-f"><b>Question:</b> Do participants say less to AI moderators than to human moderators? · 1 study · 2 articles</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-15</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://measuringu.com/do-participants-say-less-to-ai-than-to-human-moderators/?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=do-participants-say-less-to-ai-than-to-human-moderators" rel="noopener noreferrer">MeasuringU</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s14" data-study="14"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Digital twins of AI-chatbot users overestimated SUS scores by 4.4-6.7 points</h3>
+<p>MeasuringU built Claude Sonnet 5 digital twins from 420 participants in its 2026 AI-chatbot benchmark (ChatGPT, Claude, Gemini, Grok) and compared their predicted SUS scores with the humans&#x27; held-out scores. Summary twins were 4.4 points and full twins 6.7 points higher on average, significant for all four products and enough to inflate grades. The authors note that all four products scored high, so a ceiling may have limited the error.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> SUS score error</p><p class="ee-f"><b>Baseline:</b> human SUS scores</p><p class="ee-f"><b>Research:</b> May 2026 (human data)</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> UX research methods</p><p class="ee-f"><b>Question:</b> Do digital twins give the same SUS scores as the humans they model? · 1 study · 2 articles</p><p class="ee-f"><b>About:</b> Claude Sonnet 5</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-23</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://measuringu.com/how-well-do-synthetic-users-predict-sus-scores/?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=how-well-do-synthetic-users-predict-sus-scores" rel="noopener noreferrer">MeasuringU</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s13" data-study="13"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>ChatGPT-5.6 coding open-ended survey comments: kappa 0.749 vs 0.704 human-to-human</h3>
+<p>MeasuringU re-ran its 2023 dataset of SUPR-Q open-ended comments through ChatGPT-5.6 (three runs on August 11, 2026) and compared the results with three human coders. Human-to-ChatGPT-5.6 agreement (kappa 0.749) was statistically indistinguishable from human-to-human agreement (0.704), and the model&#x27;s self-agreement was much higher. The new runs were aligned to the original themes by hand, which differs from the 2023 method.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> interrater agreement (kappa)</p><p class="ee-f"><b>Baseline:</b> human-to-human kappa 0.704</p><p class="ee-f"><b>Research:</b> August 11, 2026 (AI runs); 2023 baseline</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> UX research methods</p><p class="ee-f"><b>Question:</b> Can an LLM code open-ended survey responses as reliably as human coders?</p><p class="ee-f"><b>About:</b> ChatGPT</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-30</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://measuringu.com/chatgpt-vs-humans-for-coding-open-ended-responses-three-years-later/?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=chatgpt-vs-humans-for-coding-open-ended-responses-three-years-later" rel="noopener noreferrer">MeasuringU</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s12" data-study="12"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>ChatGPT and Gemini vs a human researcher on a failed-task video: 47% and 39% agreement</h3>
+<p>MeasuringU reports that, in one usability video (from a 2019 benchmark) analysed four times by each AI, ChatGPT reached 47% and Gemini 39% any-2 agreement with an experienced human researcher. The AIs found 8 of the researcher&#x27;s 11 problems but added three false alarms and three hallucinations. This is a single-participant case study, so the figures are indicative only.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> any-2 agreement</p><p class="ee-f"><b>Baseline:</b> human researcher problem list</p><p class="ee-f"><b>Research:</b> unstated (video from a 2019 benchmark)</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> UX research methods</p><p class="ee-f"><b>Question:</b> Can AI find the usability problems a human researcher finds in test videos?</p><p class="ee-f"><b>About:</b> ChatGPT, Gemini</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-07</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://measuringu.com/using-ai-to-find-usability-problems-examining-task-failure/?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=using-ai-to-find-usability-problems-examining-task-failure" rel="noopener noreferrer">MeasuringU</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s11" data-study="11"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Digital twins of business-software users overestimated SUS scores by about 10.5 points</h3>
+<p>MeasuringU built Claude Sonnet 5 digital twins of 289 participants from its January-February 2025 business software benchmark (6 products) and had them predict held-out SUS scores. Twins scored 10.6 (summary) and 10.4 (full) points higher than humans on average, enough to shift grades by up to two letters, though product rank order was largely preserved (r = .94-.95).</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> SUS score error</p><p class="ee-f"><b>Baseline:</b> human SUS scores</p><p class="ee-f"><b>Research:</b> January-February 2025 (human data)</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> UX research methods</p><p class="ee-f"><b>Question:</b> Do digital twins give the same SUS scores as the humans they model? · 1 study · 2 articles</p><p class="ee-f"><b>About:</b> Claude Sonnet 5</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-20</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://measuringu.com/digital-twins-systematically-overestimated-business-software-sus-scores/?utm_source=rss&amp;utm_medium=rss&amp;utm_campaign=digital-twins-systematically-overestimated-business-software-sus-scores" rel="noopener noreferrer">MeasuringU</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s10" data-study="10"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Synthetic vs human survey respondents: same conclusion, but 14 points more UX terms and far less variety</h3>
+<p>Nielsen Norman Group put one open-ended question to 120 synthetic respondents (Synthetic Users platform, February 2026) and compared them with 604 human professionals from an earlier survey. Both reached the same conclusion, but synthetic respondents used UX terminology 14 percentage points more often and collapsed onto a dozen labels versus 50+ for humans. The human sample was recruited via NN/g&#x27;s own channels and the platform reworded the question, both possible confounds.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">selection bias</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> share of UX-related terminology; distinct labels</p><p class="ee-f"><b>Baseline:</b> human survey responses</p><p class="ee-f"><b>Research:</b> February 2026 (synthetic); earlier human survey</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> UX research methods</p><p class="ee-f"><b>Question:</b> Do synthetic respondents answer open-ended questions like human respondents?</p><p class="ee-f"><b>About:</b> Synthetic Users</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-16</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.nngroup.com/articles/synthetic-users-vs-human-respondents/?utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=rss-syndication" rel="noopener noreferrer">Nielsen Norman Group</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s9" data-study="9"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>skeptic: D · independent</span></p>
+<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>
+</div>
+<div class="ee-card-main">
+<h3>Personalization vs shipping the best single variant: +18% in one field study, +4% in another</h3>
+<p>Covered on the VWO blog, two Wharton researchers tested five personalization methods in two large field studies (~20 variations each) and found personalization beat rolling out the single best version by 18% in one and only 4% in the other. The article adds a cited Yahoo study (observational lift of 870-1,200% vs 5.4% in a randomized holdout) and one practitioner test that won by 6% but lost money after costs. A primary-source check found the figures match the original abstract; the research timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="dispute"><b>Disputed:</b> grades two tiers apart.<br><b>Skeptic&#x27;s doubts:</b> A methods essay on personalization break-even, built on cited studies (the Yahoo ad holdout and the Wharton field studies), one practitioner test that won by 6% but was unprofitable, and a hypothetical worked example.</p><p class="ee-f"><b>Conflict of interest:</b> Published on VWO&#x27;s blog, which sells personalization tools.</p><p class="ee-f"><b>Original:</b> <span class="ee-warn"><span class="ee-mark" aria-hidden="true">#</span>numbers not found — 5.4%</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> incremental lift from personalization</p><p class="ee-f"><b>Baseline:</b> single best version for everyone</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Personalization</p><p class="ee-f"><b>Question:</b> Does personalization beat shipping the single best variant to everyone?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-21</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Primary source:</b> <a href="https://arxiv.org/abs/2411.16552" rel="noopener noreferrer">https://arxiv.org/abs/2411.16552</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://wingify.com/blog/the-crossover-test/" rel="noopener noreferrer">VWO Blog</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s8" data-study="8"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Event ticketing usability testing: 463 sessions surfaced 2,800+ medium-to-severe issues</h3>
+<p>Baymard Institute ran 463 think-aloud usability sessions (2,400+ hours of research) on US and UK ticketing marketplaces and venue sites such as Ticketmaster and StubHub, logging 2,800+ medium-to-severe issues. Hidden prices and late fees, late sold-out signals and costly seat-view evaluation drove abandonment in test sessions. The study is qualitative and reports no conversion rates; the testing period is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Conflict of interest:</b> Baymard sells audits of the benchmarked industries.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Task success &amp; usability · usability issues</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> How many usability issues do event ticketing sites cause in usability testing?</p><p class="ee-f"><b>About:</b> Ticketmaster, StubHub, SeatGeek</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-24</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/research-articles/event-ticketing-ux-research-launch" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s7" data-study="7"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>B2B electronic components UX benchmark of 6 sites: only 1 rated decent across 2,600+ UX scores</h3>
+<p>Baymard Institute assessed 6 B2B electronic components and machinery sites on 420+ UX parameters (2,600+ scores). Most performed poorly; about a third lacked B2B shipping details in the cart and more than half offered no way to share or save cart contents. Results are expert ratings, not measured conversions; the assessment date is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">vendor metric</span></p><p class="ee-f"><b>Conflict of interest:</b> Baymard sells audits of the benchmarked industries.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Task success &amp; usability · UX performance score</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> How well do ecommerce sites in an industry score on Baymard UX benchmarks? · 1 study · 3 articles</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-01</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/research-articles/b2b-electronic-components-machinery-ux-benchmark-2026" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s6" data-study="6"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>E-cigarette &amp; Vaping UX benchmark of 7 sites: none rated decent or better across 3,600+ UX scores</h3>
+<p>Baymard Institute assessed 7 e-cigarette and vaping ecommerce sites on 500+ UX parameters (3,600+ weighted scores): 5 rated mediocre and 2 poor. Missing critical filters and unclear order costs and delivery times were common. Scores are Baymard&#x27;s expert ratings, not conversion data; the assessment date is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">vendor metric</span></p><p class="ee-f"><b>Conflict of interest:</b> Baymard sells audits of the benchmarked industries.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Task success &amp; usability · UX performance score</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> How well do ecommerce sites in an industry score on Baymard UX benchmarks? · 1 study · 3 articles</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-07</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/research-articles/e-cigarette-and-vaping-ux-benchmark-2026" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s5" data-study="5"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Mass Merchant UX benchmark of 10 sites: only 1 rated good across 5,600+ UX scores</h3>
+<p>Baymard Institute manually assessed 10 mass merchant and department store sites on 500+ UX parameters (5,600+ weighted scores). Most sites ranged from mediocre to decent, with only one rated good; common issues were search handling, missing unit prices and late order-cost disclosure. Scores are Baymard&#x27;s own expert ratings, not measured conversions; the assessment date is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">vendor metric</span></p><p class="ee-f"><b>Conflict of interest:</b> Baymard sells audits of the benchmarked industries.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Task success &amp; usability · UX performance score</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> How well do ecommerce sites in an industry score on Baymard UX benchmarks? · 1 study · 3 articles</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-22</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/research-articles/mass-merchant-ux-benchmark-2026" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s4" data-study="4"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Research-based UX changes to a restaurant app: over 40% digital membership growth since the partnership began</h3>
+<p>Baymard Institute reports that a global restaurant brand saw over 40% growth in app membership since the start of its Baymard partnership, alongside changes such as cart quantity controls. The growth is measured before/after over an unstated period with no control, so other changes may explain it.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, no baseline, confounded window, selection bias</span></p><p class="ee-f"><b>Conflict of interest:</b> Baymard sells the research and audits credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Sign-ups &amp; leads · digital membership</p><p class="ee-f"><b>Research:</b> unstated (since start of partnership)</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> Do research-based UX changes to an app grow digital membership?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-06</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/blog/global-restaurant-brand-app-downloads" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s3" data-study="3"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Comparison tool on product listing pages: apparel brand reports a $16M revenue increase</h3>
+<p>Baymard Institute reports that a premium apparel brand added a product-list comparison tool (guideline #495) on web and app and reported a $16M revenue increase. There is no baseline, time window, control group or attribution method, and the story is published by the vendor credited. The timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, no baseline, confounded window, selection bias</span></p><p class="ee-f"><b>Conflict of interest:</b> Baymard sells the research and audits credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> revenue</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Product pages</p><p class="ee-f"><b>Question:</b> Does adding a comparison tool to product lists raise revenue?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-07</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/blog/premium-apparel-brand-revenue-increase" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s2" data-study="2"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>vendor</span></p>
+<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>
+</div>
+<div class="ee-card-main">
+<h3>Baymard-informed checkout changes at a SaaS/digital services company: customer reports +$1M in value</h3>
+<p>Baymard Institute reports that a digital services customer credited checkout and buying-flow changes informed by Baymard research with more than $1 million in commercial value. The figure is the customer&#x27;s own assessment, with no stated method, baseline or test; treat it as an anecdotal claim. The timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="dispute"><b>Disputed:</b> no quoted number found in the text.<br><b>Skeptic&#x27;s doubts:</b> A vendor testimonial credits the changes with &#x27;+$1M commercial value&#x27; based only on the customer&#x27;s own assessment, with no stated method, baseline or test results.</p><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim, no baseline, selection bias</span></p><p class="ee-f"><b>Conflict of interest:</b> Baymard sells the research and audits credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> commercial value</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Checkout &amp; cart</p><p class="ee-f"><b>Question:</b> Do research-informed checkout changes create commercial value?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-08</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/blog/digital-services-company-strengthens-checkout-decisions-with-baymard" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s1" data-study="1"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>vendor</span></p>
+<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>
+</div>
+<div class="ee-card-main">
+<h3>Baymard checkout guidelines across a store portfolio: checkout conversion reported doubled (+100%)</h3>
+<p>Baymard Institute relays a customer&#x27;s report that checkout conversion doubled after the retailer applied Baymard&#x27;s checkout usability guide across all its stores. No baseline rate, store count, timeframe or control group is given, and the claim comes from the vendor whose guidelines are credited. The research timeframe is unstated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="dispute"><b>Disputed:</b> no quoted number found in the text.<br><b>Skeptic&#x27;s doubts:</b> A vendor-published customer story says checkout conversion doubled after the guidelines were applied, but it gives no baseline rate, no time window and no control, and it does not account for anything else that changed at the same time.</p><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim, no baseline, confounded window, selection bias</span></p><p class="ee-f"><b>Conflict of interest:</b> Baymard sells the research and audits credited with the result.</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Conversion rate · checkout conversion rate</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Checkout &amp; cart</p><p class="ee-f"><b>Question:</b> Does applying checkout usability guidelines raise checkout conversion?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-16</p><p class="ee-f"><b>Reported:</b> 2026-10-25 · in 1 report</p><p class="ee-f"><b>Coverage:</b> <a href="https://baymard.com/blog/online-retailer-doubles-checkout-conversion" rel="noopener noreferrer">Baymard Institute</a></p></div>
+</div>
+</div></article>
+</div>
+</section>
+</main>
+<footer class="ee-foot"><div class="ee-foot-in"><a class="ee-top-link" href="#ee-top">Back to top <span aria-hidden="true">↑</span></a><span class="ee-foot-end"><a class="ee-repo" href="https://github.com/r-hural/evidence-echo" aria-label="Evidence Echo on GitHub" title="Evidence Echo on GitHub"><svg class="ee-gh" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></span></div></footer>
+<script type="application/json" id="ee-data">{"studies": [{"id": 39, "pos": 0, "tier": "C", "flags": ["cherry_pick"], "relation": "vendor", "series": null, "disputed": false, "text": "papier's experimentation programme on kameleoon: 4-5 tests a month, winning tests average +5-6% conversion kameleoon reports that papier, a uk stationery brand with about 1.4m monthly visits, went from 1-2 experiments a quarter to 4-5 a month, with winning tests averaging a 5-6% conversion lift (up to 8%). the average covers winning tests only and there are no control or sample details; the timeframe is unstated. kameleoon", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "experimentation-tooling-velocity", "metric": "conversion-rate", "sources": ["kameleoon-blog"], "entities": ["kameleoon"]}, {"id": 38, "pos": 1, "tier": "C", "flags": ["vendor_metric", "multiple_metrics"], "relation": "vendor", "series": null, "disputed": false, "text": "kameleoon pbx at graham \u0026 brown: test creation time cut ~90%; sticky add-to-bag +58% kameleoon reports that graham \u0026 brown cut test creation time by about 90% with pbx, an estimate from the customer, and that a pbx-built sticky add-to-bag test lifted add-to-bag 58%. no control, sample size or significance is given for the test; the timeframe is unstated. kameleoon pbx", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "experimentation-tooling-velocity", "metric": "other", "sources": ["kameleoon-blog"], "entities": ["kameleoon-pbx"]}, {"id": 37, "pos": 2, "tier": "D", "flags": ["anecdote_generalisation", "no_baseline"], "relation": "independent", "series": null, "disputed": false, "text": "kameleoon pbx in five moderated sessions: usable variants reported 5-10x faster guess the test reports, in a study published by kameleoon, that across five moderated usability sessions with practitioners pbx produced usable variants 5-10 times faster and got users '90% of the way there'. the baseline workflow and timing method are not stated, so the claim rests on a very small sample. kameleoon pbx", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "experimentation-tooling-velocity", "metric": "other", "sources": ["kameleoon-blog"], "entities": ["kameleoon-pbx"]}, {"id": 36, "pos": 3, "tier": "D", "flags": ["correlation_causation"], "relation": "vendor", "series": null, "disputed": true, "text": "forrester survey of 107 healthcare cx leaders: insight-driven organisations '5x more likely' to grow revenue forrester, commissioned by kameleoon, surveyed 107 marketing and cx managers at north american healthcare organisations and reports that those applying customer insights are 5x more likely to grow revenue. the link is correlational, the survey date is unstated (published 2021), and the vendor sponsored the study.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "other", "metric": "other", "sources": ["kameleoon-blog"]}, {"id": 35, "pos": 4, "tier": "B", "flags": ["stale_data", "headline_overclaim", "vendor_metric"], "relation": "independent", "series": null, "disputed": false, "text": "average documented cart abandonment rate across 50 studies: 70.22% baymard institute averages 50 published studies of online cart abandonment to reach 70.22%. the sources, mostly cart-recovery vendors, use differing methods and go back many years, so the figure is a rough benchmark rather than a current measurement.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "checkout-cart", "metric": "cart-abandonment", "sources": ["baymard-institute"]}, {"id": 34, "pos": 5, "tier": "D", "flags": ["cherry_pick", "multiple_metrics"], "relation": "agency", "series": null, "disputed": false, "text": "autotune subscription pricing test: +27% revenue per visitor, +24% aov (client testimonial) autotune's cmo reports, in a conversion rate experts testimonial, that one pricing test on a subscription product raised revenue per visitor 27%, average order value 24% and annual-plan conversion 32%, with 17-18% higher ltv. the test design and control are not described, and it is one favourable result from hundreds of tests; the timing is unstated. autotune", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "pricing-plans", "metric": "revenue-per-visitor", "sources": ["conversion-rate-experts"], "entities": ["autotune"]}, {"id": 33, "pos": 6, "tier": "A", "flags": ["cherry_pick"], "relation": "agency", "series": null, "disputed": false, "text": "trial button 'try it free for 14 days' vs 'start free trial' at exclaimer: +39% trial sign-ups conversion rate experts tested a sitewide header button rewritten to state the trial length against the original 'start free trial' copy. trial conversions rose 39%, confirmed by the client. no sample size, duration or significance is given, and it comes from a wins-only series. exclaimer", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ctas-buttons", "metric": "sign-ups-leads", "sources": ["conversion-rate-experts"], "entities": ["exclaimer"]}, {"id": 32, "pos": 7, "tier": "C", "flags": ["cherry_pick", "confounded_window"], "relation": "agency", "series": null, "disputed": false, "text": "cro programme at churnet valley railway: capacity sold rose from ~40% to 80-100% conversion rate experts publishes a client testimonial in which churnet valley railway's managers say trains that used to run at 40% capacity on some days now regularly run at 80-100%, and income passed gbp 1 million for the first time in 2026. these are loose before/after figures over a multi-year engagement that also included seo and other marketing, with no control. churnet valley railway", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "other", "metric": "other", "sources": ["conversion-rate-experts"], "entities": ["churnet-valley-railway"]}, {"id": 31, "pos": 8, "tier": "B", "flags": ["correlation_causation", "vendor_metric"], "relation": "independent", "series": null, "disputed": false, "text": "third-party automotive websites (11 sites, 561 users): average nps +6%, trust at the 34th percentile measuringu surveyed 561 us users of 11 third-party automotive sites in march-april 2026 with the supr-q, ux-lite and nps. the industry averaged the 51st supr-q percentile and an nps of +6%, but trust sat at the 34th percentile; kelley blue book led on nps (+34%) and carvana trailed (-23%). results are self-reported ratings, not behavioural data. kelley blue book carvana carfax cars.com carweek.com", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "other", "metric": "other", "sources": ["measuringu"], "entities": ["kelley-blue-book", "carvana", "carfax", "cars-com", "carweek-com"]}, {"id": 30, "pos": 9, "tier": "C", "flags": ["cherry_pick", "confounded_window"], "relation": "vendor", "series": null, "disputed": false, "text": "kameleoon pbx at verychic: 87% less time per test build; +31% promo banner clicks kameleoon reports that verychic, a premium travel flash-sale platform, cut test build time by 87% with pbx from summer 2025 and saw 31% more clicks on promotional banners and 7% more quote-page visits. the banner result compares a summer run with an earlier test, so seasonality is uncontrolled, and the page also quotes 7% time saved. kameleoon pbx", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "experimentation-tooling-velocity", "metric": "other", "sources": ["kameleoon-blog"], "entities": ["kameleoon-pbx"]}, {"id": 29, "pos": 10, "tier": "C", "flags": ["headline_overclaim", "no_baseline"], "relation": "vendor", "series": null, "disputed": true, "text": "ai predictive targeting of toyota.fr's test-drive pop-in: leads reported doubled kameleoon reports that toyota.fr doubled the number of test-drive leads after switching its pop-in from manual scoring to kameleoon ai predictive targeting. no control group, absolute numbers or lead-quality measures (show-ups, sales) are given, though lead quality was the stated problem. the timeframe is unstated. kameleoon ai predictive targeting toyota", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "personalization", "metric": "sign-ups-leads", "sources": ["kameleoon-blog"], "entities": ["kameleoon-ai-predictive-targeting", "toyota"]}, {"id": 28, "pos": 11, "tier": "A", "flags": [], "relation": "vendor", "series": null, "disputed": false, "text": "promo codes shown only to ai-detected hesitant visitors at orange: +11.6% conversion vs no promo kameleoon reports a three-arm test at orange: no promo code (control), a promo code for everyone, and a promo code only for visitors its ai flagged as hesitant. the ai-targeted arm raised conversion 11.6% vs control and 7.6% vs promo-for-all, while the share of purchases using a code fell from 68% to 25%. no sample size or significance is reported; the timeframe is unstated. kameleoon ai predictive targeting orange", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "personalization", "metric": "conversion-rate", "sources": ["kameleoon-blog"], "entities": ["kameleoon-ai-predictive-targeting", "orange"]}, {"id": 27, "pos": 12, "tier": "C", "flags": ["cherry_pick"], "relation": "vendor", "series": null, "disputed": false, "text": "cta text change on alternative airlines: +34% purchases kameleoon reports that alternative airlines increased purchases by 34% by changing cta text on a product, one of several highlighted wins from 100+ tests a year. no control details, sample size or significance are given, and the timeframe is unstated. alternative airlines", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ctas-buttons", "metric": "conversion-rate", "sources": ["kameleoon-blog"], "entities": ["alternative-airlines"]}, {"id": 26, "pos": 13, "tier": "C", "flags": ["headline_overclaim", "vendor_metric"], "relation": "vendor", "series": null, "disputed": false, "text": "kameleoon pbx at cedars-sinai: up to 83% faster test builds, 67% more tests per year projected kameleoon reports that cedars-sinai's single optimization engineer cut test build time by up to 83% with a hybrid pbx workflow and projects 60 tests a year instead of 36. the body gives 67% (simple) and 20% (complex) time reductions, and the volume gain is a projection, not a measured result. data are from 2025-2026. kameleoon pbx", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "experimentation-tooling-velocity", "metric": "other", "sources": ["kameleoon-blog"], "entities": ["kameleoon-pbx"]}, {"id": 25, "pos": 14, "tier": "C", "flags": ["cherry_pick", "vendor_metric"], "relation": "vendor", "series": null, "disputed": false, "text": "kameleoon pbx at best western france: twice as many tests, launch in 20 minutes to 4 hours kameleoon reports that best western hotels \u0026 resorts france doubled the number of experiments run with the same team after adopting its pbx tool, launching tests in 20 minutes to 4 hours instead of several days and saving up to eur 2,000 per test. the figures are before/after from a vendor success story with no control; the timeframe is unstated. kameleoon pbx", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "experimentation-tooling-velocity", "metric": "other", "sources": ["kameleoon-blog"], "entities": ["kameleoon-pbx"]}, {"id": 24, "pos": 15, "tier": "D", "flags": ["correlation_causation", "no_baseline"], "relation": "vendor", "series": "Kameleoon experiment-led growth report", "disputed": false, "text": "kameleoon high-performer survey: 90% run both web and feature experiments kameleoon reports, in its 2025 experiment-led growth report, that 90% of high-performing companies run both web and feature experiments and 74% of leaders regularly check cross-team metric effects. no sample size or method is stated, and the link between team structure and growth is correlational; treat the figures as indicative.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "experimentation-tooling-velocity", "metric": "other", "sources": ["kameleoon-blog"]}, {"id": 23, "pos": 16, "tier": "C", "flags": ["selection_bias"], "relation": "independent", "series": null, "disputed": false, "text": "kameleoon pbx across 17 tests: test creation 89% faster; 94% success on simple vs 63% on complex tests henkan \u0026 partners, in a study published by kameleoon, evaluated kameleoon's prompt-based experimentation on 17 tests. build time fell from about 9 hours to under one, but success was 94% on simple tests and only 63% on complex ones, with non-deterministic output. there is no control and the test set was chosen by the evaluators; the timeframe is unstated. kameleoon pbx", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "experimentation-tooling-velocity", "metric": "other", "sources": ["kameleoon-blog"], "entities": ["kameleoon-pbx"]}, {"id": 22, "pos": 17, "tier": "A", "flags": ["cherry_pick"], "relation": "agency", "series": null, "disputed": false, "text": "gift add-ons moved to their own funnel step: +28% revenue per order, no conversion loss conversion rate experts moved a gift retailer's add-ons from the bottom of the product page to an interstitial step and tested it against the original. revenue per order rose 28%, with no impact on overall conversion. no sample size, duration or significance is reported.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "checkout-cart", "metric": "average-order-value", "sources": ["conversion-rate-experts"]}, {"id": 21, "pos": 18, "tier": "A", "flags": ["cherry_pick"], "relation": "agency", "series": null, "disputed": false, "text": "tutor sign-up page reframed as a job posting with a real student request: +15% applications conversion rate experts tested a tutoring marketplace's recruitment page rewritten as a job ad (subject and city headline, a real student request, pay range) against the plain registration form. tutor applications rose 15%, about 20,000 more in the first year by the agency's extrapolation. no sample size or significance is stated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "forms-sign-up", "metric": "sign-ups-leads", "sources": ["conversion-rate-experts"]}, {"id": 20, "pos": 19, "tier": "A", "flags": ["cherry_pick"], "relation": "agency", "series": null, "disputed": false, "text": "redesigned breakfast train page with live calendar and menus: +10% bookings vs original conversion rate experts tested a rebuilt churnet valley railway dining-train page (price and next date upfront, availability calendar, detailed menus, repeated booking buttons) against the original. bookings rose 10%. many changes were bundled, so no single element can be credited, and no sample size or significance is reported. churnet valley railway", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "product-pages", "metric": "conversion-rate", "sources": ["conversion-rate-experts"], "entities": ["churnet-valley-railway"]}, {"id": 19, "pos": 20, "tier": "A", "flags": ["cherry_pick", "anecdote_generalisation"], "relation": "agency", "series": null, "disputed": false, "text": "free included services listed in the checkout order table: +9% orders vs control conversion rate experts added two rows to a gift retailer's order table naming services already included (premium service, satisfaction guarantee) priced free, and tested it against the original checkout. orders rose 9%. no sample size, duration or significance is given, and the timeframe is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "checkout-cart", "metric": "conversion-rate", "sources": ["conversion-rate-experts"]}, {"id": 18, "pos": 21, "tier": "A", "flags": ["cherry_pick", "multiple_metrics"], "relation": "agency", "series": null, "disputed": false, "text": "simplified homepage (checklist + shop button) for the raw honey shop: +24% sales vs control conversion rate experts tested a homepage that replaced long brand storytelling with a claims checklist and a shop button against the original, after scrollmaps showed 50% of desktop users never reached the products. the variation lifted sales 24%, with a larger gain in revenue per visitor. no sample size, duration or significance is reported, and the result comes from a wins-only series. the raw honey shop", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "landing-pages", "metric": "conversion-rate", "sources": ["conversion-rate-experts"], "entities": ["the-raw-honey-shop"]}, {"id": 17, "pos": 22, "tier": "B", "flags": [], "relation": "independent", "series": null, "disputed": false, "text": "streamlined ux-of-ai questionnaire on 420 chatbot users: reliability alpha 0.81-0.87 measuringu tested 34 candidate items on 420 us users of chatgpt, claude, gemini and grok (may 2026). factor analysis confirmed six constructs (such as ai productivity and ai trust), and the streamlined two-to-three-item scales reached coefficient alpha of 0.81-0.87. claude led on ai productivity and chatgpt lagged on ai trust. chatgpt claude gemini grok", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ux-research-methods", "metric": "other", "sources": ["measuringu"], "entities": ["chatgpt", "claude", "gemini", "grok"]}, {"id": 16, "pos": 23, "tier": "D", "flags": [], "relation": "independent", "series": null, "disputed": true, "text": "literature review of ai interview moderators: mixed evidence, only two head-to-head studies measuringu reviewed ten sources on ai-led interviewing published between 2024 and mid-2026. evidence on whether participants say less or give shallower answers to ai was mixed, and only two studies compared ai and human moderators directly (5 vs 6 and 30 vs 30 interviews). the authors conclude ai matches humans on procedure but trails on judgment-dependent moderation.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ux-research-methods", "metric": "other", "sources": ["measuringu"]}, {"id": 15, "pos": 24, "tier": "A", "flags": [], "relation": "independent", "series": null, "disputed": false, "text": "ai vs human interview moderators (randomized, n=20): participants spoke 45% less to ai measuringu randomly assigned 20 participants to ai- or human-moderated in-depth interviews with the same script. ai sessions were 37% shorter, participants spoke 45% less per minute to ai moderators, and ai moderators took 64% of the words. the sample is small and no inferential statistics are reported; the study date is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ux-research-methods", "metric": "other", "sources": ["measuringu"]}, {"id": 14, "pos": 25, "tier": "B", "flags": [], "relation": "independent", "series": null, "disputed": false, "text": "digital twins of ai-chatbot users overestimated sus scores by 4.4-6.7 points measuringu built claude sonnet 5 digital twins from 420 participants in its 2026 ai-chatbot benchmark (chatgpt, claude, gemini, grok) and compared their predicted sus scores with the humans' held-out scores. summary twins were 4.4 points and full twins 6.7 points higher on average, significant for all four products and enough to inflate grades. the authors note that all four products scored high, so a ceiling may have limited the error. claude sonnet 5", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ux-research-methods", "metric": "other", "sources": ["measuringu"], "entities": ["claude-sonnet-5"]}, {"id": 13, "pos": 26, "tier": "C", "flags": [], "relation": "independent", "series": null, "disputed": false, "text": "chatgpt-5.6 coding open-ended survey comments: kappa 0.749 vs 0.704 human-to-human measuringu re-ran its 2023 dataset of supr-q open-ended comments through chatgpt-5.6 (three runs on august 11, 2026) and compared the results with three human coders. human-to-chatgpt-5.6 agreement (kappa 0.749) was statistically indistinguishable from human-to-human agreement (0.704), and the model's self-agreement was much higher. the new runs were aligned to the original themes by hand, which differs from the 2023 method. chatgpt", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ux-research-methods", "metric": "other", "sources": ["measuringu"], "entities": ["chatgpt"]}, {"id": 12, "pos": 27, "tier": "D", "flags": [], "relation": "independent", "series": null, "disputed": false, "text": "chatgpt and gemini vs a human researcher on a failed-task video: 47% and 39% agreement measuringu reports that, in one usability video (from a 2019 benchmark) analysed four times by each ai, chatgpt reached 47% and gemini 39% any-2 agreement with an experienced human researcher. the ais found 8 of the researcher's 11 problems but added three false alarms and three hallucinations. this is a single-participant case study, so the figures are indicative only. chatgpt gemini", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ux-research-methods", "metric": "other", "sources": ["measuringu"], "entities": ["chatgpt", "gemini"]}, {"id": 11, "pos": 28, "tier": "B", "flags": [], "relation": "independent", "series": null, "disputed": false, "text": "digital twins of business-software users overestimated sus scores by about 10.5 points measuringu built claude sonnet 5 digital twins of 289 participants from its january-february 2025 business software benchmark (6 products) and had them predict held-out sus scores. twins scored 10.6 (summary) and 10.4 (full) points higher than humans on average, enough to shift grades by up to two letters, though product rank order was largely preserved (r = .94-.95). claude sonnet 5", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ux-research-methods", "metric": "other", "sources": ["measuringu"], "entities": ["claude-sonnet-5"]}, {"id": 10, "pos": 29, "tier": "B", "flags": ["selection_bias"], "relation": "independent", "series": null, "disputed": false, "text": "synthetic vs human survey respondents: same conclusion, but 14 points more ux terms and far less variety nielsen norman group put one open-ended question to 120 synthetic respondents (synthetic users platform, february 2026) and compared them with 604 human professionals from an earlier survey. both reached the same conclusion, but synthetic respondents used ux terminology 14 percentage points more often and collapsed onto a dozen labels versus 50+ for humans. the human sample was recruited via nn/g's own channels and the platform reworded the question, both possible confounds. synthetic users", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "ux-research-methods", "metric": "other", "sources": ["nielsen-norman-group"], "entities": ["synthetic-users"]}, {"id": 9, "pos": 30, "tier": "A", "flags": [], "relation": "independent", "series": null, "disputed": true, "text": "personalization vs shipping the best single variant: +18% in one field study, +4% in another covered on the vwo blog, two wharton researchers tested five personalization methods in two large field studies (~20 variations each) and found personalization beat rolling out the single best version by 18% in one and only 4% in the other. the article adds a cited yahoo study (observational lift of 870-1,200% vs 5.4% in a randomized holdout) and one practitioner test that won by 6% but lost money after costs. a primary-source check found the figures match the original abstract; the research timeframe is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "personalization", "metric": "other", "sources": ["vwo-blog"]}, {"id": 8, "pos": 31, "tier": "B", "flags": [], "relation": "independent", "series": null, "disputed": false, "text": "event ticketing usability testing: 463 sessions surfaced 2,800+ medium-to-severe issues baymard institute ran 463 think-aloud usability sessions (2,400+ hours of research) on us and uk ticketing marketplaces and venue sites such as ticketmaster and stubhub, logging 2,800+ medium-to-severe issues. hidden prices and late fees, late sold-out signals and costly seat-view evaluation drove abandonment in test sessions. the study is qualitative and reports no conversion rates; the testing period is unstated. ticketmaster stubhub seatgeek", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "other", "metric": "task-success-usability", "sources": ["baymard-institute"], "entities": ["ticketmaster", "stubhub", "seatgeek"]}, {"id": 7, "pos": 32, "tier": "B", "flags": ["vendor_metric"], "relation": "independent", "series": null, "disputed": false, "text": "b2b electronic components ux benchmark of 6 sites: only 1 rated decent across 2,600+ ux scores baymard institute assessed 6 b2b electronic components and machinery sites on 420+ ux parameters (2,600+ scores). most performed poorly; about a third lacked b2b shipping details in the cart and more than half offered no way to share or save cart contents. results are expert ratings, not measured conversions; the assessment date is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "other", "metric": "task-success-usability", "sources": ["baymard-institute"]}, {"id": 6, "pos": 33, "tier": "B", "flags": ["vendor_metric"], "relation": "independent", "series": null, "disputed": false, "text": "e-cigarette \u0026 vaping ux benchmark of 7 sites: none rated decent or better across 3,600+ ux scores baymard institute assessed 7 e-cigarette and vaping ecommerce sites on 500+ ux parameters (3,600+ weighted scores): 5 rated mediocre and 2 poor. missing critical filters and unclear order costs and delivery times were common. scores are baymard's expert ratings, not conversion data; the assessment date is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "other", "metric": "task-success-usability", "sources": ["baymard-institute"]}, {"id": 5, "pos": 34, "tier": "B", "flags": ["vendor_metric"], "relation": "independent", "series": null, "disputed": false, "text": "mass merchant ux benchmark of 10 sites: only 1 rated good across 5,600+ ux scores baymard institute manually assessed 10 mass merchant and department store sites on 500+ ux parameters (5,600+ weighted scores). most sites ranged from mediocre to decent, with only one rated good; common issues were search handling, missing unit prices and late order-cost disclosure. scores are baymard's own expert ratings, not measured conversions; the assessment date is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "other", "metric": "task-success-usability", "sources": ["baymard-institute"]}, {"id": 4, "pos": 35, "tier": "C", "flags": ["correlation_causation", "no_baseline", "confounded_window", "selection_bias"], "relation": "vendor", "series": null, "disputed": false, "text": "research-based ux changes to a restaurant app: over 40% digital membership growth since the partnership began baymard institute reports that a global restaurant brand saw over 40% growth in app membership since the start of its baymard partnership, alongside changes such as cart quantity controls. the growth is measured before/after over an unstated period with no control, so other changes may explain it.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "other", "metric": "sign-ups-leads", "sources": ["baymard-institute"]}, {"id": 3, "pos": 36, "tier": "C", "flags": ["correlation_causation", "no_baseline", "confounded_window", "selection_bias"], "relation": "vendor", "series": null, "disputed": false, "text": "comparison tool on product listing pages: apparel brand reports a $16m revenue increase baymard institute reports that a premium apparel brand added a product-list comparison tool (guideline #495) on web and app and reported a $16m revenue increase. there is no baseline, time window, control group or attribution method, and the story is published by the vendor credited. the timeframe is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "product-pages", "metric": "other", "sources": ["baymard-institute"]}, {"id": 2, "pos": 37, "tier": "D", "flags": ["headline_overclaim", "no_baseline", "selection_bias"], "relation": "vendor", "series": null, "disputed": true, "text": "baymard-informed checkout changes at a saas/digital services company: customer reports +$1m in value baymard institute reports that a digital services customer credited checkout and buying-flow changes informed by baymard research with more than $1 million in commercial value. the figure is the customer's own assessment, with no stated method, baseline or test; treat it as an anecdotal claim. the timeframe is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "checkout-cart", "metric": "other", "sources": ["baymard-institute"]}, {"id": 1, "pos": 38, "tier": "C", "flags": ["headline_overclaim", "no_baseline", "confounded_window", "selection_bias"], "relation": "vendor", "series": null, "disputed": true, "text": "baymard checkout guidelines across a store portfolio: checkout conversion reported doubled (+100%) baymard institute relays a customer's report that checkout conversion doubled after the retailer applied baymard's checkout usability guide across all its stores. no baseline rate, store count, timeframe or control group is given, and the claim comes from the vendor whose guidelines are credited. the research timeframe is unstated.", "first_reported": "2026-10-25", "last_reported": "2026-10-25", "subtopic": "checkout-cart", "metric": "conversion-rate", "sources": ["baymard-institute"]}]}</script>
+<script>(function () {
+  var form = document.getElementById('ee-filters');
+  var list = document.getElementById('ee-studies');
+  var count = document.getElementById('ee-count');
+  var dataEl = document.getElementById('ee-data');
+  if (!form || !list || !count || !dataEl) return;
+  var box = document.getElementById('ee-filter-box');
+  var reset = document.getElementById('ee-reset');
+  var active = document.getElementById('ee-active');
+  var studies = JSON.parse(dataEl.textContent).studies;
+  var cards = {};
+  Array.prototype.forEach.call(list.querySelectorAll('[data-study]'), function (el) {
+    cards[el.getAttribute('data-study')] = el;
+  });
+  var TIER = {A: 0, B: 1, C: 2, D: 3};
+  function rank(s) { return s.tier in TIER ? TIER[s.tier] : 9; }
+  function value(name) { var el = form.elements[name]; return el ? el.value : ''; }
+  function tiers() {
+    var out = [];
+    Array.prototype.forEach.call(form.querySelectorAll('input[name=tier]:checked'), function (el) {
+      out.push(el.value);
+    });
+    return out;
+  }
+  function matches(s, f) {
+    if (f.tiers.indexOf(s.tier in TIER ? s.tier : '?') < 0) return false;
+    if (f.flag === '*' && !s.flags.length) return false;
+    if (f.flag && f.flag !== '*' && s.flags.indexOf(f.flag) < 0) return false;
+    if (f.relation && s.relation !== f.relation) return false;
+    if (f.series && s.series !== f.series) return false;
+    if (f.subtopic && s.subtopic !== f.subtopic) return false;
+    if (f.metric && s.metric !== f.metric) return false;
+    if (f.entity && (s.entities || []).indexOf(f.entity) < 0) return false;
+    if (f.source && (s.sources || []).indexOf(f.source) < 0) return false;
+    if (f.disputed && !s.disputed) return false;
+    if (f.q && s.text.indexOf(f.q) < 0) return false;
+    return true;
+  }
+  function ordered(sort) {
+    var rows = studies.slice();
+    if (sort === 'tier') {
+      rows.sort(function (a, b) { return rank(a) - rank(b) || a.pos - b.pos; });
+    } else if (sort === 'first') {
+      rows.sort(function (a, b) {
+        if (a.first_reported === b.first_reported) return a.pos - b.pos;
+        return a.first_reported < b.first_reported ? -1 : 1;
+      });
+    } else {
+      rows.sort(function (a, b) { return a.pos - b.pos; });
+    }
+    return rows;
+  }
+  function marked() {   // highlights every field that narrows or reorders the list; returns how many
+    var n = 0;
+    Array.prototype.forEach.call(form.querySelectorAll('select, input[type=search], input[name=disputed]'),
+      function (el) {
+        var on = el.type === 'checkbox' ? el.checked
+          : el.name === 'sort' ? el.value !== 'newest' : el.value.trim() !== '';
+        var label = el.closest('label');
+        if (label) label.classList.toggle('ee-on', on);
+        if (on) n += 1;
+      });
+    var tiersOn = form.querySelectorAll('input[name=tier]:not(:checked)').length > 0;
+    var fieldset = form.querySelector('fieldset');
+    if (fieldset) fieldset.classList.toggle('ee-on', tiersOn);
+    return n + (tiersOn ? 1 : 0);
+  }
+  function apply() {
+    var f = {tiers: tiers(), flag: value('flag'), relation: value('relation'),
+             series: value('series'), subtopic: value('subtopic'), metric: value('metric'), entity: value('entity'), source: value('source'), disputed: form.elements['disputed'].checked,
+             q: value('q').trim().toLowerCase()};
+    var shown = 0;
+    ordered(value('sort')).forEach(function (s) {
+      var el = cards[String(s.id)];
+      if (!el) return;
+      var ok = matches(s, f);
+      el.hidden = !ok;
+      if (ok) shown += 1;
+      el.classList.toggle('ee-alt', ok && shown % 2 === 0);
+      list.appendChild(el);
+    });
+    count.textContent = shown + ' of ' + studies.length + ' studies';
+    var n = marked();
+    if (reset) reset.hidden = n === 0;
+    if (active) active.textContent = n ? '(' + n + ' active)' : '';
+  }
+  list.classList.add('ee-js');
+  if (box) box.hidden = false;
+  if (reset) reset.addEventListener('click', function () { form.reset(); apply(); });
+  form.hidden = false;
+  form.addEventListener('input', apply);
+  form.addEventListener('change', apply);
+  form.addEventListener('submit', function (event) { event.preventDefault(); });
+  // a link to a source (#source=<slug>) preselects the Source filter and shows the list
+  function fromHash() {
+    var m = /^#source=(.+)$/.exec(location.hash);
+    var select = form.elements['source'];
+    if (!m || !select) return;
+    var slug;
+    try { slug = decodeURIComponent(m[1]); } catch (e) { return; }
+    var found = Array.prototype.some.call(select.options, function (o) { return o.value === slug; });
+    if (!found) return;
+    select.value = slug;
+    if (box) box.open = true;
+    apply();
+    var all = document.getElementById('ee-all');
+    if (all) all.scrollIntoView();
+  }
+  window.addEventListener('hashchange', fromHash);
+  apply();
+  fromHash();
+})();
+// a link to a subtopic (#sub-...) opens its closed question list
+(function () {
+  function open() {
+    var el = location.hash && document.getElementById(location.hash.slice(1));
+    var sub = el && el.classList.contains('subtopic') && el.querySelector('details.ee-sub');
+    if (sub) { sub.open = true; el.scrollIntoView(); }
+  }
+  window.addEventListener('hashchange', open);
+  open();
+})();</script>
+</body>
+</html>

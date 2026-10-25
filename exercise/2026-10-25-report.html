@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exercise Echo Report - 2026-10-25</title>
+<style>:root{--bg:#ffffff;--fg:#151412;--muted:#58554e;--card:#f2f0ea;--border:#d5d1c7;--rule:#151412;--link:#151412;--mast-bg:#151412;--mast-fg:#ffffff;--mast-muted:#bcb8ae;--red:#ad1328;--warn-bg:#fbeeee;--warn-fg:#8f0f22;--ok-fg:#151412;--bad-fg:#ad1328;--mix-fg:#58554e;--zebra:#f9f8f4;--mark:#fdf0a6;--faint:#7a766d;}@media (prefers-color-scheme: dark){:root{--bg:#161513;--fg:#ecebe6;--muted:#aaa69c;--card:#211f1c;--border:#3b3934;--rule:#ecebe6;--link:#ecebe6;--mast-bg:#0b0b0a;--mast-fg:#ecebe6;--mast-muted:#aaa69c;--red:#ff8593;--warn-bg:#2d1619;--warn-fg:#ffb3bc;--ok-fg:#ecebe6;--bad-fg:#ff8593;--mix-fg:#aaa69c;--zebra:#1c1b18;--mark:#4a4220;--faint:#85817a;}}:root{--sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--cond:Bahnschrift,'DIN Alternate','Avenir Next Condensed','Roboto Condensed','Arial Narrow',system-ui,sans-serif;--serif:Charter,'Bitstream Charter','Sitka Text',Cambria,Georgia,serif;--measure:66ch;--page:78rem}:root{color-scheme:light dark}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 var(--sans);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}::selection{background:var(--fg);color:var(--bg)}main{max-width:var(--page);margin:0 auto;padding:0 2rem 2.5rem}a{color:var(--link);text-decoration-thickness:1px;text-underline-offset:.18em;text-decoration-color:var(--muted)}a:hover{text-decoration-color:currentColor;text-decoration-thickness:2px}:focus-visible{outline:2px solid var(--fg);outline-offset:2px}summary{cursor:pointer}summary:focus-visible{outline-offset:1px}h1,h2,h3{font-family:var(--cond);font-stretch:condensed;letter-spacing:-.01em;text-wrap:balance}h1{font-size:2.6rem;line-height:1.05;font-weight:700;margin:2.25rem 0 .35rem}h2{font-size:1.15rem;line-height:1.2;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:3rem 0 0;padding:.5rem 0 .6rem;border-top:3px solid var(--rule)}h3{font-size:1.4rem;line-height:1.15;font-weight:700;margin:0 0 .5rem}.meta{color:var(--muted);font-size:.9rem;margin:.25rem 0}.empty{color:var(--muted);font-style:italic;font-family:var(--serif)}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}[hidden]{display:none!important}.ee-mast{background:var(--mast-bg);color:var(--mast-fg);border-bottom:3px solid var(--mast-bg)}@media (prefers-color-scheme: dark){.ee-mast{border-bottom-color:var(--rule)}}.ee-mast-in{max-width:var(--page);margin:0 auto;padding:.7rem 2rem;display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem 1.5rem}.ee-mast a{color:var(--mast-fg);text-decoration-color:var(--mast-muted)}.ee-brand,.ee-crumbs li:first-child{font:700 1.35rem/1.2 var(--cond);font-stretch:condensed;letter-spacing:-.005em;color:var(--mast-fg)}.ee-brand a,.ee-crumbs li:first-child a{text-decoration:none}.ee-crumbs ol{display:flex;flex-wrap:wrap;align-items:baseline;list-style:none;margin:0;padding:0;font-size:.875rem;color:var(--mast-muted)}.ee-crumbs li+li::before{content:'\203a';margin:0 .45rem;color:var(--mast-muted)}.ee-crumbs li:first-child+li::before{margin-left:.6rem}.ee-crumbs a{color:var(--mast-fg)}.ee-crumbs [aria-current]{color:var(--mast-fg)}.ee-links{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;margin-left:auto;font-size:.875rem}.ee-head{margin:0 0 1.5rem}.ee-head .meta{font-size:1rem}.tier{display:inline-flex;align-items:baseline;gap:.3em;text-indent:0;font:700 1em/1 var(--cond);font-stretch:condensed;white-space:nowrap;color:var(--fg)}.tier::before{content:'';flex:none;width:1.05em;height:1.05em;border-radius:50%;border:.13em solid currentColor;transform:translateY(.14em);background:conic-gradient(currentColor var(--fill),transparent 0)}.tier-x::before{border-style:dotted}.ee-chart{width:100%;border-collapse:collapse;margin:0 0 1rem;font-size:.95rem}.ee-chart caption{text-align:left;font:700 1.15rem/1.2 var(--cond);font-stretch:condensed;text-transform:uppercase;letter-spacing:.04em;padding:.5rem 0 .6rem;border-top:3px solid var(--rule)}.ee-chart th{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:.4rem .75rem;border-bottom:1px solid var(--rule);white-space:nowrap}.ee-chart td{padding:.65rem .75rem;border-bottom:1px solid var(--border);vertical-align:baseline}.ee-chart tbody tr:nth-child(even) td{background:var(--card)}.ee-chart .tier{font-size:1.15rem}.ee-chart td.ee-c-study{font-weight:600;width:44%}.ee-chart td.ee-c-study a{text-decoration:none}.ee-chart tbody tr{position:relative}.ee-chart td.ee-c-study a::after{content:'';position:absolute;inset:0}.ee-chart td.ee-c-study a:hover,.ee-chart tbody tr:hover td.ee-c-study a{text-decoration:underline}.ee-chart .ee-none{color:var(--muted)}.ee-warn,.ee-chart .ee-warn{color:var(--red);font-weight:600}.ee-mark{font-family:var(--sans);font-weight:800;margin-right:.2em}.ee-key{margin:-.5rem 0 0;font-size:.875rem;display:flex;flex-wrap:wrap;gap:.25rem 1.5rem}.ee-key .tier{font-size:1.1em;margin-right:.35rem}.ee-key .ee-mark{font-size:1.1em}.ee-key-box{margin:-.5rem 0 0;font-size:.875rem}.ee-key-box>summary{color:var(--muted);padding:.2rem 0}.ee-key-box>.ee-key{margin:.4rem 0 0;flex-direction:column;gap:.3rem}article.card{padding:1.75rem 1rem;border-top:1px solid var(--border);scroll-margin-top:1rem}section>article.card:nth-of-type(even),#ee-studies:not(.ee-js)>article.card:nth-child(even),#ee-studies.ee-js>article.ee-alt{background:var(--zebra)}h2+article.card,h2+.ee-chart,#ee-studies>article.card:first-child{border-top:0}.ee-card{display:grid;grid-template-columns:minmax(0,var(--measure)) minmax(16rem,1fr);grid-template-rows:auto 1fr;gap:0 2.5rem}.ee-card-main{grid-column:1;grid-row:1/span 2}.ee-card-rate{grid-column:2;grid-row:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .75rem;padding:0 0 .5rem;margin:0 0 .6rem;border-bottom:1px solid var(--border)}.ee-card-side{grid-column:2;grid-row:2}.ee-grp+.ee-grp{border-top:1px solid var(--border);margin-top:.6rem;padding-top:.6rem}.ee-grp>:last-child{margin-bottom:0}.ee-card-rate .label{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;margin:0;color:var(--muted);font-size:.85rem;line-height:1.35}.ee-card-rate .tier{font-size:1.2rem}.ee-card-rate .ee-warn{font-size:.85rem}.ee-card-main p{font:1.075rem/1.62 var(--serif);margin:0}.ee-f{margin:0 0 .4rem;padding-left:8.8rem;text-indent:-8.8rem;font-size:.9rem;line-height:1.45}.ee-f b{display:inline-block;width:8.5rem;padding-right:.75rem;text-indent:0;vertical-align:top;font-weight:600;color:var(--muted);font-size:.8rem;line-height:1.6}.ee-f.ee-flags{color:var(--red);font-weight:600}.warn{background:var(--warn-bg);color:var(--warn-fg);border:1px solid currentColor;padding:.55rem .75rem;margin:0 0 .9rem;font-size:.9rem}.dispute{background:var(--card);color:var(--fg);border:1px solid var(--border);padding:.55rem .75rem;margin:0 0 .9rem;font-size:.875rem;line-height:1.5}.dispute b{color:var(--muted);font-weight:600}.dispute b:first-child{color:var(--red)}@media (prefers-reduced-motion:no-preference){article.card:target{animation:ee-find 1.6s cubic-bezier(.16,1,.3,1)}}@keyframes ee-find{from{background:var(--card);box-shadow:0 0 0 1rem var(--card)}to{background:transparent;box-shadow:0 0 0 1rem transparent}}.seen{list-style:none;padding:0;margin:0}.seen li{padding:.6rem 0;border-bottom:1px solid var(--border)}footer{margin-top:2.5rem}.table-wrap{overflow-x:auto;max-width:100%}table{border-collapse:collapse}.ee-rej th,.ee-rej td:nth-child(3),.ee-rej td:nth-child(4){white-space:nowrap}.ee-rej td:first-child{min-width:8em}th,td{padding:.45rem .75rem;vertical-align:top;text-align:left}th{border-bottom:1px solid var(--rule);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}td{border-bottom:1px solid var(--border)}.ee-src .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ee-src .ee-sub-h{text-transform:none;letter-spacing:0;font-weight:400}.ee-src{width:100%}.ee-src td{vertical-align:baseline}.ee-src tbody tr:nth-child(even) td{background:var(--card)}.ee-src td.ee-url{font-size:.85rem}.ee-src .ee-none{color:var(--muted)}.ee-src .ee-site,.ee-src .ee-feed{display:block}.ee-src .ee-feed{margin-top:.15rem}.ee-src .ee-nw{white-space:nowrap}.ee-src td b a{text-decoration:none}.ee-src td b a:hover{text-decoration:underline}.table-wrap+.ee-key{margin-top:.75rem}.ee-src .ee-broken{color:var(--warn-fg);font-weight:600}.ee-src tr.ee-gone td{color:var(--muted)}.ee-src tr.ee-gone-head th{padding-top:1.25rem;text-align:left}#ee-evidence>h2,#ee-all>h2{font-size:1.6rem;line-height:1.15;margin-top:6rem;padding:.75rem 0 .8rem}.ee-reports{margin:0 0 1rem}.ee-reports summary{color:var(--muted);font-size:.9rem}.ee-reports ul{columns:12rem;margin:.5rem 0 0;padding:0;list-style:none;font-size:.9rem}.ee-reports li{padding:.15rem 0}.ee-index{margin:0 0 1rem}.ee-index ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:0 2rem}.ee-index li{display:grid;grid-template-columns:minmax(0,1fr) 2.5rem;gap:0 .5rem;align-items:baseline;padding:.35rem 0 .2rem;font-size:.9rem}.ee-index a{text-decoration:none}.ee-index a:hover{text-decoration:underline}.ee-index .ee-n{text-align:right;color:var(--muted)}.ee-index .ee-extent{grid-column:1/-1;height:3px;margin-top:.3rem;background:var(--border)}.ee-index .ee-extent span{display:block;height:100%;width:var(--w);background:var(--rule)}.subtopic{scroll-margin-top:1rem}.ee-sub>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:.75rem;margin:2rem 0 .25rem;padding-top:.5rem;border-top:1px solid var(--rule)}.ee-sub>summary::-webkit-details-marker{display:none}.ee-sub>summary h3{margin:0;padding:0;border:0}.ee-sub>summary h3::before{content:"▸";display:inline-block;width:1.1em;color:var(--muted)}.ee-sub[open]>summary h3::before{content:"▾"}.ee-sub>summary:hover h3{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}.ee-sub>summary .meta{margin-left:auto;font-size:.85rem;text-align:right}.ee-legend{margin:0 0 .5rem}.ee-questions{list-style:none;margin:.5rem 0 .75rem;padding:0}.ee-question{padding:.6rem 0;border-bottom:1px solid var(--border)}.ee-cmp{display:block;font-size:.85rem;color:var(--muted)}.ee-question>strong,.ee-question>details>summary>strong{font-weight:600}.ee-question>details.ee-studies{margin:0;font-size:1rem}.ee-question>details.ee-studies>summary{color:var(--fg);list-style-position:inside;cursor:pointer}.ee-question>details.ee-studies>summary:hover strong{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}.ee-question>details.ee-studies>ol{font-size:.9rem}.ee-question.ee-multi{background:var(--card);border-left:3px solid var(--rule);border-bottom:0;padding:.6rem .75rem;margin:.5rem 0}.ee-question.ee-single{padding:.5rem 0 .5rem calc(.75rem + 3px)}.ee-single-q{display:block;font-weight:600}.ee-ungrouped{color:var(--muted);font-style:italic}.ee-ungrouped::first-letter{text-transform:uppercase}.ee-single-row{list-style:none;margin:.2rem 0 0;padding:0;font-size:.85rem;color:var(--muted)}.ee-reports li .meta{margin-left:.4rem;font-size:.85rem}.ee-label{color:var(--muted);white-space:nowrap}.ee-label span{display:inline-block;width:1.1em;font-weight:800}.ee-label-consistent span{color:var(--ok-fg)}.ee-label-contested span{color:var(--bad-fg)}.ee-label-varied{color:var(--mix-fg)}.ee-why{margin:.5rem 0;font-size:.9rem;border:1px solid var(--border);background:var(--card);padding:.4rem .7rem}.ee-why[open]{padding-bottom:.6rem}.ee-why p{margin:.4rem 0;font-family:var(--serif);font-size:1rem;max-width:var(--measure)}.ee-why ul{margin:.4rem 0;padding-left:1.2rem}.ee-why li{margin:.5rem 0}.ee-why blockquote{margin:.5rem 0 .5rem .25rem;padding-left:.9rem;border-left:1px solid var(--rule);font-family:var(--serif);font-size:1rem;max-width:var(--measure)}.ee-studies{margin:.35rem 0;font-size:.9rem}.ee-studies summary{color:var(--muted)}.ee-studies ol{margin:.35rem 0;padding-left:1.5rem}.ee-studies li{margin:.35rem 0}.ee-row{display:grid;grid-template-columns:2.4em minmax(0,1fr);color:inherit;text-decoration:none}.ee-row>.tier{grid-row:1/span 2;font-size:.95em;align-self:start;margin-top:.1em}.ee-q,.ee-row-line{grid-column:2}.ee-q{font-weight:600}.ee-date{color:var(--muted);white-space:nowrap}a.ee-row:hover .ee-q,a.ee-row:hover .ee-row-line{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em}.ee-change{margin:.25rem 0 .25rem 1.5rem}#ee-count{margin:0 0 .5rem;color:var(--muted)}.ee-foot{padding:0 2rem}.ee-foot-in{max-width:calc(var(--page) - 4rem);margin:0 auto;padding:.75rem 0 2.5rem;display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem 1.5rem;border-top:3px solid var(--rule);font-size:.85rem;color:var(--muted)}.ee-foot a{font-weight:600}.ee-foot-end{display:inline-flex;align-items:center;gap:.6rem}.ee-foot a.ee-repo{color:inherit;display:inline-flex}.ee-filter-box{margin:0 0 1rem;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}.ee-filter-box>summary{padding:.6rem 0;font-weight:600}#ee-active{font-weight:400;color:var(--muted)}.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:.9rem 1.5rem;align-items:end;padding:.25rem 0 1rem;font-size:.9rem}.filters label{display:flex;flex-direction:column;gap:.3rem;min-width:0;max-width:100%;color:var(--muted);font-size:.8rem;font-weight:600}.filters label:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:.4rem;color:var(--fg);font-size:.9rem;font-weight:400;padding:.3rem .45rem;border:1px solid transparent}.filters fieldset{grid-column:1/-1;border:1px solid transparent;margin:0;padding:.3rem .45rem;display:flex;flex-wrap:wrap;align-items:center;gap:.25rem 1rem}.filters fieldset label:has(input[type=checkbox]){padding:0;border:0}.filters legend{float:left;padding:0;margin-right:.5rem;color:var(--muted);font-size:.8rem;font-weight:600}.filters select,.filters input[type=search]{width:100%;min-width:0;font:400 .9rem/1.3 var(--sans);color:var(--fg);background:var(--bg);border:1px solid var(--muted);border-radius:0;padding:.4rem .5rem}.filters input[type=checkbox]{accent-color:var(--fg)}.filters .ee-on{color:var(--fg)}.filters .ee-on select,.filters .ee-on input[type=search]{background:var(--mark);border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}.filters label.ee-on:has(input[type=checkbox]),.filters fieldset.ee-on{background:var(--mark);border-color:var(--fg)}#ee-reset{justify-self:start;font:600 .9rem/1.3 var(--sans);padding:.4rem .9rem;color:var(--fg);background:var(--bg);border:1px solid var(--fg);border-radius:0;cursor:pointer}#ee-reset:hover{background:var(--fg);color:var(--bg)}.ee-topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:0 3rem}section.card h2{margin-top:2rem}section.card h2 .ee-echo{color:var(--faint)}section.card ul{list-style:none;margin:.5rem 0;padding:0}section.card li{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:0 .5rem;padding:.45rem 0;border-bottom:1px solid var(--border)}section.card li{position:relative}section.card li a{text-decoration:none}section.card li a::after{content:'';position:absolute;inset:0}section.card li:hover{background:var(--card);box-shadow:-.5rem 0 0 var(--card),.5rem 0 0 var(--card)}@media (prefers-reduced-motion:no-preference){section.card li{transition:background-color .15s,box-shadow .15s}}section.card h2 a{color:inherit;text-decoration:none}section.card h2 a:hover{text-decoration:underline;text-decoration-thickness:2px}section.card h3.ee-earlier{font:700 .8rem/1.2 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:1.25rem 0 0}section.card li.ee-more{display:block;padding-left:3.5rem}section.card nav{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;margin:.75rem 0 0;font-weight:600}@media (max-width:58rem){.ee-card{grid-template-columns:minmax(0,1fr);grid-template-rows:none}.ee-card-main,.ee-card-rate,.ee-card-side{grid-column:1;grid-row:auto}.ee-card-side{margin-top:1rem}}@media (max-width:44rem){main{padding:0 1rem 2rem}.ee-mast-in{padding:.6rem 1rem}.ee-foot{padding:0 1rem}.ee-foot-in{padding-bottom:2rem}.ee-links{margin-left:0}h1{font-size:2rem;margin-top:1.5rem}.ee-f{padding-left:0;text-indent:0}.ee-f b{display:inline;width:auto;padding-right:.25rem}.ee-chart thead{display:none}.ee-chart,.ee-chart tbody,.ee-chart caption{display:block}.ee-chart tr{display:grid;grid-template-columns:3.5rem minmax(0,1fr);gap:.1rem .75rem;padding:.6rem .5rem;border-bottom:1px solid var(--border)}.ee-chart tbody tr:nth-child(even){background:var(--card)}.ee-chart td{display:block;padding:0;border:0;background:none!important;grid-column:2}.ee-chart td.ee-c-grade{grid-column:1;grid-row:1/span 4}.ee-chart td.ee-c-study{width:auto}.ee-chart td[data-name]::before{content:attr(data-name) ': ';color:var(--muted);font-weight:400}}@media print{:root{--bg:#fff;--fg:#000;--rule:#000;--link:#000;--card:#fff;--muted:#444;--border:#bbb}body{background:#fff;color:#000}.ee-mast{background:none;color:#000;border-bottom:3px solid #000}.ee-mast a,.ee-crumbs li:first-child{color:#000}.ee-filter-box,.ee-top-link{display:none}}.tier-a{--fill:100%}.tier-b{--fill:75%}.tier-c{--fill:50%}.tier-d{--fill:25%}.tier-x{--fill:0%}</style>
+</head>
+<body>
+<div class="ee-demo-banner" style="font:14px/1.4 system-ui,sans-serif;background:#fff4d6;color:#3a2c00;border-bottom:1px solid #e6cf8a"><div style="max-width:var(--page,78rem);margin:0 auto;padding:.6em 2rem">Demo run: default settings, the shipped templates, grading in a Claude Code session. Grades, summaries and explanations are written by a language model and can be wrong; check the linked article before relying on a result. Linked articles belong to their authors; people&#x27;s names are left out. This page tracks published research and is not advice of any kind: not medical, health, nutrition or fitness advice, and not financial, legal, safety or other professional advice. Do not base decisions about your health, money, legal matters or safety on it; ask a qualified professional who knows your situation.</div></div>
+<header class="ee-mast" id="ee-top"><div class="ee-mast-in"><nav class="ee-crumbs" aria-label="Breadcrumb"><ol><li><a href="../overview.html">Evidence Echo</a></li><li><a href="exercise.html">Exercise Echo</a></li><li aria-current="page">Report 2026-10-25</li></ol></nav><nav class="ee-links" aria-label="Pages"><a href="exercise.html">All studies</a><a href="exercise-sources.html">Sources</a></nav></div></header>
+<main>
+<header class="ee-head"><h1>Exercise Echo Report - 2026-10-25</h1>
+<p class="meta">65 new studies · 2 disputed</p></header>
+<table class="ee-chart"><caption>In this report</caption><thead><tr><th scope="col">Grade</th><th scope="col">Study</th><th scope="col">Skeptic</th><th scope="col">Red flags</th><th scope="col">Original</th></tr></thead><tbody><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s1">Moderate vs low-intensity cycling in stress-related exhaustion: lower post-exercise HRV at 55% VO2max, not in controls</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s2">Creatine with 6 weeks of resistance training in perimenopausal women: +7.4 points sleep consistency vs placebo, no cognitive edge</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">vendor metric, multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-d"><span class="sr">Tier </span>D</span></td><td class="ee-c-study"><a href="#s3">MX3 saliva osmolality device in the heat: tongue readings varied 31-35% between days, collected saliva 17-18%</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s4">Slow-paced breathing in 962 servicemen: HRV rose for all, most in those breathing &gt;=15/min (RMSSD 15.6 to 21.9 ms)</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-d"><span class="sr">Tier </span>D</span></td><td class="ee-c-study"><a href="#s6">Accelerometer energy expenditure in elite female runners: about 12% (416 kcal/day) above doubly labeled water</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s7">12-month multicomponent training in 288 older adults: 27-46% were high responders per outcome</a></td><td data-name="Skeptic"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td data-name="Red flags"><span class="ee-warn">multiple metrics, regression to mean</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s8">HIIT in D-galactose-aged rats: reversed liver SIRT1/P16 changes and oxidative stress markers</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s9">Evening HIIT session: next-morning flow-mediated dilation 7.6% vs 4.7% without exercise</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s10">14 weeks of periodized max-strength vs strength-power training in 80 athletes: both raised squat 1RM, neither clearly superior</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-d"><span class="sr">Tier </span>D</span></td><td class="ee-c-study"><a href="#s11">NIRS muscle oxygen saturation in running: no leg-to-leg difference on average (bias -0.34%), wide individual limits</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s12">Hyperoxic vs hypoxic Tabata HIIT for 3 weeks: VO2max 37.8 to 41.5 vs 38.3 to 39.8 mL/kg/min</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s13">Elite IPF powerlifters 2013-2026: population peak at age 26.0, top-100 median age falling 0.20 years per year</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s14">Squat, bench and deadlift norms from 74,892 lifters: median relative squat 1.77 vs 1.38 kg/kg in young vs older men</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">vendor metric, selection bias</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s15">Machine learning model of peak ACL force in 204 athletes: XGBoost fit R2 = 0.929</a></td><td data-name="Skeptic"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s16">Adding blood flow restriction to on-field team-sport training: relative mean power -0.50 W/kg in favour of BFR, low certainty</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s17">Fixed-load biceps curls to exhaustion: trained men did 16.3 vs 13.3 reps with less muscle swelling (12.7% vs 18.1%)</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s18">Relative age effect in 1,322 Chinese youth table tennis players: present at national level, absent provincially</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s19">Static stretching in 48 elite gymnasts: 60 s holds cut jump height, 90 s holds did not</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s20">Physiotherapy adherence after ankle sprain in 118 pro athletes: return to sport 8.0 vs 14.5 weeks for high vs low adherence</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s21">Limb asymmetry in 75 youth soccer players: dominant side 0.22 s faster on change of direction, shrinking with maturity</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s22">Exercise prehabilitation before ankle ligament surgery in 276 patients: 2-year FAOS 92.4 vs 80.0 with standard care</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">selection bias</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s23">Creatine-based multi-ingredient supplement over 4 weeks: no extra leg-press 1RM gain vs placebo</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s24">Final-rep bar velocity in 62 pro Australian footballers: strong link to reps in reserve (marginal r2 = 0.78)</a></td><td data-name="Skeptic"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-d"><span class="sr">Tier </span>D</span></td><td class="ee-c-study"><a href="#s25">Dips vs wheelchair speed in 13 wheelchair athletes: r = 0.892 at international level, r = -0.919 at national level</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">cherry pick, numbers not in text</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s26">Countermovement jumps in 14 college soccer players: jump momentum and phase timing fell after a match</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s27">Internal load in 28 college football players over 10 weeks: linemen TRIMP 135 vs 101 AU and HRV 53.4 vs 72.6 ms vs skill players</a></td><td data-name="Skeptic"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s28">Physical tests and playing time in 144 NCAA D3 baseball players: starting pitchers 5074 vs 4779 W peak power</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation, multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s29">Countermovement jump testing in 41 academy rugby league players: jump height CV 6.64%, 33 of 37 metrics reliable</a></td><td data-name="Skeptic"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s30">Caffeine mouthwash before a Wingate test: only a 30-second rinse raised peak power vs placebo</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s31">Quadriceps strength in 90 people with knee osteoarthritis: not linked to self-reported activity (delta R2 = 0.007)</a></td><td data-name="Skeptic"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s32">Multicomponent exercise in mild cognitive impairment (17 RCTs, 1,260 people): better global cognition and memory, not executive function</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s33">Melatonin after exhaustive swimming in 60 rats: faster glycogen resynthesis and lower muscle-damage markers</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s34">Static flexibility tests in 157 elite African footballers: no link to agility (Random Forest R2 = 0.008)</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s35">Hydrogen-rich water for 14 days in 11 men: less soreness after downhill running (AUC d = 0.71), strength not preserved</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim, multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s36">Exercise in coronary heart disease (23 RCTs): aerobic capacity SMD 0.65 and quality of life SMD 0.42 vs usual care</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation, multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s37">Body morphology in 29 elite aerials skiers: models explained 89.2% of competitive performance</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s38">Traditional vs band-assisted Nordic hamstring training for 8 weeks: eccentric force up about 17% in both, no difference</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">cherry pick, headline overclaim, no baseline, selection bias</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s39">Mendelian randomization: genetically higher vigorous activity linked to lower type 2 diabetes risk (OR 0.402)</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s40">6 weeks of squat training in novices: load-velocity profile changed mainly in the first 2 weeks while 1RM kept rising</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s41">Aerobic training in cardiovascular disease (28 RCTs, 1,659 people): flow-mediated dilation +2.29%</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s42">BFR interval cycling vs HIIT in 40 adolescent cyclists: peak torque +21.47 vs +9.28 N·m, 78% vs 64% retained</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s43">Southpaw vs orthodox kickboxers at the 2023 world championship: southpaws landed more left straights and left low kicks</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation, multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s44">Fitness and heart rate recovery in 2,815 exercise tests: faster recovery at higher fitness, slower in low-fit women</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-d"><span class="sr">Tier </span>D</span></td><td class="ee-c-study"><a href="#s45">Xiaomi Mi Band 5 in 38 older adults: steps accurate (MAPE -3.7%), calories far off (MAPE 95.46%)</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">selection bias</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s46">4-minute daily strength routine in 97 adults over 65: 4.2 more chair stands in 30 s after 12 weeks vs no intervention</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim</span></td><td data-name="Original"><span class="ee-none">—</span></td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s47">Daily steps in about 300 older adults with early Alzheimer signs: benefits from 3,000 steps, best at 5,000-7,500</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation, headline overclaim</span></td><td data-name="Original"><span class="ee-warn"><span class="ee-mark" aria-hidden="true">#</span>numbers not found</span></td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s49">Limb loading in 12 growing guinea fowl: untrained birds used 23% more energy carrying the load, trained birds none</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim</span></td><td data-name="Original">not checked</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s50">Personalized gait retraining for knee osteoarthritis in 68 patients: pain down 2.5 vs 1.3 points vs sham at one year</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim, selection bias</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s51">VO2max reference values from 22,379 US lab tests: Trondheim adults aged 70-77 match US 40-50-year-olds</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">selection bias</span></td><td data-name="Original">not checked</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s52">Exercise after stroke (52 RCTs, 2,329 patients): whole-body vibration improved balance most, Berg score +9.86</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s53">Optimal power load strength training (meta-analysis): jump height effect 0.586, sprint and peak power unclear</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s54">Partial blood flow restriction during cycling in 15 young men: slower heart rate recovery at 30-120 s</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s55">Injuries in 390 female artistic swimmers: incidence rose from 0.23 to 1.18 per 1,000 h from under-12 to seniors</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s56">Functional tests in 115 professional ballet dancers: 30% had over 15% limb asymmetry on the vertical hop</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">stale data, selection bias</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s57">Circuit vs traditional resistance training at 60% vs 80% 1RM: more reps and less fatigue at 60%, structure irrelevant</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s58">Heavy back squat (90% 1RM) vs light jump squat (30% 1RM) before rebound jumps: both raised jump height, no winner</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">no baseline</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s59">Three consecutive days of 5-km runs in 16 adults: pre-run plantar fascia thickness rose from day 1 to days 2 and 3</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s60">24 weeks of resistance training in 42 hemodialysis patients: higher active MMP-2, unchanged MMP-9</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s61">Inspiratory muscle training vs TheraBand training in 60 healthy adults: larger gain in inspiratory pressure with IMT</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">no baseline</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s62">4-year 100-m tracking of East and South African adolescent sprinters: gains slowed toward a plateau</a></td><td data-name="Skeptic"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim, regression to mean</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-a"><span class="sr">Tier </span>A</span></td><td class="ee-c-study"><a href="#s63">Guarana vs caffeine vs placebo before a 30-s jump test: only guarana raised peak power, +4.0% vs placebo</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim, multiple metrics</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s64">Rugby recovery intervals 2022-2025: sevens rest rose from 7.9 h (Taiwan) to 15.0 h (world tier)</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-none">none</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s65">Physical activity in 294 people with Parkinson disease: most active lost 0.007 vs 0.478 cognitive points a year</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation, headline overclaim</span></td><td data-name="Original">not checked</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s66">47-year Swedish cohort of 427 people: capacity peaked around 26-36 and fell 30-48% by age 63</a></td><td data-name="Skeptic"><span class="ee-none">—</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation</span></td><td data-name="Original">not checked</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s67">Daily activity and sleep in young adults: as little as 10 minutes of MVPA a day linked to more deep sleep</a></td><td data-name="Skeptic"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td data-name="Red flags"><span class="ee-warn">correlation causation, stale data, headline overclaim, vendor metric</span></td><td data-name="Original">not checked</td></tr><tr><td class="ee-c-grade"><span class="tier tier-b"><span class="sr">Tier </span>B</span></td><td class="ee-c-study"><a href="#s5">Recreational masters runners vs sedentary peers: ascending aorta 3.25 vs 2.90 cm, within normal limits</a></td><td data-name="Skeptic"><span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>D</span></td><td data-name="Red flags"><span class="ee-warn">selection bias</span></td><td data-name="Original">no primary source</td></tr><tr><td class="ee-c-grade"><span class="tier tier-c"><span class="sr">Tier </span>C</span></td><td class="ee-c-study"><a href="#s48">Exercise and the DEAF1 gene in aging flies and mice: exercise lowered DEAF1 and rebalanced mTORC1</a></td><td data-name="Skeptic"><span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>D</span></td><td data-name="Red flags"><span class="ee-warn">headline overclaim</span></td><td data-name="Original">not checked</td></tr></tbody></table><details class="ee-key-box"><summary>How to read this table</summary><p class="meta ee-key"><span class="ee-key-g"><span class="tier tier-a"><span class="sr">Tier </span>A</span> <span class="tier tier-b"><span class="sr">Tier </span>B</span> <span class="tier tier-c"><span class="sr">Tier </span>C</span> <span class="tier tier-d"><span class="sr">Tier </span>D</span> strongest to weakest evidence</span><span class="ee-key-g"><span class="tier tier-x"><span class="sr">Tier </span>?</span> ungraded</span><span class="ee-key-g">Skeptic: the blind second grade, — when it agrees</span><span class="ee-key-g"><span class="ee-warn"><span class="ee-mark">≠</span></span>disputed</span><span class="ee-key-g"><span class="ee-warn"><span class="ee-mark">#</span></span>numbers not found in the original</span><span class="ee-key-g"><span class="ee-warn"><span class="ee-mark">∅</span></span>original not reachable</span></p></details>
+<section>
+<h2>New studies</h2>
+<article class="card" id="s1" data-study="1"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Moderate vs low-intensity cycling in stress-related exhaustion: lower post-exercise HRV at 55% VO2max, not in controls</h3>
+<p>A study in the European Journal of Applied Physiology had 30 people with stress-related exhaustion and 29 matched healthy controls each ride two 22-minute sessions at 40% and 55% of estimated VO2max in a randomized crossover. The exhaustion group showed lower RMSSD than controls, mostly after exercise, and only in that group did the moderate intensity lower RMSSD further. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Recovery markers · recovery-markers</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Exercise &amp; health outcomes</p><p class="ee-f"><b>Question:</b> Does moderate- versus low-intensity exercise lower post-exercise HRV in stress-related exhaustion?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-25</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06467-4" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s2" data-study="2"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Creatine with 6 weeks of resistance training in perimenopausal women: +7.4 points sleep consistency vs placebo, no cognitive edge</h3>
+<p>A study in the European Journal of Applied Physiology randomized 51 perimenopausal women to creatine, placebo or a non-training control alongside twice-weekly resistance training. Stroop times improved in all groups equally, while creatine showed higher prefrontal oxygenation and 7.4 percentage points more sleep consistency (a WHOOP-derived measure) than placebo at week 6; the authors call it exploratory. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">vendor metric, multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Ergogenic aids</p><p class="ee-f"><b>Question:</b> Does creatine with resistance training improve cognition or sleep versus placebo?</p><p class="ee-f"><b>About:</b> Creatine</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06481-6" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s3" data-study="3"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>independent · judge: C</span></p>
+</div>
+<div class="ee-card-main">
+<h3>MX3 saliva osmolality device in the heat: tongue readings varied 31-35% between days, collected saliva 17-18%</h3>
+<p>A study in the European Journal of Applied Physiology tested 20 active adults in two 120-minute exercise trials in the heat against a laboratory osmometer. Collected-saliva readings were moderately reliable and tracked the reference (R2 0.57-0.82) but read about 24-26 mOsm/kg low; direct tongue readings were unreliable. In this small validation sample (n=20), no control group applies. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> How reliable is the MX3 saliva osmolality device during exercise in the heat?</p><p class="ee-f"><b>About:</b> MX3 Hydration Testing System</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06476-3" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s4" data-study="4"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Slow-paced breathing in 962 servicemen: HRV rose for all, most in those breathing &gt;=15/min (RMSSD 15.6 to 21.9 ms)</h3>
+<p>A study in the European Journal of Applied Physiology analysed the ADVANCE cohort: 962 male UK military personnel, about half with combat injury, measured during five minutes of spontaneous and five of slow (6/min) breathing. All HRV measures rose with slow breathing; injury, walking distance and activity did not change the effect, but a higher baseline breathing rate did. The breathing order was fixed and the effect is acute. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Recovery markers · recovery-markers</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> Does slow-paced breathing raise heart rate variability?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06470-9" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s6" data-study="6"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>independent · judge: C</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Accelerometer energy expenditure in elite female runners: about 12% (416 kcal/day) above doubly labeled water</h3>
+<p>A study in the European Journal of Applied Physiology reports on 16 elite female university runners, in a small validation study. The Cunningham equation estimated basal metabolic rate within about 1.6% of indirect calorimetry, while the triaxial accelerometer overestimated total energy expenditure by about 12% versus doubly labeled water. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> How accurately does an accelerometer estimate total energy expenditure in athletes?</p><p class="ee-f"><b>About:</b> Cunningham equation</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06458-5" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s7" data-study="7"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>12-month multicomponent training in 288 older adults: 27-46% were high responders per outcome</h3>
+<p>A study in the European Journal of Applied Physiology analysed 288 community-dwelling older adults from a 12-month training trial without a non-training control. Grip and knee extension strength, walking speed and distance improved on average; 46% were high responders in two to five outcomes, linked to multimorbidity, younger age, lower BMI and higher resistance-training adherence. Responder labels are sensitive to measurement noise. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">multiple metrics, regression to mean</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Maximal strength · maximal-strength</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Ageing &amp; sarcopenia</p><p class="ee-f"><b>Question:</b> What share of older adults respond well to multicomponent training?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06475-4" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s8" data-study="8"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>HIIT in D-galactose-aged rats: reversed liver SIRT1/P16 changes and oxidative stress markers</h3>
+<p>A study in the European Journal of Applied Physiology assigned 28 male rats to four groups (control, HIIT, D-galactose aging, D-galactose plus HIIT) for eight weeks. HIIT restored AMPK, SIRT1 and PGC-1alpha expression, lowered malondialdehyde and inflammatory cytokines and raised antioxidant enzymes. This is an animal model; human relevance is not tested. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> HIIT &amp; sprint training</p><p class="ee-f"><b>Question:</b> Does HIIT reduce aging-related oxidative stress in rat liver?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06484-3" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s9" data-study="9"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Evening HIIT session: next-morning flow-mediated dilation 7.6% vs 4.7% without exercise</h3>
+<p>A study in the European Journal of Applied Physiology had 11 healthy young men complete a 30-minute late-afternoon HIIE session and a control condition in a randomized crossover. The usual early-morning drop in endothelial function was blunted after exercise, and night-time systolic pressure was lower. The sample is very small. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> HIIT &amp; sprint training</p><p class="ee-f"><b>Question:</b> Does an evening HIIT session raise next-morning endothelial function?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-15</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06468-3" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s10" data-study="10"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>14 weeks of periodized max-strength vs strength-power training in 80 athletes: both raised squat 1RM, neither clearly superior</h3>
+<p>A study in the European Journal of Applied Physiology matched 80 athletes into back-squat, jump-squat (optimal power load), isokinetic and control groups. Both free-weight programs raised 1RM while the control group declined; jump height rose only with squat training and power output at 40-80% 1RM only with jump squats; isokinetic training changed little. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Maximal strength · maximal-strength</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Strength</p><p class="ee-f"><b>Question:</b> Does a dedicated power phase raise strength more than max-strength training alone?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-14</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06477-2" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s11" data-study="11"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>independent · judge: C</span></p>
+</div>
+<div class="ee-card-main">
+<h3>NIRS muscle oxygen saturation in running: no leg-to-leg difference on average (bias -0.34%), wide individual limits</h3>
+<p>A study in the European Journal of Applied Physiology had 48 young adults run two graded treadmill tests with Moxy NIRS sensors on both thighs. There was no systematic side difference at any workload, regardless of fat thickness, but the limits of agreement were wide, so individual side comparisons are unreliable. Small within-subject measurement study. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Endurance training</p><p class="ee-f"><b>Question:</b> Does muscle oxygen saturation differ between legs during running?</p><p class="ee-f"><b>About:</b> Moxy Monitor</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-14</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06469-2" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s12" data-study="12"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Hyperoxic vs hypoxic Tabata HIIT for 3 weeks: VO2max 37.8 to 41.5 vs 38.3 to 39.8 mL/kg/min</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation randomized 23 active men to supramaximal Tabata intervals breathing 60% or 16% oxygen, nine sessions in total. The hyperoxic group showed larger baseline-adjusted VO2max and threshold gains and lower peak lactate. There was no normoxic arm and the authors label the study exploratory. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> VO2max · vo2max</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> HIIT &amp; sprint training</p><p class="ee-f"><b>Question:</b> Does hyperoxic HIIT raise VO2max more than hypoxic HIIT?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02115-8" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s13" data-study="13"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Elite IPF powerlifters 2013-2026: population peak at age 26.0, top-100 median age falling 0.20 years per year</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation analysed 431,476 OpenIPF entries from 161,073 lifters over 2013-2026. The age of the active population did not change, but top-100 and podium lifters got younger (0.20 and 0.37 years per year) while their scores rose; age at first recorded competition fell only slightly. Descriptive trend analysis.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> 2013-2026</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Are elite powerlifters getting younger over time?</p><p class="ee-f"><b>About:</b> International Powerlifting Federation</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02198-3" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s14" data-study="14"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Squat, bench and deadlift norms from 74,892 lifters: median relative squat 1.77 vs 1.38 kg/kg in young vs older men</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation derived percentile norms from 2024 user-submitted data on the Strength Level website (64,457 males and 10,435 females aged 12-79). Relative strength peaked in young adulthood and was lower in middle and older age; young and older women squatted a median 1.30 and 0.99 kg/kg. Self-reported, self-selected data on a platform whose founder co-authored the study.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">vendor metric, selection bias</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Maximal strength · maximal-strength</p><p class="ee-f"><b>Research:</b> 2024</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Strength</p><p class="ee-f"><b>Question:</b> What are typical squat, bench and deadlift strength levels by age and sex?</p><p class="ee-f"><b>About:</b> Strength Level</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02195-6" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s15" data-study="15"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Machine learning model of peak ACL force in 204 athletes: XGBoost fit R2 = 0.929</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation recorded side-cutting biomechanics and EMG in 204 male football and basketball players and trained models to predict peak ACL force. Knee flexion angle and hamstring-to-quadriceps activation ratio were the strongest predictors. The model was validated internally only and the feature importances are not causal. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Injury prevention &amp; rehab</p><p class="ee-f"><b>Question:</b> Can machine learning predict peak ACL force from biomechanics?</p><p class="ee-f"><b>About:</b> XGBoost</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02140-7" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s16" data-study="16"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Adding blood flow restriction to on-field team-sport training: relative mean power -0.50 W/kg in favour of BFR, low certainty</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation pooled 5 trials (102 athletes, search to July 2026). BFR may improve 30-second mean power, while effects on 1RM, VO2, repeated sprints and jump height were unclear, and all intervals crossed zero under stricter inference. Certainty was rated low to very low.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> searched to July 2026</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Does adding blood flow restriction to on-field training raise anaerobic power?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02120-x" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s17" data-study="17"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Fixed-load biceps curls to exhaustion: trained men did 16.3 vs 13.3 reps with less muscle swelling (12.7% vs 18.1%)</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation compared 20 advanced and 20 novice male lifters doing 10-kg curls to failure, with ultrasound and EMG. Trained men did more reps and showed a smaller rise in muscle thickness; a combined classifier sorted fatigue stages with 86% internal accuracy. Groups were not randomized and the same load was a different relative intensity for each. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> Do resistance-trained men tolerate a fixed-load curl set better than novices?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02188-5" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s18" data-study="18"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Relative age effect in 1,322 Chinese youth table tennis players: present at national level, absent provincially</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation analysed birth quarters of players at the 2024-2025 national and Liaoning provincial youth championships. Players born early in the year were over-represented at the national level, more so in younger age groups. Cross-sectional data.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> 2024-2025</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Are relatively older players over-represented in youth sport selection?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02160-3" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s19" data-study="19"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Static stretching in 48 elite gymnasts: 60 s holds cut jump height, 90 s holds did not</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation tested Italian Gold-level gymnasts on repeated countermovement jumps before and after two lower-limb stretching protocols. After 60 s holds, jump height, RSI and power fell; after 90 s holds nothing changed, and males showed no decline. There was no non-stretching control. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Flexibility &amp; mobility</p><p class="ee-f"><b>Question:</b> Does static stretching reduce jump performance?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-22</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-01871-x" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s20" data-study="20"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Physiotherapy adherence after ankle sprain in 118 pro athletes: return to sport 8.0 vs 14.5 weeks for high vs low adherence</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation analysed a single-centre retrospective cohort. Each 10-point rise in session completion was associated with faster return to sport (HR 1.27), lower odds of ankle instability and less residual pain, partly through lower kinesiophobia. Associations only, not a trial. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Pain &amp; function · pain-function</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Injury prevention &amp; rehab</p><p class="ee-f"><b>Question:</b> Is higher physiotherapy adherence linked to faster return to sport after ankle sprain?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-22</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02142-5" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s21" data-study="21"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Limb asymmetry in 75 youth soccer players: dominant side 0.22 s faster on change of direction, shrinking with maturity</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation tested national-level male youth players on balance and change-of-direction tests. The dominant limb performed better on every test, and maturity offset explained 15-62% of the asymmetry variance, with asymmetry falling as players matured. Cross-sectional design. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Does the dominant limb outperform the non-dominant in balance and change of direction?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-21</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02194-7" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s22" data-study="22"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Exercise prehabilitation before ankle ligament surgery in 276 patients: 2-year FAOS 92.4 vs 80.0 with standard care</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation enrolled patients scheduled for arthroscopic Brostrom repair in 2021-2022 and gave about half a 4-week supervised prehab program, with 24-month follow-up (92% completion). The prehab group scored higher on sport and quality-of-life subscales and other ankle measures. The control group was not randomized.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">selection bias</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Pain &amp; function · pain-function</p><p class="ee-f"><b>Research:</b> 2021-2024</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Injury prevention &amp; rehab</p><p class="ee-f"><b>Question:</b> Does exercise prehabilitation improve outcomes after ankle ligament surgery?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-21</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02186-7" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s23" data-study="23"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Creatine-based multi-ingredient supplement over 4 weeks: no extra leg-press 1RM gain vs placebo</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation randomized 46 male lifting novices (40 analysed) in a double-blind placebo-controlled trial with identical training. Strength rose equally in both groups, while the supplement group gained more muscle mass and thigh girth and reported better recovery; kidney markers stayed normal. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Maximal strength · maximal-strength</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Ergogenic aids</p><p class="ee-f"><b>Question:</b> Does creatine-based supplementation add strength gains during resistance training versus placebo?</p><p class="ee-f"><b>About:</b> Creatine</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-21</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02191-w" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s24" data-study="24"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Final-rep bar velocity in 62 pro Australian footballers: strong link to reps in reserve (marginal r2 = 0.78)</h3>
+<p>A study in the International Journal of Strength and Conditioning had athletes take bench press sets at 80-85% 1RM to failure on two occasions. The velocity-RIR relationship held regardless of sex, height, load or experience, and was repeatable between sessions (CV 7-15%). No control group applies. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Intensity &amp; proximity to failure</p><p class="ee-f"><b>Question:</b> Can final-repetition velocity estimate repetitions in reserve?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-25</p><p class="ee-f"><b>Coverage:</b> <a href="https://journal.iusca.org/index.php/Journal/article/view/619" rel="noopener noreferrer">International Journal of Strength and Conditioning</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s25" data-study="25"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>independent · judge: C</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Dips vs wheelchair speed in 13 wheelchair athletes: r = 0.892 at international level, r = -0.919 at national level</h3>
+<p>A study in the International Journal of Strength and Conditioning reports a small test with Japanese wheelchair racers. Across all athletes dip count and peak roller speed were not correlated; only in the two small subgroups were they related, in opposite directions. Very small sample; treat as preliminary. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick</span></p><p class="ee-f"><b>Numbers not found in the text:</b> <span class="ee-warn">0.919</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Is dip-test performance linked to wheelchair sprint speed?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-21</p><p class="ee-f"><b>Coverage:</b> <a href="https://journal.iusca.org/index.php/Journal/article/view/493" rel="noopener noreferrer">International Journal of Strength and Conditioning</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s26" data-study="26"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Countermovement jumps in 14 college soccer players: jump momentum and phase timing fell after a match</h3>
+<p>A study in the International Journal of Strength and Conditioning tested Division II female players before and after an off-season exhibition game. Braking and propulsive phases shortened, depth was shallower and jump momentum fell, while force, power and velocity metrics did not change. No control group, single match. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Do countermovement jump metrics fall after a soccer match?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-02</p><p class="ee-f"><b>Coverage:</b> <a href="https://journal.iusca.org/index.php/Journal/article/view/554" rel="noopener noreferrer">International Journal of Strength and Conditioning</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s27" data-study="27"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Internal load in 28 college football players over 10 weeks: linemen TRIMP 135 vs 101 AU and HRV 53.4 vs 72.6 ms vs skill players</h3>
+<p>A study in the International Journal of Strength and Conditioning monitored players with Firstbeat chest straps across a 10-week season. Linemen carried the highest internal load and showed the lowest pre-practice HRV; the COMBO and SKILL groups had only 3 and 5 players. Observational pilot study. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Recovery markers · recovery-markers</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Recovery &amp; sleep</p><p class="ee-f"><b>Question:</b> Do American football linemen show lower pre-practice HRV than skill players?</p><p class="ee-f"><b>About:</b> Firstbeat</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Coverage:</b> <a href="https://journal.iusca.org/index.php/Journal/article/view/549" rel="noopener noreferrer">International Journal of Strength and Conditioning</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s28" data-study="28"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Physical tests and playing time in 144 NCAA D3 baseball players: starting pitchers 5074 vs 4779 W peak power</h3>
+<p>A study in the International Journal of Strength and Conditioning tested players from three universities before their season. Starters were older and better on countermovement jump metrics, and starting hitters had stronger grip (109 vs 101 kg). Cross-sectional comparisons across many metrics; age is a confounder. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Do starting baseball players outperform backups on physical tests?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-18</p><p class="ee-f"><b>Coverage:</b> <a href="https://journal.iusca.org/index.php/Journal/article/view/641" rel="noopener noreferrer">International Journal of Strength and Conditioning</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s29" data-study="29"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Countermovement jump testing in 41 academy rugby league players: jump height CV 6.64%, 33 of 37 metrics reliable</h3>
+<p>A study in the International Journal of Strength and Conditioning repeated three CMJ trials 48 hours apart in club settings. Jump height and momentum showed good to excellent reliability (ICC 0.78 and 0.90), and the authors give minimal detectable changes for profiling. Reliability study, no intervention. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> How reliable are countermovement jump metrics between sessions?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-07</p><p class="ee-f"><b>Coverage:</b> <a href="https://journal.iusca.org/index.php/Journal/article/view/605" rel="noopener noreferrer">International Journal of Strength and Conditioning</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s30" data-study="30"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Caffeine mouthwash before a Wingate test: only a 30-second rinse raised peak power vs placebo</h3>
+<p>A study in the International Journal of Strength and Conditioning tested active men in a randomized crossover with 10, 20 or 30 s rinses of a 2% caffeine solution or a placebo. The 30 s rinse raised peak power and shortened time to peak; mean power and fatigue index did not change, and shorter rinses had no effect. The sample size is not given in the abstract. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Ergogenic aids</p><p class="ee-f"><b>Question:</b> Does a caffeine-based supplement raise peak anaerobic power compared with placebo? · ✓ consistent (2 independent studies) · corroborated by 1 other independent study</p><p class="ee-f"><b>About:</b> Caffeine</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-04</p><p class="ee-f"><b>Coverage:</b> <a href="https://journal.iusca.org/index.php/Journal/article/view/596" rel="noopener noreferrer">International Journal of Strength and Conditioning</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s31" data-study="31"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Quadriceps strength in 90 people with knee osteoarthritis: not linked to self-reported activity (delta R2 = 0.007)</h3>
+<p>A study in the Journal of Science in Sport and Exercise analysed participants before and after a therapeutic intervention. After adjusting for age, sex, severity and pain, strength was not associated with activity at baseline, and strength gains did not lead to more activity up to 4 weeks after the program. Secondary analysis without a control group. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Injury prevention &amp; rehab</p><p class="ee-f"><b>Question:</b> Is quadriceps strength linked to physical activity in knee osteoarthritis?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-21</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00403-w" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s32" data-study="32"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Multicomponent exercise in mild cognitive impairment (17 RCTs, 1,260 people): better global cognition and memory, not executive function</h3>
+<p>A study in the Journal of Science in Sport and Exercise pooled randomized controlled trials against control conditions. Subgroups suggested larger gains with higher training frequency and 13-24-week programs. The dose findings come from exploratory subgroup analyses. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Exercise &amp; health outcomes</p><p class="ee-f"><b>Question:</b> Does multicomponent exercise improve global cognition in mild cognitive impairment?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-21</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00402-x" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s33" data-study="33"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Melatonin after exhaustive swimming in 60 rats: faster glycogen resynthesis and lower muscle-damage markers</h3>
+<p>A study in the Journal of Science in Sport and Exercise gave rats melatonin (10 mg/kg) or a vehicle after a 60-minute swim, sampling at 6, 12 and 48 hours. Melatonin raised glycogen in several muscles and the liver and lowered triglycerides, CK and LDH, with the largest effect at 12 hours. Animal study only. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Recovery markers · recovery-markers</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Recovery &amp; sleep</p><p class="ee-f"><b>Question:</b> Does melatonin after exercise speed muscle glycogen resynthesis?</p><p class="ee-f"><b>About:</b> Melatonin</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-29</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00395-7" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s34" data-study="34"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Static flexibility tests in 157 elite African footballers: no link to agility (Random Forest R2 = 0.008)</h3>
+<p>A study in the Journal of Science in Sport and Exercise tested male players from seven nations on Thomas, 90/90 hamstring and Illinois agility tests. Neither statistics nor machine-learning models found that flexibility predicts agility; test number, age and position explained most variance. Cross-sectional data. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Flexibility &amp; mobility</p><p class="ee-f"><b>Question:</b> Do static flexibility test results predict agility?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-15</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00401-y" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s35" data-study="35"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Hydrogen-rich water for 14 days in 11 men: less soreness after downhill running (AUC d = 0.71), strength not preserved</h3>
+<p>A study in the Journal of Science in Sport and Exercise ran a double-blind placebo crossover with 1.74 L/day of hydrogen-rich water around a 30-minute downhill run. Soreness, CK and HSP70 were lower than with placebo, but 1RM strength loss and other damage markers were unchanged. Very small sample. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim, multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Recovery markers · recovery-markers</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Recovery &amp; sleep</p><p class="ee-f"><b>Question:</b> Does a recovery supplement reduce muscle soreness after damaging exercise versus placebo?</p><p class="ee-f"><b>About:</b> Hydrogen-rich water</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-14</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00400-z" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s36" data-study="36"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Exercise in coronary heart disease (23 RCTs): aerobic capacity SMD 0.65 and quality of life SMD 0.42 vs usual care</h3>
+<p>A study in the Journal of Science in Sport and Exercise pooled trials searched to April 2026. Aerobic training, more than three sessions a week and sessions under 60 minutes showed the largest effects. The prescription findings come from subgroup cuts.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> VO2max · vo2max</p><p class="ee-f"><b>Research:</b> searched to April 2026</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Exercise &amp; health outcomes</p><p class="ee-f"><b>Question:</b> Does exercise training raise aerobic capacity in coronary heart disease?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-28</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00393-9" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s37" data-study="37"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Body morphology in 29 elite aerials skiers: models explained 89.2% of competitive performance</h3>
+<p>A study in the Journal of Science in Sport and Exercise tested Chinese national-team athletes preparing for the Beijing 2022 Olympics. A high-muscle, low-fat physique with strong limbs and core was associated with better scores; morphology alone explained 63.6%. Many predictors for a small sample; the data is from before 2022.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> before 2022 Olympics</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Is body morphology linked to competitive performance in aerials skiers?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-12</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00396-6" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s38" data-study="38"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Traditional vs band-assisted Nordic hamstring training for 8 weeks: eccentric force up about 17% in both, no difference</h3>
+<p>A study in the Journal of Science in Sport and Exercise assigned 45 collegiate athletes (30 completed with at least 80% adherence) to two Nordic variants. Both raised eccentric and long-length isometric knee flexor force, break angle and hip flexion ROM; the assisted version caused less early soreness. There was no non-training control. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">cherry pick, headline overclaim, no baseline, selection bias</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Maximal strength · maximal-strength</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Strength</p><p class="ee-f"><b>Question:</b> Does band-assisted Nordic hamstring training build knee flexor strength differently from traditional NHE?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-03</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00397-5" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s39" data-study="39"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Mendelian randomization: genetically higher vigorous activity linked to lower type 2 diabetes risk (OR 0.402)</h3>
+<p>A study in Sport Sciences for Health used UK Biobank genetic instruments and FinnGen outcome data for eight activity traits. Accelerometer-measured vigorous activity and rest-activity rhythm amplitude showed protective effects, partly mediated by beta-hydroxybutyrate (11.2%) and SHBG (4.4%). The causal reading rests on MR assumptions. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Health &amp; mortality outcomes · health-mortality-outcomes</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Exercise &amp; health outcomes</p><p class="ee-f"><b>Question:</b> Does more vigorous physical activity lower type 2 diabetes risk?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01974-5" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s40" data-study="40"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>6 weeks of squat training in novices: load-velocity profile changed mainly in the first 2 weeks while 1RM kept rising</h3>
+<p>A study in Sport Sciences for Health tracked untrained people through the program and compared them with short- and long-term trained lifters. Theoretical maximal strength fell relative to 1RM and the slope flattened early; profiles did not differ by training status, though the evidence was inconclusive. Sample sizes are not stated in the abstract. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Maximal strength · maximal-strength</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Strength</p><p class="ee-f"><b>Question:</b> Does early squat training change the load-velocity profile?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-17</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01983-4" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s41" data-study="41"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Aerobic training in cardiovascular disease (28 RCTs, 1,659 people): flow-mediated dilation +2.29%</h3>
+<p>A study in Sport Sciences for Health pooled trials of aerobic training against controls. Exercise-reporting quality (CERT score 12 of 19 on average) did not predict the size of the benefit, nor did adherence or training volume. Heterogeneity was very high (I2 92%). The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Exercise &amp; health outcomes</p><p class="ee-f"><b>Question:</b> Does aerobic training improve endothelial function in cardiovascular disease?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-16</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01976-3" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s42" data-study="42"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>BFR interval cycling vs HIIT in 40 adolescent cyclists: peak torque +21.47 vs +9.28 N·m, 78% vs 64% retained</h3>
+<p>A study in Sport Sciences for Health compared 4 weeks of low-intensity cycling with cuffs and conventional HIIT, followed by two weeks without training. The two protocols produced different neuromuscular changes, with larger torque gains and better retention after BFR. The protocols were not work-matched and there was no non-training control. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Maximal strength · maximal-strength</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> HIIT &amp; sprint training</p><p class="ee-f"><b>Question:</b> Does low-intensity BFR interval cycling raise peak torque more than HIIT?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-16</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01979-0" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s43" data-study="43"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Southpaw vs orthodox kickboxers at the 2023 world championship: southpaws landed more left straights and left low kicks</h3>
+<p>A study in Sport Sciences for Health coded 150 matches (300 competitors, 37 southpaws) from video. Total punch and kick counts did not differ, but guard type shifted which side landed. Many uncorrected comparisons and no link to winning.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> 2023</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Do southpaw kickboxers land more lead-side techniques than orthodox fighters?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-10</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01977-2" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s44" data-study="44"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Fitness and heart rate recovery in 2,815 exercise tests: faster recovery at higher fitness, slower in low-fit women</h3>
+<p>A study in Sport Sciences for Health clustered 2,331 men and 484 women by ventilatory thresholds and VO2max after incremental tests. Both a relative recovery index and the absolute 2-minute drop rose with fitness, and women recovered more slowly than men at low and medium fitness. Cross-sectional associations. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Recovery markers · recovery-markers</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Endurance training</p><p class="ee-f"><b>Question:</b> Is higher cardiorespiratory fitness linked to faster heart rate recovery?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-09</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01967-4" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s45" data-study="45"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-d"><span class="sr">Tier </span>D</span><span>independent · judge: C</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Xiaomi Mi Band 5 in 38 older adults: steps accurate (MAPE -3.7%), calories far off (MAPE 95.46%)</h3>
+<p>A study in Sport Sciences for Health compared the wristband with an ActiGraph GT3X+ over seven free-living days. Step counts agreed well (ICC 0.94), while energy expenditure agreed poorly (ICC 0.39). Small, possibly all-female sample recruited via social media. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">selection bias</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> How accurately does the Xiaomi Mi Band 5 measure steps and energy expenditure?</p><p class="ee-f"><b>About:</b> Xiaomi Mi Band 5, ActiGraph GT3X+</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-08</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01959-4" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s46" data-study="46"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>4-minute daily strength routine in 97 adults over 65: 4.2 more chair stands in 30 s after 12 weeks vs no intervention</h3>
+<p>ScienceDaily reports a Penn State randomized trial in PLOS One (FAST-2). Participants also rose from a chair 2.3 s faster and did the routine on 81% of days. The trial enrolled inactive older adults who already had walking difficulty; the primary check found one reading faithful and one overstated, so it is undecided. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Pain &amp; function · pain-function</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Ageing &amp; sarcopenia</p><p class="ee-f"><b>Question:</b> Does a brief daily strength routine improve physical function in older adults?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-21</p><p class="ee-f"><b>Primary source:</b> <a href="http://dx.doi.org/10.1371/journal.pone.0336748" rel="noopener noreferrer">http://dx.doi.org/10.1371/journal.pone.0336748</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://www.sciencedaily.com/releases/2026/10/261020085025.htm" rel="noopener noreferrer">ScienceDaily: Fitness</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s47" data-study="47"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Daily steps in about 300 older adults with early Alzheimer signs: benefits from 3,000 steps, best at 5,000-7,500</h3>
+<p>ScienceDaily carries a commentary on a cohort that tracked participants with pedometers for 9-11 years. More steps went with less tau build-up and slower decline, but not less amyloid. Observational data with confounding the piece itself notes; the linked original is a Nature news item. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, headline overclaim</span></p><p class="ee-f"><b>Original:</b> <span class="ee-warn"><span class="ee-mark" aria-hidden="true">#</span>numbers not found — 5,000 to 7,500 steps</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Health &amp; mortality outcomes · health-mortality-outcomes</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Exercise &amp; health outcomes</p><p class="ee-f"><b>Question:</b> Is higher physical activity linked to slower cognitive decline? · ✓ consistent (2 independent studies) · corroborated by 1 other independent study</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-19</p><p class="ee-f"><b>Primary source:</b> <a href="https://www.nature.com/articles/d41586-025-03596-2" rel="noopener noreferrer">https://www.nature.com/articles/d41586-025-03596-2</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://www.sciencedaily.com/releases/2026/10/261018205058.htm" rel="noopener noreferrer">ScienceDaily: Fitness</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s49" data-study="49"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Limb loading in 12 growing guinea fowl: untrained birds used 23% more energy carrying the load, trained birds none</h3>
+<p>ScienceDaily reports a Penn State experiment (Proceedings of the Royal Society B) in which 6 birds wore leg weights from 2 to 16 weeks of age and 6 did not. Respirometry showed full load-carriage economy in the trained birds. Animal study; the link to human childhood exercise is not tested. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim</span></p><p class="ee-f"><b>Original:</b> <span class="ee-warn">not checked (could not be fetched)</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> Does limb loading during growth reduce the energy cost of carrying load as an adult?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-14</p><p class="ee-f"><b>Primary source:</b> <a href="http://dx.doi.org/10.1098/rspb.2026.0199" rel="noopener noreferrer">http://dx.doi.org/10.1098/rspb.2026.0199</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://www.sciencedaily.com/releases/2026/10/261013015811.htm" rel="noopener noreferrer">ScienceDaily: Sports Medicine</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s50" data-study="50"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Personalized gait retraining for knee osteoarthritis in 68 patients: pain down 2.5 vs 1.3 points vs sham at one year</h3>
+<p>ScienceDaily reports a randomized, placebo-controlled trial published in 2025. About 91% vs 66% had a clinically meaningful pain reduction, and one of two MRI measures suggested slower cartilage loss. Participants were pre-selected as responders to the foot-angle change. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim, selection bias</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Pain &amp; function · pain-function</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Injury prevention &amp; rehab</p><p class="ee-f"><b>Question:</b> Does personalized gait retraining reduce knee osteoarthritis pain more than sham?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-11</p><p class="ee-f"><b>Coverage:</b> <a href="https://www.sciencedaily.com/releases/2026/10/261009025434.htm" rel="noopener noreferrer">ScienceDaily: Sports Medicine</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s51" data-study="51"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>VO2max reference values from 22,379 US lab tests: Trondheim adults aged 70-77 match US 40-50-year-olds</h3>
+<p>Sweat Science highlights a 2022 Mayo Clinic Proceedings reference standard built from US cardiopulmonary tests, with percentiles for ages 20-89. Trondheim men in their 70s averaged 31.5-35.2 ml/kg/min. The comparison mixes very different samples. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">selection bias</span></p><p class="ee-f"><b>Original:</b> <span class="ee-warn">not checked (could not be fetched)</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> VO2max · vo2max</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Endurance training</p><p class="ee-f"><b>Question:</b> What are typical VO2max values by age?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-01</p><p class="ee-f"><b>Primary source:</b> <a href="https://www.mayoclinicproceedings.org/article/S0025-6196(21)00645-5/fulltext" rel="noopener noreferrer">https://www.mayoclinicproceedings.org/article/S0025-6196(21)00645-5/fulltext</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://sweatscience.substack.com/p/whats-good-for-vo2max" rel="noopener noreferrer">Sweat Science</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s52" data-study="52"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Exercise after stroke (52 RCTs, 2,329 patients): whole-body vibration improved balance most, Berg score +9.86</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation ran a Bayesian network meta-analysis searched to January 2026. Aerobic, combined, coordinative and strength training improved walking endurance versus control, with no clear differences among them. Most comparisons were low or very low certainty.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> searched to January 2026</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Injury prevention &amp; rehab</p><p class="ee-f"><b>Question:</b> Which exercise types improve balance after stroke versus control?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-20</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02150-5" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s53" data-study="53"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Optimal power load strength training (meta-analysis): jump height effect 0.586, sprint and peak power unclear</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation pooled controlled studies of training at the load that maximises power. The jump height benefit was the most consistent; the 1RM effect (0.368) depended on analytic assumptions, and sprint time and peak power were not established. Few studies with varied comparators. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Does optimal power load strength training raise jump height versus comparators?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-20</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02181-y" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s54" data-study="54"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Partial blood flow restriction during cycling in 15 young men: slower heart rate recovery at 30-120 s</h3>
+<p>A study in the European Journal of Applied Physiology compared two-stage cycling at 40% and 60% of peak power with and without thigh cuffs in a crossover. BFR lowered parasympathetic HRV indices, raised sympathetic indices and blunted heart rate recovery after cuff release. Acute responses in a small sample only. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Recovery markers · recovery-markers</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Endurance training</p><p class="ee-f"><b>Question:</b> Does blood flow restriction during cycling slow heart rate recovery?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-14</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06465-6" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s55" data-study="55"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Injuries in 390 female artistic swimmers: incidence rose from 0.23 to 1.18 per 1,000 h from under-12 to seniors</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation followed 390 swimmers (511 athlete-seasons) in six clubs over 2023-2025. It recorded 70 injuries in 65 swimmers, 80% non-contact and most often lower-limb, with injury burden highest in seniors (29.6 days lost per 1,000 h). Descriptive surveillance without a comparison group.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Injury rate · injury-rate</p><p class="ee-f"><b>Research:</b> 2023-2025</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Injury prevention &amp; rehab</p><p class="ee-f"><b>Question:</b> How often are artistic swimmers injured?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-02202-w" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s56" data-study="56"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Functional tests in 115 professional ballet dancers: 30% had over 15% limb asymmetry on the vertical hop</h3>
+<p>A study in BMC Sports Science, Medicine and Rehabilitation screened dancers from four German classical ballet companies on eight tests. Men did better on most hop and upper-body tests, women on the heel-rise test, and side-hop asymmetry was also common (24%). Companies were recruited by word of mouth, and the data period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">stale data, selection bias</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> How common are lower-limb asymmetries in professional ballet dancers?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-22</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1186/s13102-026-01836-0" rel="noopener noreferrer">BMC Sports Science, Medicine and Rehabilitation</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s57" data-study="57"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Circuit vs traditional resistance training at 60% vs 80% 1RM: more reps and less fatigue at 60%, structure irrelevant</h3>
+<p>A study in the International Journal of Strength and Conditioning had 10 trained men complete four randomized protocols. All raised blood pressure and heart rate, with no post-exercise hypotension; high intensity caused more cardiovascular stress and fatigue, while circuit and traditional formats did not differ. Very small sample. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Intensity &amp; proximity to failure</p><p class="ee-f"><b>Question:</b> Do moderate-intensity resistance sessions allow more total work than high-intensity ones?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-09</p><p class="ee-f"><b>Coverage:</b> <a href="https://journal.iusca.org/index.php/Journal/article/view/616" rel="noopener noreferrer">International Journal of Strength and Conditioning</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s58" data-study="58"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Heavy back squat (90% 1RM) vs light jump squat (30% 1RM) before rebound jumps: both raised jump height, no winner</h3>
+<p>A study in the Journal of Science in Sport and Exercise had 17 collegiate volleyball players do both conditioning activities in a randomized crossover. Jump height rose at 3-10 minutes after both and RSI peaked above baseline, with no difference between conditions. There was no no-conditioning control. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">no baseline</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> Does a heavy-load conditioning activity raise jump performance more than a light ballistic one?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-09-04</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00386-8" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s59" data-study="59"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Three consecutive days of 5-km runs in 16 adults: pre-run plantar fascia thickness rose from day 1 to days 2 and 3</h3>
+<p>A study in the Journal of Science in Sport and Exercise measured the plantar fascia by ultrasound and shear-wave elastography before and after each maximal run. Thickness and stiffness fell acutely after each run and thickness recovered within 30 minutes, but resting thickness accumulated across days. No control group and no injury outcome. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Injury prevention &amp; rehab</p><p class="ee-f"><b>Question:</b> Does running on consecutive days increase pre-run plantar fascia thickness?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00398-4" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s60" data-study="60"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>24 weeks of resistance training in 42 hemodialysis patients: higher active MMP-2, unchanged MMP-9</h3>
+<p>A study in the Journal of Science in Sport and Exercise randomized patients to training three times a week or a control group. Active MMP-2 rose with training, though the effect weakened after baseline adjustment, and it was associated with grip strength, fat-free mass and TUG time. Exploratory analysis. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Exercise &amp; health outcomes</p><p class="ee-f"><b>Question:</b> Does resistance training change MMP activity in hemodialysis patients?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-08-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s42978-026-00399-3" rel="noopener noreferrer">Journal of Science in Sport and Exercise</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s61" data-study="61"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Inspiratory muscle training vs TheraBand training in 60 healthy adults: larger gain in inspiratory pressure with IMT</h3>
+<p>A study in Sport Sciences for Health randomized participants at a hospital in Faisalabad, Pakistan, over six months (56 analysed). Both groups improved pulmonary function equally, while maximal inspiratory pressure rose more with the threshold device. There was no untreated control. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">no baseline</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Other</p><p class="ee-f"><b>Question:</b> Does inspiratory muscle training raise inspiratory muscle strength more than band resistance training?</p><p class="ee-f"><b>About:</b> TheraBand</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-21</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01972-7" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s62" data-study="62"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · capped from B · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>4-year 100-m tracking of East and South African adolescent sprinters: gains slowed toward a plateau</h3>
+<p>A study in Sport Sciences for Health followed sprinters from Ethiopia, Kenya and South Africa over 2021-2024 with yearly electronic timing. Higher baseline ground-contact variability and grit went with steeper later improvement, and the gap between early- and late-born athletes narrowed. Cohort size is not stated, and catching up is partly regression to the mean.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim, regression to mean</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> 2021-2024</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Sports performance</p><p class="ee-f"><b>Question:</b> How does 100-m sprint performance develop across adolescence in elite sprinters?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-16</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01975-4" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s63" data-study="63"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-a"><span class="sr">Tier </span>A</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Guarana vs caffeine vs placebo before a 30-s jump test: only guarana raised peak power, +4.0% vs placebo</h3>
+<p>A study in Sport Sciences for Health ran a randomized double-blind crossover in 18 active men taking about 5 mg/kg caffeine from either source. Guarana beat placebo on peak power but never differed significantly from caffeine, and the other jump measures showed only descriptive trends. One of six outcomes reached significance. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim, multiple metrics</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Power &amp; speed · power-speed</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Ergogenic aids</p><p class="ee-f"><b>Question:</b> Does a caffeine-based supplement raise peak anaerobic power compared with placebo? · ✓ consistent (2 independent studies) · corroborated by 1 other independent study</p><p class="ee-f"><b>About:</b> Guarana, Caffeine</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-13</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01969-2" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s64" data-study="64"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Rugby recovery intervals 2022-2025: sevens rest rose from 7.9 h (Taiwan) to 15.0 h (world tier)</h3>
+<p>A study in Sport Sciences for Health analysed published match schedules of international and national tournaments. In world-tier 15s, men had longer gaps between matches than women (198.7 vs 168.2 h), and Taiwanese 15s schedules varied most. Descriptive schedule analysis, no player outcomes.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> 2022-2025</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Recovery &amp; sleep</p><p class="ee-f"><b>Question:</b> How long are recovery intervals between rugby tournament matches?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-11</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s11332-026-01980-7" rel="noopener noreferrer">Sport Sciences for Health</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s65" data-study="65"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Physical activity in 294 people with Parkinson disease: most active lost 0.007 vs 0.478 cognitive points a year</h3>
+<p>ScienceDaily reports a Neurology study (University of Cincinnati) that followed adults with mild to moderate Parkinson disease for up to seven years. More active participants also had slower worsening of movement symptoms. Activity was self-reported and the study shows an association, not cause. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, headline overclaim</span></p><p class="ee-f"><b>Original:</b> <span class="ee-warn">not checked (could not be fetched)</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Health &amp; mortality outcomes · health-mortality-outcomes</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Exercise &amp; health outcomes</p><p class="ee-f"><b>Question:</b> Is higher physical activity linked to slower cognitive decline? · ✓ consistent (2 independent studies) · corroborated by 1 other independent study</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-23</p><p class="ee-f"><b>Primary source:</b> <a href="http://dx.doi.org/10.1212/WNL.0000000000218682" rel="noopener noreferrer">http://dx.doi.org/10.1212/WNL.0000000000218682</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://www.sciencedaily.com/releases/2026/10/261022081306.htm" rel="noopener noreferrer">ScienceDaily: Fitness</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s66" data-study="66"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>independent</span></p>
+</div>
+<div class="ee-card-main">
+<h3>47-year Swedish cohort of 427 people: capacity peaked around 26-36 and fell 30-48% by age 63</h3>
+<p>ScienceDaily reports the Karolinska Institutet SPAF study, which tested people born in 1958 from age 16 to 63 (about 1974-2021). Those who became active as adults gained about 5-10% in capacity. The claim that exercise slows decline is observational.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation</span></p><p class="ee-f"><b>Original:</b> <span class="ee-warn">not checked (could not be fetched)</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> Endurance performance · endurance-performance</p><p class="ee-f"><b>Research:</b> 1974-2021</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Ageing &amp; sarcopenia</p><p class="ee-f"><b>Question:</b> At what age does physical capacity peak and how much is lost by the 60s?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-15</p><p class="ee-f"><b>Primary source:</b> <a href="http://dx.doi.org/10.1002/jcsm.70134" rel="noopener noreferrer">http://dx.doi.org/10.1002/jcsm.70134</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://www.sciencedaily.com/releases/2026/10/261014000912.htm" rel="noopener noreferrer">ScienceDaily: Sports Medicine</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s67" data-study="67"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent · skeptic: B</span></p>
+</div>
+<div class="ee-card-main">
+<h3>Daily activity and sleep in young adults: as little as 10 minutes of MVPA a day linked to more deep sleep</h3>
+<p>ScienceDaily reports a University of Texas at Austin study in the Journal of Physical Activity and Health (2025). Frequent activity, including light movement, was associated with more slow-wave sleep and better mood. Observational wearable data with no stated sample size. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">correlation causation, stale data, headline overclaim, vendor metric</span></p><p class="ee-f"><b>Original:</b> <span class="ee-warn">not checked (could not be fetched)</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Recovery &amp; sleep</p><p class="ee-f"><b>Question:</b> Is more frequent daily physical activity linked to more deep sleep?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-12</p><p class="ee-f"><b>Primary source:</b> <a href="http://dx.doi.org/10.1123/jpah.2024-0844" rel="noopener noreferrer">http://dx.doi.org/10.1123/jpah.2024-0844</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://www.sciencedaily.com/releases/2026/10/261008102721.htm" rel="noopener noreferrer">ScienceDaily: Sports Medicine</a></p></div>
+</div>
+</div></article>
+</section>
+<section>
+<h2>Disputed (verdict and skeptic disagree; both grades shown)</h2>
+<article class="card" id="s5" data-study="5"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-b"><span class="sr">Tier </span>B</span><span>skeptic: D · independent</span></p>
+<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>
+</div>
+<div class="ee-card-main">
+<h3>Recreational masters runners vs sedentary peers: ascending aorta 3.25 vs 2.90 cm, within normal limits</h3>
+<p>A study in the European Journal of Applied Physiology compared 42 recreational runners over 40 (at least 20 km/week) with 27 sedentary controls in a cross-sectional design. The aorta was about 0.3 cm wider in runners after adjusting for age, sex and height, and ankle-brachial index was slightly higher, with no aortopathy. The sample is small and not randomized, and the grade is disputed. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="dispute"><b>Disputed:</b> grades two tiers apart.<br><b>Skeptic&#x27;s doubts:</b> Small cross-sectional comparison of 42 runners vs 27 sedentary controls with a pre-specified adjusted regression; runners were recruited via social media and differed in sex and height, though conclusions are appropriately hedged.</p><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">selection bias</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Endurance training</p><p class="ee-f"><b>Question:</b> Do recreational masters runners have a wider ascending aorta than sedentary peers?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-24</p><p class="ee-f"><b>Coverage:</b> <a href="https://link.springer.com/article/10.1007/s00421-026-06471-8" rel="noopener noreferrer">European Journal of Applied Physiology</a></p></div>
+</div>
+</div></article>
+<article class="card" id="s48" data-study="48"><div class="ee-card">
+<div class="ee-card-rate">
+<p class="label"><span class="tier tier-c"><span class="sr">Tier </span>C</span><span>independent</span></p>
+<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>
+</div>
+<div class="ee-card-main">
+<h3>Exercise and the DEAF1 gene in aging flies and mice: exercise lowered DEAF1 and rebalanced mTORC1</h3>
+<p>ScienceDaily reports a PNAS mechanism study in fruit flies and older mice. Exercise reduced DEAF1, restoring clearance of damaged muscle proteins, but not when DEAF1 was very high. No numbers are given, the grade is disputed, and the human headline goes beyond the animal data. The data collection period is not stated.</p>
+</div>
+<div class="ee-card-side">
+<div class="ee-grp"><p class="dispute"><b>Disputed:</b> no quoted number found in the text.<br><b>Skeptic&#x27;s doubts:</b> Press release on a fruit-fly and mouse mechanism study that gives no quantitative results or explicit control description; &#x27;exercise reverses muscle aging&#x27; is extrapolated from animal gene manipulation to humans.</p><p class="ee-f"><b>Red flags:</b> <span class="ee-warn">headline overclaim</span></p><p class="ee-f"><b>Original:</b> <span class="ee-warn">not checked (could not be fetched)</span></p></div>
+<div class="ee-grp"><p class="ee-f"><b>Measured:</b> other</p><p class="ee-f"><b>Research:</b> unstated</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Subtopic:</b> Ageing &amp; sarcopenia</p><p class="ee-f"><b>Question:</b> Does exercise lower DEAF1 and normalize mTORC1 activity in aging muscle?</p></div>
+<div class="ee-grp"><p class="ee-f"><b>Published:</b> 2026-10-16</p><p class="ee-f"><b>Primary source:</b> <a href="http://dx.doi.org/10.1073/pnas.2508893122" rel="noopener noreferrer">http://dx.doi.org/10.1073/pnas.2508893122</a></p><p class="ee-f"><b>Coverage:</b> <a href="https://www.sciencedaily.com/releases/2026/10/261015003550.htm" rel="noopener noreferrer">ScienceDaily: Sports Medicine</a></p></div>
+</div>
+</div></article>
+</section>
+</main>
+<footer class="ee-foot"><div class="ee-foot-in"><a class="ee-top-link" href="#ee-top">Back to top <span aria-hidden="true">↑</span></a><span class="ee-foot-end"><a class="ee-repo" href="https://github.com/r-hural/evidence-echo" aria-label="Evidence Echo on GitHub" title="Evidence Echo on GitHub"><svg class="ee-gh" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></span></div></footer>
+</body>
+</html>
