@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import os
 from pathlib import Path
 
@@ -14,6 +15,12 @@ def _real_data_snapshot() -> list[str]:
     if not REAL_DATA_DIR.exists():
         return []
     return sorted(str(p.relative_to(REAL_DATA_DIR)) for p in REAL_DATA_DIR.rglob("*"))
+
+
+def write_plugin_keys(plugin_data: Path, **keys) -> None:
+    """The keys file the SessionStart hook writes from the plugin settings."""
+    plugin_data.mkdir(parents=True, exist_ok=True)
+    (plugin_data / "keys.json").write_text(json.dumps(keys), encoding="utf-8")
 
 
 @pytest.fixture(autouse=True, scope="session")

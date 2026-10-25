@@ -159,8 +159,8 @@ def _read_keys(plugin_data: Path) -> dict:
 
 
 def _key(name: str, keys: dict) -> str:
-    """EV_ECHO_<name> (explicit) > plugin settings (keys file) > plain <name> (shell)."""
-    return _env("EV_ECHO_" + name) or keys.get(name, "").strip() or _env(name)
+    """Only from the plugin settings (keys file); a key in the user's environment is never read."""
+    return keys.get(name, "").strip()
 
 
 def _setting(name: str, ws: Workspace, topic: Topic | None):

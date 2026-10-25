@@ -4,11 +4,7 @@ A Claude Code plugin that reads the RSS feeds and sites you follow, keeps only t
 report measured results, and grades each study's level of evidence: experiments, A/B tests,
 large-scale data, case studies with numbers. Opinion pieces and announcements are filtered out.
 
-**[Try the demo →](https://r-hural.github.io/evidence-echo/)** (real reports from the four templates below)
-
-![A topic page: two studies on one question, graded D, and why their results differ](docs/screenshots/topic-page.png)
-
-![A report: each new study with its grade, the blind second grader's verdict, red flags and whether the original study was checked](docs/screenshots/report.png)
+See what it produces: [sample reports](#sample-reports) below.
 
 - **Filters:** an article stays only if it reports a measured outcome; every rejection has a
   one-line reason.
@@ -30,6 +26,15 @@ large-scale data, case studies with numbers. Opinion pieces and announcements ar
 | `exercise` | evidence-minded coaches and trainees | training studies, RCTs and meta-analyses on strength, endurance, recovery |
 
 Any other topic starts blank: describe it in your own words and pick its sources.
+
+### Sample reports
+
+Static HTML pages from a real run of the four templates: nothing to install, just open them in
+the browser. **[View sample reports →](https://r-hural.github.io/evidence-echo/)**
+
+| [![A topic page: two studies on one question, graded D, and why their results differ](docs/screenshots/topic-page.png)](https://r-hural.github.io/evidence-echo/seo/seo.html) | [![A report: each new study with its grade, the blind second grader's verdict, red flags and whether the original study was checked](docs/screenshots/report.png)](https://r-hural.github.io/evidence-echo/seo/2026-10-25-report.html) |
+|---|---|
+| **Topic page:** studies grouped by question, conflicting results side by side and why they differ | **Report:** each new study with its grade, red flags, the blind second grader's verdict and the original-study check |
 
 ## Install
 
@@ -56,9 +61,13 @@ Terms used throughout: [docs/GLOSSARY.md](docs/GLOSSARY.md).
   session and counts toward your usage there. With an Anthropic API key in the plugin settings
   it can run through the API instead, billed to that key.
 - **What leaves your machine.** Article and feed text goes to Anthropic only through the
-  route above. With a Voyage AI key, study cards (the judge's short summary of each item: who ran the study, what was tested, findings, timeframe, sample, title; never article text) go to Voyage AI for embeddings. The
-  plugin fetches only your configured sources and the articles and studies they link to:
-  public addresses only, at most 5 MB per response, rate-limited per site.
+  route above. With a Voyage AI key, study cards (the judge's short summary of each item: who
+  ran the study, what was tested, findings, timeframe, sample, title; never article text) go to
+  Voyage AI for embeddings. With an Apify token, LinkedIn sources are fetched through Apify
+  (your token, billed to your Apify account). The plugin fetches only your configured sources
+  and the articles and studies they link to: public addresses only, at most 5 MB per response,
+  rate-limited per site. On first use it downloads its Python dependencies from PyPI (versions
+  pinned in `constraints.txt`) into a private environment in the plugin's data folder.
 - **What stays local.** Topics, the fetched text and grades (SQLite), reports, and the
   optional Obsidian export. Keys live in the plugin's data folder and are never printed or
   passed on the command line.

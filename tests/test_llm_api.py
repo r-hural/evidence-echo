@@ -8,5 +8,5 @@ def test_missing_key_message_names_the_plugin_setting():
         llm_api.AnthropicBackend("")
     message = str(exc.value)
     assert "plugin settings" in message
-    assert "EV_ECHO_ANTHROPIC_API_KEY" in message
+    assert "ANTHROPIC_API_KEY" not in message  # keys come only from the plugin settings
     assert "session" in message

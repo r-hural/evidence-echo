@@ -257,7 +257,8 @@ def test_api_match_passes_embedder_only_with_key(cfg, monkeypatch):
     seen = []
     monkeypatch.setattr(match, "emit", lambda conn, topic, embedder=None: seen.append(embedder) or "{}")
     api.emit(cfg, "match")
-    monkeypatch.setenv("VOYAGE_API_KEY", "voyage-test-key")
+    from tests.conftest import write_plugin_keys
+    write_plugin_keys(cfg.plugin_data_dir, VOYAGE_API_KEY="voyage-test-key")
     api.emit(config.load(), "match")
     assert seen[0] is None and isinstance(seen[1], embedders.VoyageEmbedder)
 

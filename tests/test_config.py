@@ -136,8 +136,9 @@ def test_env_horizon_invalid_names_variable(workspace, monkeypatch):
         config.load()
 
 
-def test_key_aware_auto(workspace, monkeypatch):
-    _env(monkeypatch, ANTHROPIC_API_KEY="sk", VOYAGE_API_KEY="pa")
+def test_key_aware_auto(workspace, tmp_path, monkeypatch):
+    from tests.conftest import write_plugin_keys
+    write_plugin_keys(tmp_path / "plugin-data", ANTHROPIC_API_KEY="sk", VOYAGE_API_KEY="pa")
     cfg = config.load()
     assert (cfg.triage_backend, cfg.judgment_backend, cfg.embedder) == ("api", "api", "voyage")
     settings.save_global(workspace, {"judgment_backend": "session", "embedder": "auto"})
@@ -147,14 +148,17 @@ def test_key_aware_auto(workspace, monkeypatch):
     assert config.load().triage_backend == "session"
 
 
-def test_keys_file_lives_in_plugin_data(workspace, tmp_path, monkeypatch):
+def test_keys_come_only_from_the_plugin_settings(workspace, tmp_path, monkeypatch):
+    for name in config.KEY_NAMES:  # a key in the user's environment is never picked up
+        monkeypatch.setenv(name, "shell")
+        monkeypatch.setenv("EV_ECHO_" + name, "explicit")
+    cfg = config.load()
+    assert (cfg.anthropic_api_key, cfg.voyage_api_key, cfg.apify_api_token) == ("", "", "")
+    assert (cfg.judgment_backend, cfg.embedder) == ("session", "none")
     pd = tmp_path / "plugin-data"
     pd.mkdir()
     (pd / "keys.json").write_text(json.dumps({"ANTHROPIC_API_KEY": "plugin"}), encoding="utf-8")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "shell")
     assert config.load().anthropic_api_key == "plugin"
-    monkeypatch.setenv("EV_ECHO_ANTHROPIC_API_KEY", "explicit")
-    assert config.load().anthropic_api_key == "explicit"
 
 
 def test_invalid_keys_file_names_the_file(workspace, tmp_path):

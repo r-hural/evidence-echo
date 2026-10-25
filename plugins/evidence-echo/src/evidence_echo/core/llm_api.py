@@ -9,8 +9,7 @@ class AnthropicBackend:
         if not api_key:
             raise ValueError(
                 "the api backend needs an Anthropic API key: set it in the plugin "
-                "settings (or EV_ECHO_ANTHROPIC_API_KEY / ANTHROPIC_API_KEY when "
-                "running the CLI directly), or use the session backend")
+                "settings, or use the session backend")
         self._client = anthropic.Anthropic(api_key=api_key)
         self._model = model
 

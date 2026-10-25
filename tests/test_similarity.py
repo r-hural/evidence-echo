@@ -229,7 +229,6 @@ def _two_studies_with_embedder(cfg, monkeypatch, emb):
 def test_studies_similarity_skipped_without_embedder(workspace, monkeypatch):
     from evidence_echo import api
     from evidence_echo.core import config
-    monkeypatch.delenv("VOYAGE_API_KEY", raising=False)
     assert api.studies_similarity(config.load()) == {"skipped": "no embedder"}
 
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.16.4
+
+- **API keys only from the plugin settings:** the Anthropic, Voyage AI and Apify keys are read
+  only from the plugin settings. Keys in your shell's environment (`EV_ECHO_…` or the plain
+  variable names) are no longer used, so a key exported for other tools can no longer switch
+  grading to paid API runs. If you set a key that way, enter it in the plugin settings instead.
+- **Clearer privacy notes:** the plugin README opens with what the plugin does and lists every
+  service it contacts, now including Apify for LinkedIn sources and PyPI for the one-time
+  setup of its Python packages; SECURITY.md likewise.
+- **README:** a "Sample reports" section with the screenshots, each opening its live sample
+  page.
+- **Icon:** re-encoded at 512 px (smaller file, same picture).
+
 ## 0.16.3
 
 - **Pages:** every HTML page's footer has a GitHub icon that links to the project; it stays

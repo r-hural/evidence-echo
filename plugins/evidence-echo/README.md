@@ -1,19 +1,38 @@
 # Evidence Echo — Claude Code Plugin
 
-Evidence-graded content digests for any number of topics. For each topic it
-fetches the configured sources (RSS feeds, web pages, single documents, LinkedIn),
-gates on "measured outcome present", grades evidence into tiers (A controlled /
-B large-scale / C case study / D practitioner anecdote) with code-checked quotes,
-verifies grading with a blind skeptic pass, groups articles into studies, files
-each study under a subtopic and a question, and checks articles against
-the original study they report. It renders a result-first Markdown report, an
-HTML digest and topic page ("What the evidence says": per subtopic and question, the
-studies newest first and how results changed), an overview across topics, and
-optionally Obsidian notes.
+Evidence-based research digests for any number of topics. Evidence Echo reads the
+RSS feeds and sites you follow (also web pages, single documents and LinkedIn),
+keeps only the articles that report measured results, and grades each study's level
+of evidence: A controlled experiment, B large-scale data, C case study, D practitioner
+anecdote. Quotes behind each grade are checked against the article text by code, a
+blind second grader challenges every grade, and the original study an article cites
+is checked too. Each run gives a short report (Markdown and HTML), a list of what was
+rejected and why, and a topic page, "What the evidence says", that groups studies by
+question and puts conflicting results side by side; plus an overview across topics
+and optional Obsidian notes.
 
 You define the topics (SEO, Claude Code, weight loss, ...). Ready-made templates
 ship in `templates/` (`ev templates` lists them): SEO (`seo`), AI coding tools (`ai-coding`),
 conversion optimization and A/B tests (`cro`) and exercise science (`exercise`); any other topic starts blank, described in your own words. Each topic has its own sources, database and reports.
+
+## Cost and privacy
+
+- **Where the judging happens.** By default the grading runs inside your own Claude Code
+  session and counts toward your usage there. With an Anthropic API key in the plugin settings
+  it can run through the API instead, billed to that key.
+- **What leaves your machine.** Article and feed text goes to Anthropic only through the
+  route above. With a Voyage AI key, study cards (the judge's short summary of each item: who
+  ran the study, what was tested, findings, timeframe, sample, title; never article text) go to
+  Voyage AI for embeddings. With an Apify token, LinkedIn sources are fetched through Apify
+  (your token, billed to your Apify account). The plugin fetches only your configured sources
+  and the articles and studies they link to: public addresses only, at most 5 MB per response,
+  rate-limited per site. On first use it downloads its Python dependencies from PyPI (versions
+  pinned in `constraints.txt`) into a private environment in the plugin's data folder.
+- **What stays local.** Topics, the fetched text and grades (SQLite), reports, and the
+  optional Obsidian export. Keys live in the plugin's data folder and are never printed or
+  passed on the command line.
+
+Details: [SECURITY.md](https://github.com/r-hural/evidence-echo/blob/main/SECURITY.md).
 
 ## Install
 
@@ -58,8 +77,8 @@ A SessionStart hook passes the settings to the engine; keys never appear in
 prompts or command lines. The hook writes them to `<plugin data>/keys.json`
 (owner-only permissions on macOS/Linux; on Windows it sits in your user
 profile), which only the engine reads, and never exports them to the session's
-commands. Precedence: `EV_ECHO_ANTHROPIC_API_KEY` (etc.) if set > the plugin
-settings > a plain `ANTHROPIC_API_KEY` in your shell. Clearing the keys in the
+commands. Keys come only from the plugin settings: a key set in your shell's
+environment is never read. Clearing the keys in the
 settings removes the file at the next session start. Never paste a key into the
 chat.
 
