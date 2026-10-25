@@ -259,6 +259,8 @@ _BASE = (
     "justify-content:space-between;gap:.5rem 1.5rem;border-top:3px solid var(--rule);font-size:.85rem;"
     "color:var(--muted)}"
     ".ee-foot a{font-weight:600}"
+    ".ee-foot-end{display:inline-flex;align-items:center;gap:.6rem}"
+    ".ee-foot a.ee-repo{color:inherit;display:inline-flex}"
     # filters: closed by default; a grid of captioned fields; a field with a value is highlighted
     ".ee-filter-box{margin:0 0 1rem;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}"
     ".ee-filter-box>summary{padding:.6rem 0;font-weight:600}"
@@ -321,7 +323,7 @@ _BASE = (
     "}"
     "@media print{:root{--bg:#fff;--fg:#000;--rule:#000;--link:#000;--card:#fff;--muted:#444;--border:#bbb}body{background:#fff;color:#000}"
     ".ee-mast{background:none;color:#000;border-bottom:3px solid #000}"
-    ".ee-mast a,.ee-crumbs li:first-child{color:#000}.ee-filter-box,.ee-foot a{display:none}}"
+    ".ee-mast a,.ee-crumbs li:first-child{color:#000}.ee-filter-box,.ee-top-link{display:none}}"
 )
 
 _TIERS = "".join(f".tier-{k}{{--fill:{TIER_FILL[k]}}}" for k in TIER_KEYS)

@@ -354,7 +354,7 @@ def test_pages_link_only_to_sources_and_siblings(tmp_path):
     r = report(new=[FULL], disputed=[DISPUTED], seen=[seen(9)])
     out = html_render.write_report(r, t, reports_dir, overview_dir, md)
     sources = {"https://example.com/study", "https://a.example/1", "https://b.example/2",
-               "https://example.com/post-3", "https://other.example/9"}
+               "https://example.com/post-3", "https://other.example/9", html_render.REPO_URL}
     for path in out.values():
         found = refs(Path(path).read_text(encoding="utf-8"))
         assert found.srcs == []
@@ -566,7 +566,7 @@ def test_overview_report_outside_the_folder_uses_a_relative_or_file_link(tmp_pat
     s = _summary(tmp_path / "elsewhere")
     out = html_render.overview_page([s], tmp_path / "R", NOW)
     for h in refs(out).hrefs:
-        assert h.startswith("../") or h.startswith("file:") or h == "#ee-top", h
+        assert h.startswith("../") or h.startswith("file:") or h in ("#ee-top", html_render.REPO_URL), h
 
 
 def test_write_overview(tmp_path):
@@ -859,7 +859,10 @@ def test_every_page_ends_with_the_footer(tmp_path):
     when = datetime(2026, 10, 21, 8, 5, tzinfo=timezone.utc)
     out = html_render.page("T", "<p>x</p>", now=when)
     assert out.index("</main>") < out.index('<footer class="ee-foot">') < out.index("</body>")
-    assert '<a href="#ee-top">Back to top' in out and 'id="ee-top"' in out
+    assert 'href="#ee-top">Back to top' in out and 'id="ee-top"' in out
+    assert '<a class="ee-repo" href="https://github.com/r-hural/evidence-echo"' in out
+    assert "</svg></a></span></div></footer>" in out    # icon only, after the timestamp
+    assert out.index("Generated ") < out.index('class="ee-repo"')
     assert f"Generated {html_render.clock.local_minute(when)}" in out
     for page_html in (html_render.report_page(report(), "seo.html", "o.html"),
                       html_render.topic_page(topic_model([topic_study(entry(1))]), "o", "r"),

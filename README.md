@@ -1,8 +1,14 @@
-# Evidence Echo: evidence-graded research digests for Claude Code
+# Evidence Echo: evidence-based research digests for Claude Code
 
-A Claude Code plugin that reads the RSS feeds and sites you follow and keeps only the articles
-that report measured results: experiments, A/B tests, large-scale data, case studies with
-numbers. Opinion pieces and announcements are filtered out.
+A Claude Code plugin that reads the RSS feeds and sites you follow, keeps only the articles that
+report measured results, and grades each study's level of evidence: experiments, A/B tests,
+large-scale data, case studies with numbers. Opinion pieces and announcements are filtered out.
+
+**[Try the demo →](https://r-hural.github.io/evidence-echo/)** (real reports from the four templates below)
+
+![A topic page: two studies on one question, graded D, and why their results differ](docs/screenshots/topic-page.png)
+
+![A report: each new study with its grade, the blind second grader's verdict, red flags and whether the original study was checked](docs/screenshots/report.png)
 
 - **Filters:** an article stays only if it reports a measured outcome; every rejection has a
   one-line reason.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.16.3
+
+- **Pages:** every HTML page's footer has a GitHub icon that links to the project; it stays
+  visible in print.
+- **README:** a link to the public demo (real reports from the four templates) and two
+  screenshots, a topic page and a report.
+- **Plugin listing:** the description now says what each study gets, a level of evidence, and
+  the plugin keywords match it.
+
 ## 0.16.2
 
 - **Similar studies found by meaning:** with a Voyage AI key, study matching also proposes

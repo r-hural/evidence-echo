@@ -1,15 +1,15 @@
 {
   "name": "evidence-echo",
   "displayName": "Evidence Echo",
-  "description": "Evidence-graded research digests from the feeds you follow: keeps only articles with measured results, grades each study, checks quotes and the original study. Templates for SEO, AI coding, A/B testing and exercise science.",
-  "version": "0.16.2",
+  "description": "Claude Code plugin for evidence-based research digests from the feeds you follow: keeps only articles with measured results, grades each study's level of evidence, checks quotes and the original study. Templates for SEO, AI coding, A/B testing and exercise science.",
+  "version": "0.16.3",
   "author": {
     "name": "r-hural"
   },
   "homepage": "https://github.com/r-hural/evidence-echo",
   "repository": "https://github.com/r-hural/evidence-echo",
   "license": "MIT",
-  "keywords": ["research", "evidence", "evidence-based", "digest", "rss", "studies", "seo", "ab-testing", "ai-coding", "exercise-science", "obsidian"],
+  "keywords": ["research", "evidence-based", "levels-of-evidence", "research-digest", "rss", "seo", "seo-experiments", "ab-testing", "ai-coding", "llm-benchmarks", "exercise-science", "obsidian"],
   "skills": "./skills/",
   "agents": [
     "./agents/skeptic.md",
