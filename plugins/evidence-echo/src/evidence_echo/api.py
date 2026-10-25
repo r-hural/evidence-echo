@@ -13,7 +13,9 @@ from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from evidence_echo.core import config, embedders, interfaces, knowledge, legacy, llm_api, overview as overview_mod, settings, store, topics
+import numpy as np
+
+from evidence_echo.core import config, embedders, interfaces, knowledge, legacy, llm_api, overview as overview_mod, settings, similarity, store, topics
 from evidence_echo.core.settings import ConfigError
 from evidence_echo.core.urls import canonical_url
 from evidence_echo.render import html as html_render
@@ -159,6 +161,8 @@ def emit(cfg, stage: str) -> str:
             return classify.emit(conn, cfg.topic, cap=cfg.classify_batch)
         if mod is primary_stage:
             return mod.emit(conn, cfg.topic, primary_stage.default_ctx(fetch_cache.for_config(cfg)))
+        if mod is match:
+            return mod.emit(conn, cfg.topic, embedder=embedders.build(cfg))
         return mod.emit(conn, cfg.topic)
 
 
@@ -187,6 +191,9 @@ def apply(cfg, stage: str, payload: str, ruling: bool = False, payload_b: str | 
     with _topic_db(cfg) as conn:
         if ruling:
             return verify.apply(conn, payload, ruling=True)
+        if mod is match:
+            embedder = embedders.build(cfg)
+            return mod.apply(conn, payload, tag=embedder.tag if embedder else None)
         return mod.apply(conn, payload)
 
 
@@ -207,6 +214,8 @@ def run_api(cfg, stage: str) -> dict:
         if mod is primary_stage:
             return mod.run_api(conn, backend, cfg.topic,
                                primary_stage.default_ctx(fetch_cache.for_config(cfg)))
+        if mod is match:
+            return mod.run_api(conn, backend, cfg.topic, embedder=embedders.build(cfg))
         return mod.run_api(conn, backend, cfg.topic)
 
 
@@ -217,7 +226,7 @@ def extract(cfg) -> dict:
 
 def embed(cfg) -> dict:
     with _connect(cfg) as conn:
-        return embed_stage.run(conn, embedders.build(cfg))
+        return embed_stage.run(conn)
 
 
 def _topic_model(cfg) -> render_model.Topic:
@@ -319,6 +328,8 @@ def reset(cfg, stage: str) -> dict:
     with _connect(cfg) as conn:
         qmarks = ",".join("?" * len(states))
         if stage == "judge":  # back to extracted: the judge's fields, grading ones too, go
+            conn.execute(f"DELETE FROM embeddings WHERE item_id IN "
+                         f"(SELECT id FROM items WHERE state IN ({qmarks}))", states)
             conn.execute(f"""UPDATE items SET quotes=NULL, quote_check=NULL, capped_from=NULL,
                              judged_from=NULL, provenance=NULL, judge_tier=NULL,
                              subtopic_choice=NULL, metric_code=NULL, direction=NULL, entity_names=NULL,
@@ -989,8 +1000,10 @@ def studies_show(cfg, study_id: int) -> dict:
 
 
 def studies_duplicates(cfg, count_only: bool = False):
+    embedder = embedders.build(cfg)
     with _connect(cfg) as conn:
-        pairs = store.duplicate_pairs(conn)
+        vectors = similarity.study_vectors(conn, embedder.tag) if embedder else None
+        pairs = store.duplicate_pairs(conn, vectors, threshold=similarity.DUPLICATE_SIM)
     if count_only:
         return {"count": len(pairs)}
     keep = ("id", "canonical_name", "findings", "research_timeframe", "evidence_tier",
@@ -998,6 +1011,63 @@ def studies_duplicates(cfg, count_only: bool = False):
     return {"pairs": [{"keep": p["keep"], "other": p["other"], "rule": p["rule"],
                        "keep_study": {k: p["keep_study"][k] for k in keep},
                        "other_study": {k: p["other_study"][k] for k in keep}} for p in pairs]}
+
+
+SIMILARITY_CUTOFFS = (0.70, 0.75, 0.80, 0.85, 0.90, 0.95)
+
+
+def studies_similarity(cfg) -> dict:
+    """Read-only check of how well the embedder separates studies: where do known same-study items sit,
+    how many items would get a candidate at each cutoff, which different studies look most alike."""
+    embedder = embedders.build(cfg)
+    if embedder is None:
+        return {"skipped": "no embedder"}
+    out = {}
+    with _connect(cfg) as conn:
+        failure = similarity.embed_pending(conn, embedder)
+        if failure:
+            out["embeddings"] = f"unavailable: {failure}"
+        items = similarity.item_vectors(conn, embedder.tag)
+        studies = similarity.study_vectors(conn, embedder.tag)
+        rows = conn.execute(
+            f"""SELECT i.id, i.title, i.study_id, s.canonical_name FROM items i
+                JOIN studies s ON s.id = i.study_id
+                WHERE s.merged_into IS NULL AND {similarity.STUDY_ITEMS_SQL} ORDER BY i.id""").fetchall()
+    names = {r["study_id"]: r["canonical_name"] for r in rows}
+    members: dict[int, list] = {}
+    for r in rows:
+        if r["id"] in items:
+            members.setdefault(r["study_id"], []).append(r)
+    known = []
+    known_raw = []   # unrounded cosines, for the cutoff counts
+    for sid, group in members.items():
+        if len(group) < 2:
+            continue
+        for r in group:
+            others = [items[o["id"]] for o in group if o["id"] != r["id"]]
+            mean = np.mean(others, axis=0)
+            norm = np.linalg.norm(mean)
+            if norm > 0:
+                raw = float(items[r["id"]] @ (mean / norm))
+                known_raw.append(raw)
+                known.append({"study_id": sid, "item_id": r["id"], "title": r["title"], "sim": round(raw, 3)})
+    nearest = []   # per item: best cosine to any other active study
+    for r in rows:
+        if r["id"] in items:
+            sims = [float(items[r["id"]] @ v) for sid, v in studies.items() if sid != r["study_id"]]
+            nearest.append(max(sims) if sims else -1.0)
+    out["known_pairs"] = known
+    out["cutoffs"] = [{"cutoff": c,
+                       "items_with_candidate": sum(1 for n in nearest if n >= c),
+                       "known_found": sum(1 for k in known_raw if k >= c),
+                       "known_total": len(known), "items_total": len(nearest)}
+                      for c in SIMILARITY_CUTOFFS]
+    ids = sorted(studies)
+    top = sorted(((float(studies[a] @ studies[b]), a, b) for n, a in enumerate(ids) for b in ids[n + 1:]),
+                 key=lambda t: -t[0])[:20]
+    out["top_pairs"] = [{"a": a, "b": b, "a_name": names.get(a), "b_name": names.get(b),
+                         "sim": round(sim, 3)} for sim, a, b in top]
+    return out
 
 
 def _owner_id(value, prefix: str, what: str) -> int:

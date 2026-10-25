@@ -51,4 +51,5 @@ def test_entities_end_to_end(seeded, topic):
     select = select[:select.index("</select>")]
     assert "ChatGPT (2)" in select and "Shopify (2)" in select and "GPT-4o" not in select
     card = page[page.index(f'id="s{sids[1]}"'):]
-    assert "About" in card[:card.index("Measured") if "Measured" in card else 2000] and "ChatGPT, Shopify" in card[:2000]
+    card = card[:card.index("</article>")]
+    assert "<b>About:</b> ChatGPT, Shopify" in card

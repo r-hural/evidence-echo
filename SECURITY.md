@@ -15,7 +15,7 @@ Only the latest release gets fixes.
 - **Anthropic** (only with the `api` backend and an Anthropic API key): feed and article text
   for triage, grading, verification and grouping. With the default `session` backend the same
   text is processed inside your own Claude Code session.
-- **Voyage AI** (only with a Voyage key): short representative texts of items, for embeddings.
+- **Voyage AI** (only with a Voyage key): study cards, for embeddings: the judge's short summary of each item (who ran the study, what was tested, findings, timeframe, sample, title), never article text.
 - **Apify** (only with an Apify token and a LinkedIn source): the profile URLs of those
   sources, sent to the topic's Apify actor (default `harvestapi~linkedin-profile-posts`).
 - **The web:** your configured sources and the article and study URLs they link to. Only

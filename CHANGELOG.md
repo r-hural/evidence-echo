@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.16.2
+
+- **Similar studies found by meaning:** with a Voyage AI key, study matching also proposes
+  studies whose study card reads alike as candidates, so the same study reported under
+  different words is caught. Only study cards (the judge's short summary of each item and its title, never
+  article text) are sent. `ev studies similarity` shows, read-only, what this would find;
+  possible duplicates in `studies duplicates` can carry their similarity. Without a key,
+  matching uses the rules alone, as before.
+- **Level questions explain large spreads:** when the studies of a "how much / how often"
+  question report values far apart (one at least three times the other), the explanation step
+  now says why, as it already did for questions where studies disagree on the direction.
+  Explanations show each study's value.
+- **Primary-source check:** a study's numbers are compared only with the numbers its own
+  findings state, so an article that also cites other research no longer looks like it left
+  numbers out of the original.
+- **Article titles from index pages:** a link card's heading is used as the title, and a
+  byline date stuck to the end of the link text is dropped.
+- **Markdown reports:** `&` and quotes appear as written instead of HTML entities.
+- **Pages:** study cards group their facts (trust, what was tested, where it fits, sources and
+  dates); the ratings chart's key folds under "How to read this table" and each chart row
+  opens its write-up; the Sources page is one full-width table with Site and Feed links, and a
+  source with studies opens the topic page filtered to it; overview rows open the study's card
+  in the report that first showed it; topic and overview headers show totals.
+
 ## 0.16.1
 
 - **Setup shows settings as a table:** each setting with its current value and what it does,

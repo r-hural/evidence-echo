@@ -165,7 +165,7 @@ def test_broken_marker_only_for_failures(db):
     assert rows["Fine"].broken is None and rows["Fine"].quiet_days is None
     text = _html(page)
     assert text.count("∅") == 2 and "HTTP 403" in text and "no entries in 7 days" in text
-    quiet = re.search(r"<tr><td>Quiet.*?</tr>", text, re.S).group(0)
+    quiet = re.search(r"<tr><td><b>Quiet</b>.*?</tr>", text, re.S).group(0)
     assert "ee-broken" not in quiet and "no entries in 7 days" in quiet
 
 
@@ -178,7 +178,7 @@ def test_removed_source_listed_last_greyed(db):
     assert [r.name for r in page.rows] == ["Kept", "Fresh", "Gone"]
     assert _rows(page)["Gone"].removed and not _rows(page)["Kept"].removed
     text = _html(page)
-    assert text.index("No longer in the topic") < text.index(">Gone</a>")
+    assert text.index("No longer in the topic") < text.index(">Gone</a></b>")
     assert 'class="ee-gone"' in text
 
 
@@ -190,11 +190,26 @@ def test_links(db):
     cfg = _cfg(_rss("Field Notes (Jo Example)", site_url="https://field-notes.example/"),
                _rss("Plain", site_url="https://e.com/Plain/feed"), _rss("Nolink"))
     text = _html(sp.build_sources(db, cfg, NOW))
-    assert '<a href="t.html#source=field-notes-jo-example">Field Notes (Jo Example)</a>' in text
-    assert "Site</a> · " in text and ">Feed</a>" in text
-    plain = re.search(r"<tr><td><a[^>]*>Plain</a>.*?</tr>", text, re.S).group(0)
-    assert "Site</a>" not in plain and plain.count("<a ") == 2    # the name and the one link
-    assert "#source=nolink" not in text                            # no studies: not a link
+    # a name opens the topic page filtered by the source; without studies it is plain text
+    assert '<td><b><a href="t.html#source=field-notes-jo-example">Field Notes (Jo Example)</a></b></td>' in text
+    assert "<td><b>Nolink</b></td>" in text and "#source=nolink" not in text
+    notes = re.search(r"<tr><td><b><a[^>]*>Field Notes.*?</tr>", text, re.S).group(0)
+    assert re.search(r'<td class="ee-url"><span class="ee-site"><a [^>]*>field-notes\.example</a></span>'
+                     r'<span class="ee-feed">', notes) and "ee-none" not in notes
+    plain = re.search(r"<tr><td><b><a[^>]*>Plain</a></b>.*?</tr>", text, re.S).group(0)
+    assert plain.count("<a ") == 2 and plain.count('class="ee-none"') == 1   # one URL: Feed only
+    assert re.search(r'ee-site"><span class="ee-none">—</span></span>'
+                     r'<span class="ee-feed"><a [^>]*>e\.com/Plain/feed</a>', plain)
+
+
+def test_page_and_linkedin_go_in_site_column(db):
+    cfg = _cfg({"type": "linkedin", "name": "Jane", "slug": "jane-doe"},
+               {"type": "page", "name": "Listing", "url": "https://e.com/list"})
+    text = _html(sp.build_sources(db, cfg, NOW))
+    for name, short in (("Jane", "linkedin.com/in/jane-doe"), ("Listing", "e.com/list")):
+        row = re.search(rf"<tr><td><b>{name}</b>.*?</tr>", text, re.S).group(0)
+        assert re.search(rf'ee-site"><a [^>]*>{short}</a></span><span class="ee-feed"><span class="ee-none">',
+                         row)
 
 
 def test_linkedin_row_shows_profile_url(db):
@@ -254,3 +269,11 @@ def test_without_a_sources_page_no_link_is_written(tmp_path):
                                    tmp_path / "R", reports_dir / "2026-10-16-report.md")
     assert "sources" not in out
     assert "Sources" not in (reports_dir / "seo.html").read_text(encoding="utf-8")
+
+
+def test_one_site_feed_column_and_short_columns_do_not_wrap(db):
+    cfg = _cfg(_rss("Field Notes", site_url="https://field-notes.example/"))
+    text = _html(sp.build_sources(db, cfg, NOW))
+    assert "<th>Site/Feed</th>" in text and "<th>Site</th>" not in text and "<th>Feed</th>" not in text
+    assert '<th class="ee-nw">Kind</th>' in text and '<th class="ee-nw">Last fetched</th>' in text
+    assert '<td class="ee-nw">rss</td>' in text

@@ -101,6 +101,7 @@ def _parser() -> argparse.ArgumentParser:
     st.add_parser("list").add_argument("--all", dest="include_merged", action="store_true")
     st.add_parser("show").add_argument("id", type=int)
     st.add_parser("duplicates").add_argument("--count", dest="count_only", action="store_true")
+    st.add_parser("similarity")
     sm = st.add_parser("merge")
     sm.add_argument("keep", type=int)
     sm.add_argument("other", type=int)
@@ -237,6 +238,8 @@ def _dispatch(args):
             return api.studies_show(cfg, args.id)
         if args.action == "duplicates":
             return api.studies_duplicates(cfg, args.count_only)
+        if args.action == "similarity":
+            return api.studies_similarity(cfg)
         if args.action == "merge":
             return api.studies_merge(cfg, args.keep, args.other)
         if args.action == "metric":

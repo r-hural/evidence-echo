@@ -1,7 +1,7 @@
 """Match: give each judged item its study. Fixed rules first; Claude only for items with candidates."""
 import json
 
-from evidence_echo.core import contracts, identity, interfaces, store
+from evidence_echo.core import contracts, identity, interfaces, similarity, store
 from evidence_echo.core.urls import canonical_url
 from evidence_echo.stages import classify
 
@@ -89,17 +89,22 @@ def _asks(entry: dict) -> bool:
     return entry["follows"] is None and entry["joins"] is None
 
 
-def fixed_pass(conn) -> list[dict]:
+def fixed_pass(conn, tag: str | None = None) -> list[dict]:
     """Assign everything the rules decide; return the items that wait (oldest first).
     Each entry: item, candidates (shown, at most MAX_CANDIDATES, same-url targets first),
     allowed (every cid that qualifies, accepted as same_as), follows (a waiting item's id),
     joins (a study id: a same-url join applied with the answers).
     Once an entry is planned, later same-url joins are planned too instead of written, so the
-    apply run sees the studies exactly as emit did and computes the same plan."""
+    apply run sees the studies exactly as emit did and computes the same plan.
+    With an embedder tag, stored vectors add similarity candidates after the rule candidates;
+    without one the rules decide alone."""
+    ivecs = similarity.item_vectors(conn, tag) if tag else {}
+    ssums = similarity.study_sums(conn, tag, ivecs) if tag else {}
     pool, url_targets = [], {}   # url_targets: canonical url -> every study and waiting item with it
     for s in store.active_studies(conn):
         study = {"cid": f"s{s['id']}", "series_key": s["series_key"], "numbers": s["fingerprint"],
-                 "editions": s["editions"], "order": s["id"]}
+                 "editions": s["editions"], "order": s["id"],
+                 "sum": ssums.get(s["id"]), "vec": similarity.unit_of(ssums.get(s["id"]))}
         pool.append(study)
         if s["primary_canonical"]:
             url_targets.setdefault(s["primary_canonical"], []).append(study)
@@ -123,20 +128,34 @@ def fixed_pass(conn) -> list[dict]:
                     store.assign_study(conn, item["id"], sid, "same primary url")
                 target["numbers"] = sorted(set(target["numbers"]) | set(_numbers(facts)))
                 target["editions"] = sorted(set(target["editions"]) | set(editions))
+                if item["id"] in ivecs:   # apply's study vector will include this item
+                    vec = ivecs[item["id"]]
+                    target["sum"] = vec if target.get("sum") is None else target["sum"] + vec
+                    target["vec"] = similarity.unit_of(target["sum"])
             continue
         # several same-url targets fit, or all are another edition: Claude decides between them
         forced = sorted(targets, key=lambda c: -c["order"])
         skey, nums = identity.series_key(facts.get("series")), _numbers(facts)
         shown = {c["cid"] for c in forced}
         ranked = forced + [c for c in identity.qualifying(skey, nums, pool) if c["cid"] not in shown]
-        if not ranked:
+        vec = ivecs.get(item["id"])
+        sims = []
+        if vec is not None:
+            sims = similarity.similar(
+                vec, [c for c in pool if c.get("vec") is not None and not _clash(editions, c["editions"])],
+                similarity.CANDIDATE_SIM, similarity.MAX_SIMILAR, {c["cid"] for c in ranked})
+        if not ranked and not sims:
             sid = _new_study(conn, item, "no candidates")
             entry = {"cid": f"s{sid}", "series_key": skey, "numbers": nums,
-                     "editions": editions, "order": sid}
+                     "editions": editions, "order": sid, "sum": vec, "vec": vec}
         else:
-            plan.append(_entry(item, ranked[:identity.MAX_CANDIDATES], {c["cid"] for c in ranked}))
+            n = min(len(sims), max(2, identity.MAX_CANDIDATES - len(ranked)),
+                    max(0, identity.MAX_CANDIDATES - len(forced)))
+            plan.append(_entry(item, ranked[:identity.MAX_CANDIDATES - n] + sims[:n],
+                               {c["cid"] for c in ranked} | {c["cid"] for c in sims[:n]}))
             entry = {"cid": interfaces.opaque_id(item["id"]), "series_key": skey, "numbers": nums,
-                     "editions": editions, "order": BATCH_ORDER + item["id"], "item_id": item["id"]}
+                     "editions": editions, "order": BATCH_ORDER + item["id"], "item_id": item["id"],
+                     "vec": vec}
         pool.append(entry)
         if canon:
             url_targets.setdefault(canon, []).append(entry)
@@ -167,11 +186,22 @@ def instructions(topic) -> str:
     return f"You are matching {topic.domain} studies.\n\n" + INSTRUCTIONS
 
 
-def emit(conn, topic) -> str:
+def _embed(conn, embedder) -> tuple[str | None, str | None]:
+    """Run the embed pass: (tag to match with, failure reason or None)."""
+    if embedder is None:
+        return None, None
+    return embedder.tag, similarity.embed_pending(conn, embedder)
+
+
+def emit(conn, topic, embedder=None) -> str:
+    tag, failed = _embed(conn, embedder)
     items = [{**_item_view(e["item"]),
               "candidates": [_candidate_view(conn, c["cid"]) for c in e["candidates"]]}
-             for e in fixed_pass(conn) if _asks(e)]
-    return interfaces.envelope("match", instructions(topic), items, topic)
+             for e in fixed_pass(conn, tag) if _asks(e)]
+    out = interfaces.envelope("match", instructions(topic), items, topic)
+    if failed is None:
+        return out
+    return json.dumps({**json.loads(out), "embeddings": f"unavailable: {failed}"}, ensure_ascii=False, indent=2)
 
 
 def _resolve(conn, plan: list[dict], answer) -> tuple[int, list[dict]]:
@@ -221,8 +251,8 @@ def _target_errors(entry: dict, res: dict) -> list[str]:
     return []
 
 
-def apply(conn, payload: str) -> dict:
-    plan = fixed_pass(conn)
+def apply(conn, payload: str, tag: str | None = None) -> dict:
+    plan = fixed_pass(conn, tag)
     asked = {interfaces.opaque_id(e["item"]["id"]): e for e in plan if _asks(e)}
     accepted, rejected = contracts.check_payload("match", payload, set(asked))
     answers = {res["id"]: res for res in accepted}
@@ -237,8 +267,9 @@ def apply(conn, payload: str) -> dict:
     return {"applied": applied, "rejected": rejected + more}
 
 
-def run_api(conn, backend, topic) -> dict:
-    plan = fixed_pass(conn)
+def run_api(conn, backend, topic, embedder=None) -> dict:
+    tag, failed = _embed(conn, embedder)
+    plan = fixed_pass(conn, tag)
 
     def answer(entry):
         oid = interfaces.opaque_id(entry["item"]["id"])
@@ -253,4 +284,7 @@ def run_api(conn, backend, topic) -> dict:
         errors = _target_errors(entry, res)
         return (None, errors) if errors else (res, [])
     processed, rejected = _resolve(conn, plan, answer)
-    return {"processed": processed, "rejected": rejected}
+    out = {"processed": processed, "rejected": rejected}
+    if failed is not None:
+        out["embeddings"] = f"unavailable: {failed}"
+    return out

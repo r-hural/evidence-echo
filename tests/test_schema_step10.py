@@ -34,7 +34,7 @@ def test_step10_adds_kind_and_comparison(tmp_path):
     path = tmp_path / "echo.db"
     _version9(path)
     conn = store.connect(path)
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 13
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION
     question = dict(conn.execute("SELECT * FROM questions").fetchone())
     assert question["kind"] is None and question["comparison"] is None
     assert question["text"] == "Q?" and question["measure"] == "m"

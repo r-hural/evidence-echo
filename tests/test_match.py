@@ -1,8 +1,11 @@
 import json
 
+import numpy as np
+
 from evidence_echo.core import store
 from evidence_echo.stages import match
 from tests.conftest import FakeBackend, make_item
+from tests.test_similarity import FakeEmbedder
 
 
 def judged(db, url, facts=None, tier="B", primary=None):
@@ -320,3 +323,183 @@ def test_item_clashing_with_a_stored_study_still_follows_a_waiting_item_of_its_e
     assert plan[b]["follows"] == a
     match.apply(db, payload({"id": f"i{a}", "same_as": None, "reason": "other edition"}))
     assert study_of(db, b) == study_of(db, a) != s
+
+
+# --- similarity candidates (stored vectors) ---
+
+TAG = "fake/card-v1"
+
+
+def _vec(cos=1.0, axis=1):
+    """Unit vector with the given cosine to the first axis."""
+    v = [0.0] * 4
+    v[0], v[axis] = cos, (1 - cos * cos) ** 0.5
+    return v
+
+
+def _put(db, item_id, vec, tag=TAG):
+    store.save_vector(db, item_id, tag, np.array(vec, dtype=np.float32).tobytes())
+
+
+def _vec_study(db, n, vec, facts=None):
+    """A stored study with one member item carrying `vec`."""
+    item_id = judged(db, f"https://e.com/member{n}", facts or F())
+    sid = store.create_study(db, "B", facts or F(), None)
+    store.assign_study(db, item_id, sid, "seed")
+    _put(db, item_id, vec)
+    return sid
+
+
+def _waiting(db, url, vec, facts=None):
+    item_id = judged(db, url, facts or F())
+    _put(db, item_id, vec)
+    return item_id
+
+
+def test_similarity_candidate_for_item_without_rule_candidates(db):
+    s = _vec_study(db, 1, _vec())
+    x = _waiting(db, "https://e.com/x", _vec(0.95))
+    plan = match.fixed_pass(db, TAG)
+    assert [c["cid"] for c in plan[0]["candidates"]] == [f"s{s}"]
+    assert f"s{s}" in plan[0]["allowed"]
+    assert study_of(db, x) is None
+    match.fixed_pass(db)   # no tag: the item becomes a new study
+    assert study_of(db, x) is not None
+
+
+def test_below_cutoff_is_no_candidate(db):
+    _vec_study(db, 1, _vec())
+    x = _waiting(db, "https://e.com/x", _vec(0.80))
+    assert match.fixed_pass(db, TAG) == []
+    assert store.get_item(db, x)["match_reason"] == "no candidates"
+
+
+def test_similarity_gets_two_slots_when_rules_fill_five(db):
+    rule = [store.create_study(db, "B", F(["44%"]), None) for _ in range(6)]
+    sims = [_vec_study(db, n, _vec(0.99 - n / 100)) for n in range(3)]
+    _waiting(db, "https://e.com/x", _vec(), F(["44%"]))
+    entry = match.fixed_pass(db, TAG)[0]
+    cids = [c["cid"] for c in entry["candidates"]]
+    assert len(cids) == 5 and set(cids[3:]) == {f"s{s}" for s in sims[:2]}
+    assert set(cids[:3]) <= {f"s{s}" for s in rule}
+    assert entry["allowed"] == {f"s{s}" for s in rule} | {f"s{s}" for s in sims[:2]}
+
+
+def test_similarity_fills_free_slots_up_to_three(db):
+    rule = store.create_study(db, "B", F(["44%"]), None)
+    sims = [_vec_study(db, n, _vec(0.99 - n / 100)) for n in range(4)]
+    _waiting(db, "https://e.com/x", _vec(), F(["44%"]))
+    cids = [c["cid"] for c in match.fixed_pass(db, TAG)[0]["candidates"]]
+    assert cids == [f"s{rule}"] + [f"s{s}" for s in sims[:3]]
+
+
+def test_similarity_skips_edition_clash(db):
+    _vec_study(db, 1, _vec(), F(editions=["2024"]))
+    x = _waiting(db, "https://e.com/x", _vec(0.95), F(editions=["2025"]))
+    assert match.fixed_pass(db, TAG) == []
+    assert study_of(db, x) is not None
+
+
+def test_vectors_ignored_without_tag(db):
+    _vec_study(db, 1, _vec())
+    x = _waiting(db, "https://e.com/x", _vec(0.95))
+    plain = [(e["item"]["id"], [c["cid"] for c in e["candidates"]]) for e in match.fixed_pass(db)]
+    assert plain == [] and study_of(db, x) is not None
+
+
+def test_corrupt_vector_never_crashes_the_pass(db):
+    s = _vec_study(db, 1, _vec())
+    x = _waiting(db, "https://e.com/x", _vec(0.95))
+    y = judged(db, "https://e.com/y", F())
+    store.save_vector(db, y, TAG, b"\x00\x01\x02\x03\x04")
+    plan = match.fixed_pass(db, TAG)
+    assert [c["cid"] for c in plan[0]["candidates"]] == [f"s{s}"]
+    assert study_of(db, y) is not None and x != y
+
+
+def test_apply_accepts_similarity_candidate_after_emit(db, topic):
+    s = _vec_study(db, 1, _vec())
+    x = _waiting(db, "https://e.com/x", _vec(0.95))
+    out = json.loads(match.emit(db, topic, embedder=FakeEmbedder()))
+    assert [c["id"] for c in out["items"][0]["candidates"]] == [f"s{s}"]
+    path = db.execute("PRAGMA database_list").fetchone()[2]
+    other = store.connect(path)
+    res = match.apply(other, payload({"id": f"i{x}", "same_as": f"s{s}", "reason": "same"}), tag=TAG)
+    assert res == {"applied": 1, "rejected": []}
+    assert study_of(other, x) == s
+    other.close()
+
+
+def test_emit_reports_unavailable_embeddings(db, topic):
+    s = _vec_study(db, 1, _vec())
+    _waiting(db, "https://e.com/x", _vec(0.95))
+    judged(db, "https://e.com/unembedded", F())   # pending: the embed pass has work to fail on
+    out = json.loads(match.emit(db, topic, embedder=FakeEmbedder(error="401")))
+    assert out["embeddings"] == "unavailable: 401"
+    assert [c["id"] for c in out["items"][0]["candidates"]] == [f"s{s}"]   # built from what is stored
+
+
+def test_run_api_reports_unavailable_embeddings(db, topic):
+    x = judged(db, "https://e.com/x", F())
+    res = match.run_api(db, FakeBackend([]), topic, embedder=FakeEmbedder(error="401"))
+    assert res == {"processed": 0, "rejected": [], "embeddings": "unavailable: 401"}
+    assert study_of(db, x) is not None
+
+
+# --- final review fixes ---
+
+def test_run_api_with_working_embedder_shows_similarity_candidate(db, topic):
+    s = _vec_study(db, 1, [1.0, 0.0, 0.0, 0.0])
+    x = judged(db, "https://e.com/x", F())   # embedded by the pass: FakeEmbedder gives [1, 0, 0, 0]
+    backend = FakeBackend([json.dumps({"same_as": f"s{s}", "reason": "same"})])
+    res = match.run_api(db, backend, topic, embedder=FakeEmbedder())
+    assert res == {"processed": 1, "rejected": []}
+    assert study_of(db, x) == s and f'"id": "s{s}"' in backend.prompts[0]
+
+
+def test_same_url_join_updates_pool_vector_like_apply(db):
+    import math
+    url = "https://orig.example/r"
+    m = [1.0, 0.0, 0.0, 0.0]
+    sid = store.create_study(db, "B", F(), url)
+    member = judged(db, "https://e.com/member", F())
+    store.assign_study(db, member, sid, "seed")
+    _put(db, member, m)
+    half = math.acos(0.86) + math.acos(0.84)
+    a = judged(db, "https://e.com/a", F(), primary=url)
+    _put(db, a, [math.cos(2 * half), math.sin(2 * half), 0.0, 0.0])
+    b = judged(db, "https://e.com/b", F())
+    _put(db, b, _vec(0.86))
+    emit_plan = [(e["item"]["id"], e["allowed"]) for e in match.fixed_pass(db, TAG)]
+    assert study_of(db, a) == sid
+    apply_plan = [(e["item"]["id"], e["allowed"]) for e in match.fixed_pass(db, TAG)]
+    assert emit_plan == apply_plan
+
+
+def test_new_study_keeps_its_vector_after_same_url_join(db):
+    import math
+    url = "https://orig.example/r"
+    h = math.radians(32)                       # b is 0.848 from c or a alone, 1.0 from their mean
+    c = judged(db, "https://e.com/c", F(), primary=url)
+    _put(db, c, [1.0, 0.0, 0.0, 0.0])
+    a = judged(db, "https://e.com/a", F(), primary=url)
+    _put(db, a, [math.cos(2 * h), math.sin(2 * h), 0.0, 0.0])
+    b = judged(db, "https://e.com/b", F())
+    _put(db, b, [math.cos(h), math.sin(h), 0.0, 0.0])
+    plan = match.fixed_pass(db, TAG)
+    sid = study_of(db, c)
+    assert study_of(db, a) == sid
+    assert [e["item"]["id"] for e in plan] == [b] and f"s{sid}" in plan[0]["allowed"]
+
+
+def test_same_url_candidates_are_never_cut_by_similarity(db):
+    url = "https://orig.example/r"
+    forced = [store.create_study(db, "B", F(editions=[str(2020 + n)]), url) for n in range(4)]
+    sims = [_vec_study(db, n, _vec(0.99 - n / 100)) for n in range(2)]
+    x = _waiting(db, "https://e.com/x", _vec(), F(editions=["2030"]))
+    db.execute("UPDATE items SET primary_url=? WHERE id=?", (url, x))
+    db.commit()
+    entry = match.fixed_pass(db, TAG)[0]
+    cids = {c["cid"] for c in entry["candidates"]}
+    assert {f"s{s}" for s in forced} <= cids
+    assert len(entry["candidates"]) == 5

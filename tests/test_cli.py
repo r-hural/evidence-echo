@@ -202,3 +202,9 @@ def test_report_render_rejections_flag(workspace, tmp_path, capsys):
     assert cli.main(["report", "--render", str(results), "--rejections"]) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["rejections"]["count"] == 0 and Path(out["rejections"]["path"]).exists()
+
+
+def test_cli_studies_similarity(workspace, monkeypatch, capsys):
+    monkeypatch.setattr(api, "studies_similarity", lambda cfg: {"skipped": "no embedder"})
+    assert cli.main(["studies", "similarity"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"skipped": "no embedder"}

@@ -329,7 +329,7 @@ def test_topic_page_never_overwrites_the_overview(tmp_path):
 
 def test_topic_page_with_zero_studies(tmp_path):
     out = html_render.topic_page(topic_model([]), "../overview.html", "2026-10-16-report.html")
-    assert "<h1>SEO — all studies</h1>" in out
+    assert "<h1>SEO — all studies</h1>" in out and '<p class="meta">Updated 2026-10-16 09:00</p>' in out
     assert '<p class="empty">No studies reported yet.</p>' in out
     assert "<form" not in out and "<script" not in out
 
@@ -338,7 +338,7 @@ def test_topic_page_with_one_study(tmp_path):
     out = html_render.topic_page(topic_model([topic_study(entry(1))]), "../overview.html", "r.html")
     assert '<p id="ee-count" class="meta" aria-live="polite">1 study</p>' in out
     assert "<b>Reported:</b> first 2026-10-01 · last 2026-10-16 · in 2 reports" in out
-    assert "Updated 2026-10-16 09:00" in out
+    assert "1 study · updated 2026-10-16 09:00" in out
 
 
 def test_topic_page_with_many_studies_lists_all_in_model_order():
@@ -495,11 +495,11 @@ def _summary(tmp_path, tid="seo", name="SEO", entries=None, html_files=True, ste
 
 def test_overview_card_without_depth_lists_the_report_ranked_with_links(tmp_path):
     out = html_render.overview_page([_summary(tmp_path)], tmp_path / "R", NOW)
-    assert "<h1>Evidence Echo — Overview</h1>" in out and "Updated 2026-10-16 10:30" in out
-    assert "<h2>SEO</h2>" in out
+    assert "<h1>Evidence Echo — Overview</h1>" in out and "4 new findings · updated 2026-10-16 10:30" in out
+    assert '<h2><a href="seo/seo.html">SEO</a></h2>' in out          # the head opens the topic page
     assert "last run 2026-10-16 · 4 new findings" in out
     _sections(out, "A study", "B new", "B old", "C study")
-    assert '<a href="seo/2026-10-16-report.html">A study</a>' in out
+    assert '<a href="seo/2026-10-16-report.html#s2">A study</a>' in out    # the study's card
     assert '<a href="seo/2026-10-16-report.html">Latest report</a>' in out
     assert '<a href="seo/seo.html">All studies</a>' in out
 
@@ -517,7 +517,7 @@ def test_overview_one_finding_and_empty_report(tmp_path):
     out = html_render.overview_page([one, none], tmp_path / "R", NOW)
     assert "last run 2026-10-16 · 1 new finding</p>" in out
     assert ('<span class="tier tier-x"><span class="sr">Tier </span>?</span> '
-            '<a href="a/2026-10-16-report.html">T</a>') in out
+            '<a href="a/2026-10-16-report.html#s1">T</a>') in out
     assert "0 new findings" in out
 
 
@@ -527,6 +527,27 @@ def test_overview_setup_error_and_not_run(tmp_path):
         tmp_path, NOW)
     assert "<h2>Alpha</h2>" in out and '<p class="meta">not run yet</p>' in out
     assert '<p class="warn">setup error: b/topic.json: field &#x27;name&#x27; missing</p>' in out
+
+
+def test_overview_sets_the_word_echo_apart(tmp_path):
+    out = html_render.overview_page(
+        [TopicSummary("a", "SEO <b> Echo"), TopicSummary("b", "Echo"), TopicSummary("c", "Echoes")],
+        tmp_path, NOW)
+    assert '<h2>SEO &lt;b&gt; <span class="ee-echo">Echo</span></h2>' in out
+    assert "<h2>Echo</h2>" in out and "<h2>Echoes</h2>" in out
+
+
+def test_overview_totals_the_new_findings_of_every_run_topic(tmp_path):
+    one = _summary(tmp_path, "a", "A", entries=[{"study_id": 1, "title": "x", "tier": "B", "published": None}])
+    two = _summary(tmp_path, "b", "B", html_files=False)
+    out = html_render.overview_page([one, two, TopicSummary("c", "C"),
+                                     TopicSummary("d", "D", error="broken")], tmp_path / "R", NOW)
+    assert "5 new findings · updated 2026-10-16 10:30" in out
+    assert "<h2>B</h2>" in out and "<h2>C</h2>" in out          # no topic page yet, not run: no link
+    single = html_render.overview_page([one], tmp_path / "R", NOW)
+    assert "1 new finding · updated" in single
+    none_run = html_render.overview_page([TopicSummary("c", "C")], tmp_path / "R", NOW)
+    assert '<p class="meta">Updated 2026-10-16 10:30</p></header>' in none_run
 
 
 def test_overview_without_topics(tmp_path):
@@ -669,10 +690,30 @@ def test_full_card_keeps_every_fact():
               coverage=[Link("A", "https://a.example/1"), Link("B", "https://b.example/2")])
     out = html_render.card(e, "2026-10-18 · in 1 report")
     names = [html.unescape(n) for n in re.findall(r"<b>([^<]*?):</b>", _side(out))]
-    assert names == ["Disputed", "Skeptic's doubts", "Red flags", "Measured", "Baseline", "Original",
-                     "Subtopic", "Question", "Part of", "Research", "Published", "Primary source",
-                     "Coverage", "Reported"]
+    assert names == ["Disputed", "Skeptic's doubts", "Red flags", "Original",
+                     "Measured", "Baseline", "Research", "Part of",
+                     "Subtopic", "Question",
+                     "Published", "Reported", "Primary source", "Coverage"]
     assert "Q? · ⇅ contested (2 independent studies) · corroborated by 1 other" in out
+    groups = _side(out).split('<div class="ee-grp">')[1:]   # trust, tested, where it fits, sources & dates
+    assert [len(re.findall(r"<b>[^<]*?:</b>", g)) for g in groups] == [4, 4, 2, 4]
+
+
+def test_card_groups_name_every_fact():
+    full = view(flags=["no_baseline"], metric="m", baseline="b", provenance={"conflict_of_interest": "v"},
+                missing_numbers=["5%"], judged_from="excerpt", entities=[("x", "X")],
+                primary={"status": "unreachable"})
+    named = {n for group in html_render.CARD_GROUPS for n in group}
+    e = entry(1, view=full, series="S", subtopic={"key": "k", "name": "Sub", "question": "Q?"})
+    names = ([n for n, _ in md_render.fact_pairs(full)] + [n for n, _ in md_render.subtopic_lines(e.subtopic)]
+             + [n for n, _ in md_render.research_pairs(e)] + ["Part of", "Primary source", "Coverage", "Reported"])
+    assert set(names) <= named and len(names) == len(named)
+
+
+def test_card_without_trust_facts_opens_with_what_was_tested():
+    out = html_render.card(entry(1, view=view(metric="clicks")))
+    first = _side(out).split('<div class="ee-grp">')[1]
+    assert "<b>Measured:</b>" in first and "Red flags" not in out
 
 
 def test_reported_single_date():
@@ -776,6 +817,8 @@ def test_chart_shows_the_skeptic_grade_and_printed_marks():
     assert '<td data-name="Skeptic"><span class="tier tier-b">' in chart
     assert '<span class="ee-mark" aria-hidden="true">∅</span>not reachable' in chart
     assert 'class="meta ee-key"' in chart
+    assert "<caption>In this report</caption>" in chart
+    assert chart.index('<details class="ee-key-box"><summary>') < chart.index("ee-key\"") < chart.index("</details>")
     card = html_render.card(near)
     assert '<b>Original:</b> <span class="ee-warn"><span class="ee-mark" aria-hidden="true">∅</span>' in card
 

@@ -32,6 +32,8 @@ _MONTHS = {m: i for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun",
                                        "oct", "nov", "dec"), 1)}
 _TEXT_DATE = re.compile(r"\b(?:(\d{1,2})\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})"
                         r"|([A-Za-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4}))\b")
+_TRAILING_DATE = re.compile(r"\s+(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|"
+                            r"Nov|Dec) \d{1,2} \d{4}$")   # "... Wed Oct 21 2026": a card's date
 _NEXT_TEXT = re.compile(r"(older( posts| entries)?|next( page)?|more posts|›|»|→)[›»→]?", re.I)
 
 
@@ -115,9 +117,19 @@ def _time_in(container) -> datetime | None:
     return _text_date(" ".join(container.text_content().split()))
 
 
+def _link_text(a) -> str:
+    """The link's own title text: a heading inside the link wins (a card link also wraps the
+    author and date); otherwise its text, without a trailing "Wed Oct 21 2026" date."""
+    for h in a.iter("h1", "h2", "h3", "h4"):
+        heading = " ".join(h.text_content().split())
+        if heading:
+            return heading
+    return _TRAILING_DATE.sub("", " ".join(a.text_content().split()))
+
+
 def _link_title(a) -> str:
     """The link's text; for an image-only link, the image's alt text (or the link's own label)."""
-    text = " ".join(a.text_content().split())
+    text = _link_text(a)
     if text:
         return text
     for img in a.iter("img"):
@@ -140,7 +152,7 @@ def article_links(html: str, page_url: str, index_url: str) -> list[Link]:
         canon = canonical_url(url)
         if not canon or not keep_link(url, index_url):
             continue
-        text = " ".join(a.text_content().split())
+        text = _link_text(a)
         if canon in seen:   # the same article again: a text link beats an earlier image link
             first = out[seen[canon]]
             if text and first.title != text and not first.title_from_text:

@@ -85,3 +85,15 @@ def test_space_thousands_in_year_range_match_comma_form():
 
 def test_space_thousands_with_comma_decimal():
     assert primary.number_check(_facts("2000.5%"), "Up 2 000,5 % overall.") == ("ok", [])
+
+
+def test_number_check_ignores_key_numbers_not_in_findings():
+    """B10: a key number the findings never state (another study of a roundup, the article's own
+    headline) is not looked for in this study's original."""
+    facts = {"match_keys": {"key_numbers": ["39", "12%"]}, "findings": "The title test lifted CTR 12%."}
+    assert primary.number_check(facts, "CTR rose 12% in the test group.") == ("ok", [])
+
+
+def test_number_check_falls_back_when_findings_name_no_key_number():
+    facts = {"match_keys": {"key_numbers": ["39", "12%"]}, "findings": "CTR rose."}
+    assert primary.number_check(facts, "CTR rose 12%.") == ("partial", ["39"])

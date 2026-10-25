@@ -70,7 +70,7 @@ def test_recent_latest_fewer_than_limit_fills_from_earlier(db):
     assert _titles(got["latest"]) == ["new A", "new B", "new C"] and got["more"] == 0
     assert _titles(got["earlier"]) == ["2026-10-15 A", "2026-10-15 B", "2026-10-15 C", "2026-10-15 D",
                                        "2026-10-08 A", "2026-10-08 B", "2026-10-08 C"]
-    assert got["latest"][0].keys() == {"study_id", "title", "tier", "report_path", "rendered_at"}
+    assert got["latest"][0].keys() == {"study_id", "title", "tier", "report_path", "rendered_at", "card_id"}
     assert got["earlier"][0]["report_path"] == "/r/seo/2026-10-15-report.md"
     text = overview.render([_summary(db, 10)], Path("/r"), NOW)
     lines = text.splitlines()
@@ -121,6 +121,15 @@ def test_merged_study_listed_once_under_its_survivor(db):
     assert got["latest"] == [] and _titles(got["earlier"]) == ["survivor"]
 
 
+def test_card_id_is_the_id_the_report_showed(db):
+    a, b = _study(db, "A"), _study(db, "B")
+    _report(db, DAYS[0], [(b, "shown as b")])
+    db.execute("UPDATE studies SET merged_into=? WHERE id=?", (a, b))   # b later merged into a
+    db.commit()
+    row = store.recent_studies(db, 10)["latest"][0]
+    assert row["study_id"] == a and row["card_id"] == b                 # the report's card is #s<b>
+
+
 def test_earlier_links_to_first_report(db, tmp_path):
     out = tmp_path / "R"
     (out / "seo").mkdir(parents=True)
@@ -151,8 +160,8 @@ def test_html_card_same_rule(db, tmp_path):
     db.commit()
     page = html_render.overview_page([_summary(db, 10)], out, NOW)
     assert page.index("newer study") < page.index('<h3 class="ee-earlier">Earlier</h3>') < page.index("older study")
-    assert '<a href="seo/2026-10-01-report.html">older study</a>' in page      # its first report, as HTML
-    assert '<a href="seo/2026-10-22-report.md">newer study</a>' in page        # no HTML sibling: Markdown
+    assert f'<a href="seo/2026-10-01-report.html#s{s1}">older study</a>' in page   # its card in its first report
+    assert '<a href="seo/2026-10-22-report.md">newer study</a>' in page        # no HTML sibling: Markdown, no anchor
     assert "1 new finding</p>" in page
     zero = html_render.overview_page([_summary(db, 0)], out, NOW)
     assert "Earlier" not in zero and "older study" not in zero

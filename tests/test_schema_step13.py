@@ -33,7 +33,7 @@ def test_step13_on_a_step12_database(tmp_path):
     path = tmp_path / "echo.db"
     _version12(path)
     conn = store.connect(path)
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 13
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION
     assert TABLES <= _tables(conn)
     assert conn.execute("SELECT entities_checked FROM studies").fetchone()[0] is None
     assert conn.execute("SELECT entity_names FROM items").fetchone()[0] is None
@@ -41,13 +41,13 @@ def test_step13_on_a_step12_database(tmp_path):
     assert conn.execute("SELECT COUNT(*) FROM study_entities").fetchone()[0] == 0
     conn.close()
     again = store.connect(path)
-    assert again.execute("PRAGMA user_version").fetchone()[0] == 13
+    assert again.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION
     again.close()
 
 
 def test_fresh_database_has_entity_schema(tmp_path):
     conn = store.connect(tmp_path / "echo.db")
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION == 13
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION == 14
     assert TABLES <= _tables(conn)
     assert {r["name"] for r in conn.execute("PRAGMA table_info(entities)")} == {
         "id", "slug", "name", "status", "merged_into", "created_at"}

@@ -204,7 +204,7 @@ def test_step9_adds_questions_and_keeps_old_explanations(tmp_path):
     path = tmp_path / "echo.db"
     _version8(path)
     conn = store.connect(path)
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 13
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION
     row = dict(conn.execute("SELECT * FROM pair_explanations").fetchone())
     assert row["question_id"] is None and row["metric"] == "clicks" and row["status"] == "agreed"
     assert conn.execute("SELECT COUNT(*) FROM questions").fetchone()[0] == 0

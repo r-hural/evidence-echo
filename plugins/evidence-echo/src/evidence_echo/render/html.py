@@ -126,9 +126,29 @@ def _dispute_html(e: Entry) -> str:
     return '<p class="dispute">' + "<br>".join(parts) + "</p>"
 
 
+CARD_GROUPS = (   # the card's fact groups, in order: can I trust it, what was tested, where it fits, sources & dates
+    ("Red flags", "Conflict of interest", "Numbers not found in the text", "Original", "Graded from"),
+    ("Measured", "Baseline", "Research", "Part of"),
+    ("Subtopic", "Question", "About"),
+    ("Published", "Reported", "Primary source", "Coverage"),
+)
+
+
+def _fact_groups(dispute: str, fields: list[tuple[str, str]]) -> list[str]:
+    """The card's facts in CARD_GROUPS order, one <div class="ee-grp"> per group that has any;
+    the skeptic's note opens the first group."""
+    by_name = dict(fields)
+    groups = []
+    for i, names in enumerate(CARD_GROUPS):
+        rows = ([dispute] if i == 0 and dispute else []) + [by_name[n] for n in names if n in by_name]
+        if rows:
+            groups.append('<div class="ee-grp">' + "".join(rows) + "</div>")
+    return groups
+
+
 def card(e: Entry, reported: str | None = None) -> str:
     """One study as a write-up in three columns: the rating (tier, relation, skeptic) in the
-    margin, title and summary, then the named facts on one name column.
+    margin, title and summary, then the named facts on one name column, in CARD_GROUPS.
     reported is the topic page's plain 'Reported' value (escaped here)."""
     tier, extras = label_parts(e)
     rest = (tier[len(e.tier or "?"):] + "".join(f" · {x}" for x in extras)).strip(" ·/")
@@ -139,20 +159,18 @@ def card(e: Entry, reported: str | None = None) -> str:
     main = [f"<h3>{esc(e.title)}</h3>"]
     if e.summary:
         main.append(f"<p>{esc(e.summary)}</p>")
-    side = []
-    if e.disputed:
-        side.append(_dispute_html(e))
-    side += [_field(n, esc(v), _mark(e) if n == "Original" else "") for n, v in fact_pairs(e.view)]
-    side += [_field(n, esc(v)) for n, v in subtopic_lines_with_echo(e)]
+    fields = [(n, _field(n, esc(v), _mark(e) if n == "Original" else "")) for n, v in fact_pairs(e.view)]
+    fields += [(n, _field(n, esc(v))) for n, v in subtopic_lines_with_echo(e)]
     if e.series:
-        side.append(_field("Part of", esc(series_text(e).removeprefix("Part of: "))))
-    side += [_field(n, esc(v)) for n, v in research_pairs(e)]
+        fields.append(("Part of", _field("Part of", esc(series_text(e).removeprefix("Part of: ")))))
+    fields += [(n, _field(n, esc(v))) for n, v in research_pairs(e)]
     if e.primary_url:
-        side.append(_field("Primary source", link(e.primary_url)))
+        fields.append(("Primary source", _field("Primary source", link(e.primary_url))))
     if e.coverage:
-        side.append(_field("Coverage", " · ".join(link(c.url, c.name) for c in e.coverage)))
+        fields.append(("Coverage", _field("Coverage", " · ".join(link(c.url, c.name) for c in e.coverage))))
     if reported:
-        side.append(_field("Reported", esc(reported)))
+        fields.append(("Reported", _field("Reported", esc(reported))))
+    side = _fact_groups(_dispute_html(e) if e.disputed else "", fields)
     return "\n".join([f'<article class="card" id="s{e.study_id}" data-study="{e.study_id}">'
                       '<div class="ee-card">',
                       '<div class="ee-card-rate">', *rate, "</div>",
@@ -296,10 +314,11 @@ def ratings_chart(entries: list[Entry]) -> str:
         return ""
     head = "".join(f'<th scope="col">{x}</th>'
                    for x in ("Grade", "Study", "Skeptic", "Red flags", "Original"))
-    return ('<table class="ee-chart"><caption>This run’s ratings</caption>'
+    return ('<table class="ee-chart"><caption>In this report</caption>'
             f"<thead><tr>{head}</tr></thead><tbody>"
             + "".join(_chart_row(e) for e in entries) + "</tbody></table>"
-            + f'<p class="meta ee-key">{RATINGS_KEY}</p>')
+            + '<details class="ee-key-box"><summary>How to read this table</summary>'
+            + f'<p class="meta ee-key">{RATINGS_KEY}</p></details>')
 
 
 def report_page(r: Report, topic_href: str, overview_href: str, sources_href: str | None = None) -> str:
@@ -385,14 +404,15 @@ def question_explanation(g, titles: dict) -> str:
     parts = ['<details class="ee-why"><summary>Why the results differ</summary>']
     if x.get("summary"):
         parts.append(f"<p>{esc(x['summary'])}</p>")
-    parts.append(f'<p class="meta">Main result: {esc(et.direction_text(x.get("main_result")))}</p><ul>')
+    parts.append(f'<p class="meta">Main result: {esc(et.result_text(x.get("main_result"), g.kind))}</p><ul>')
     for line in x["lines"]:
         sid = line["study"]
         title = titles.get(sid) or names.get(sid) or f"study {sid}"
         shown = esc(_cut(title, TITLE_MAX))
         ref = f'<a href="#s{sid}" title="{esc(title)}">{shown}</a>' if sid in titles else shown
         note = _cut(" ".join(str(line.get("note") or "").split()), NOTE_MAX)
-        parts.append(f"<li>{ref} ({esc(et.direction_text(direction.get(sid, g.directions.get(sid))))}) — "
+        result = line.get("value") if g.kind == "level" else direction.get(sid, g.directions.get(sid))
+        parts.append(f"<li>{ref} ({esc(et.result_text(result, g.kind))}) — "
                      f"{esc(metric_text(line.get('reason')))}"
                      + (f"<p>{esc(note)}</p>" if note else "")
                      + f"<blockquote>{esc(quote_text(line.get('quote')))}</blockquote></li>")
@@ -497,8 +517,17 @@ def _topic_header(t: Topic, overview_href: str, report_href: str,
     mast = masthead(crumbs([("Evidence Echo", overview_href), (t.topic_name, topic_href),
                             ("All studies", None)]),
                     [("Latest report", report_href)] + ([("Sources", sources_href)] if sources_href else []))
+    totals = [f"Updated {updated}"]
+    if t.studies:   # the issue's totals: studies, then questions (Unsorted has none)
+        n = len(t.studies)
+        q = sum(len(sub.questions) + sum(1 for o in sub.others if o.question)
+                for sub in t.evidence if sub.key != knowledge.UNSORTED)
+        totals = [f'{n} {"study" if n == 1 else "studies"}']
+        if q:
+            totals.append(f'{q} {"question" if q == 1 else "questions"}')
+        totals.append(f"updated {updated}")
     return mast, [f'<header class="ee-head"><h1>{esc(t.topic_name)} — all studies</h1>',
-                  f'<p class="meta">Updated {esc(updated)}</p></header>']
+                  f'<p class="meta">{esc(" · ".join(totals))}</p></header>']
 
 
 def _subtopic_keys(t: Topic) -> dict[int, tuple[str, str]]:
@@ -711,12 +740,18 @@ def write_report(report: Report, topic: Topic, reports_dir, overview_dir, md_pat
 
 
 def _topic_card(s, out_dir: Path) -> str:
-    head = f'<section class="card"><h2>{esc(s.name)}</h2>'
+    name = esc(s.name)
+    if s.name.endswith(" Echo") and s.name[:-5].strip():   # "SEO Echo": the word Echo set lighter
+        name = f'{esc(s.name[:-5])} <span class="ee-echo">Echo</span>'
+    head = f'<section class="card"><h2>{name}</h2>'
     if s.error:
         return f'{head}<p class="warn">{esc("setup error: " + s.error)}</p></section>'
     if not s.report:
         return f'{head}<p class="meta">not run yet</p></section>'
     md = Path(s.report["path"])
+    report_html, topic_html = md.with_suffix(".html"), md.parent / f"{s.id}.html"
+    if topic_html.exists():   # the topic head opens the topic page
+        head = f'<section class="card"><h2><a href="{esc(href(topic_html, out_dir))}">{name}</a></h2>'
     latest, earlier, more = overview_mod.select(s)
     n = len(latest) + more
     parts = [head, f'<p class="meta">{esc("last run " + clock.local_date(s.report["rendered_at"]))}'
@@ -727,9 +762,15 @@ def _topic_card(s, out_dir: Path) -> str:
         sibling = target.with_suffix(".html")
         return sibling if target.suffix == ".md" and sibling.exists() else target
 
+    def study_href(e) -> str:
+        """The study's card in its report page; the plain file when the report is Markdown only."""
+        target = report_target(e["report_path"])
+        card = e.get("card_id", e.get("study_id"))
+        return href(target, out_dir) + (f"#s{card}" if target.suffix == ".html" and card is not None else "")
+
     def study_list(rows, extra=""):
         return "<ul>" + "".join(
-            f'<li>{tier_badge(e.get("tier"))} <a href="{esc(href(report_target(e["report_path"]), out_dir))}">'
+            f'<li>{tier_badge(e.get("tier"))} <a href="{esc(study_href(e))}">'
             f'{esc(e.get("title"))}</a></li>' for e in rows) + extra + "</ul>"
 
     if latest or more:
@@ -738,7 +779,6 @@ def _topic_card(s, out_dir: Path) -> str:
         parts.append(study_list(latest, more_link))
     if earlier:
         parts += ['<h3 class="ee-earlier">Earlier</h3>', study_list(earlier)]
-    report_html, topic_html = md.with_suffix(".html"), md.parent / f"{s.id}.html"
     nav = [f'<a href="{esc(href(report_html, out_dir))}">Latest report</a>' if report_html.exists()
            else f'<a href="{esc(href(md, out_dir))}">Latest report (Markdown)</a>']
     if topic_html.exists():
@@ -750,8 +790,12 @@ def _topic_card(s, out_dir: Path) -> str:
 def overview_page(summaries: list, overview_dir: Path, now: datetime) -> str:
     """One card per topic: last run, its newest studies, links to the latest report and topic page."""
     title = "Evidence Echo — Overview"
+    updated = f"Updated {clock.local_minute(now)}"
+    if any(s.report and not s.error for s in summaries):
+        n = sum(overview_mod.new_count(s) for s in summaries if s.report and not s.error)
+        updated = f"{n} new finding{'' if n == 1 else 's'} · updated {clock.local_minute(now)}"
     body = [f'<header class="ee-head"><h1>{esc(title)}</h1>',
-            f'<p class="meta">Updated {esc(clock.local_minute(now))}</p></header>']
+            f'<p class="meta">{esc(updated)}</p></header>']
     if not summaries:
         body.append('<p class="empty">No topics yet — run /evidence-echo:setup.</p>')
     else:

@@ -3,6 +3,7 @@
 A study belongs to the report that first included it (store.first_report_ids), so a seen-before
 study shown again as "More coverage" never counts as a later report's study. HTML only.
 """
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
@@ -110,23 +111,33 @@ def build_sources(conn, topic_cfg, now: datetime, horizon_days: int = 7) -> Sour
                        generated_at=now.isoformat(), rows=rows + gone)
 
 
-def _links(row: SourceRow) -> str:
+def _site_feed(row: SourceRow) -> tuple[str | None, str | None]:
+    """The Site and Feed column URLs; a source with one URL fills Feed only when it is a feed."""
     if row.url and row.site_url and row.site_url.rstrip("/") != row.url.rstrip("/"):
-        return (f'<span class="ee-src-links">{h.link(row.site_url, "Site")} · '
-                f'{h.link(row.url, "Feed")}</span>')
+        return row.site_url, row.url
     only = row.url or row.site_url
-    if not only:
-        return ""
-    label = "Feed" if row.kind in ("rss", "linkedin") else "Page"
-    return f'<span class="ee-src-links">{h.link(only, label)}</span>'
+    return (None, only) if row.kind == "rss" else (only, None)
+
+
+def _url_line(url: str | None) -> str:
+    if not url:
+        return '<span class="ee-none">—</span>'
+    short = re.sub(r"^https?://(www\.)?", "", url, flags=re.I).rstrip("/")
+    return h.link(url, short) if short != url else h.link(url)
+
+
+def _site_feed_cell(row: SourceRow) -> str:
+    """The Site/Feed column: the site on the first line, the feed on the second (— when none)."""
+    site, feed = _site_feed(row)
+    return (f'<td class="ee-url"><span class="ee-site">{_url_line(site)}</span>'
+            f'<span class="ee-feed">{_url_line(feed)}</span></td>')
 
 
 def _fetched_cell(row: SourceRow) -> str:
     parts = []
     if row.last_fetched_at:
-        text = clock.local_date(row.last_fetched_at)
-        parts.append(f'{h.esc(text)} <span class="meta">(last entry)</span>' if row.last_is_entry
-                     else h.esc(text))
+        text = f'<span class="ee-nw">{h.esc(clock.local_date(row.last_fetched_at))}</span>'
+        parts.append(f'{text} <span class="meta">(last entry)</span>' if row.last_is_entry else text)
     else:
         parts.append('<span class="meta">never</span>')
     if row.broken:
@@ -138,10 +149,12 @@ def _fetched_cell(row: SourceRow) -> str:
 
 
 def _row_html(row: SourceRow, topic_href: str, slug: str | None) -> str:
+    """One source; its name links to the topic page filtered by it when it produced a study."""
     name = (f'<a href="{h.esc(h.source_href(topic_href, slug))}">{h.esc(row.name)}</a>'
             if slug else h.esc(row.name))
     cls = ' class="ee-gone"' if row.removed else ""
-    return (f"<tr{cls}><td>{name}<br>{_links(row)}</td><td>{h.esc(row.kind)}</td>"
+    return (f'<tr{cls}><td><b>{name}</b></td><td class="ee-nw">{h.esc(row.kind)}</td>'
+            f"{_site_feed_cell(row)}"
             f'<td class="num">{row.all_studies} / {row.all_fetched}</td>'
             f'<td class="num">{row.last_studies} / {row.last_fetched}</td>'
             f"<td>{_fetched_cell(row)}</td></tr>")
@@ -156,20 +169,20 @@ def sources_html(p: SourcesPage, overview_href: str, topic_href: str, report_hre
     gone = [r for r in p.rows if r.removed]
     never = sum(1 for r in live if not r.all_studies)
     noun = "source" if len(live) == 1 else "sources"
-    slugs = h.source_slugs(r.name for r in p.rows if r.all_studies)
     body = [f'<header class="ee-head"><h1>{h.esc(title)}</h1>',
             f'<p class="meta">{len(live)} {noun} · {never} never produced a study</p>',
             f'<p class="meta">Updated {h.esc(clock.local_minute(p.generated_at))}</p></header>']
     if not p.rows:
         body.append('<p class="empty">No sources in this topic yet.</p>')
         return h.page(title, "\n".join(body), mast=mast)
-    head = ("<thead><tr><th>Source</th><th>Kind</th>"
+    head = ('<thead><tr><th>Source</th><th class="ee-nw">Kind</th><th>Site/Feed</th>'
             '<th class="num">All reports<br><span class="ee-sub-h">studies / fetched</span></th>'
             '<th class="num">Last report<br><span class="ee-sub-h">studies / fetched</span></th>'
-            "<th>Last fetched</th></tr></thead>")
+            '<th class="ee-nw">Last fetched</th></tr></thead>')
+    slugs = h.source_slugs(r.name for r in p.rows if r.all_studies)   # the topic page's Source filter values
     rows = [_row_html(r, topic_href, slugs.get(r.name)) for r in live]
     if gone:
-        rows.append('<tr class="ee-gone-head"><th colspan="5">No longer in the topic</th></tr>')
+        rows.append('<tr class="ee-gone-head"><th colspan="6">No longer in the topic</th></tr>')
         rows += [_row_html(r, topic_href, slugs.get(r.name)) for r in gone]
     body.append(f'<div class="table-wrap"><table class="ee-src">{head}<tbody>{"".join(rows)}</tbody>'
                 "</table></div>")

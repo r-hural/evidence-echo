@@ -228,3 +228,29 @@ def test_plain_text_dates_on_cards_are_read():
     links = page.article_links(CARDS, "https://example.com/blog/", "https://example.com/blog/")
     assert [l.published.date().isoformat() if l.published else None for l in links] == [
         "2023-05-04", "2025-02-17", "2025-05-05", None]
+
+
+BLOG = "https://example.com/blog/"
+
+
+def _one_link(anchor: str) -> page.Link:
+    html = f"<html><body><main><article>{anchor}</article></main></body></html>"
+    [link] = page.article_links(html, BLOG, BLOG)
+    return link
+
+
+def test_link_title_prefers_heading_inside_link():
+    """B13: a card link wraps heading, author and date; the heading is the title."""
+    link = _one_link('<a href="/blog/running-faster-tests"><h3>Running faster tests</h3>'
+                     '<span>Jane Roe</span><span>Wed Oct 21 2026</span></a>')
+    assert link.title == "Running faster tests"
+
+
+def test_link_title_drops_trailing_weekday_date():
+    link = _one_link('<a href="/blog/intro-to-experiments">Intro to X Wed Oct 07 2026</a>')
+    assert link.title == "Intro to X"
+
+
+def test_link_title_without_heading_unchanged():
+    link = _one_link('<a href="/blog/intro-to-experiments">Intro to X: 12% more sign-ups</a>')
+    assert link.title == "Intro to X: 12% more sign-ups"

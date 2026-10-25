@@ -85,7 +85,9 @@ date.
 
 **Explanation** — one per question: the relate step's short synthesis plus one checked line per study
 outside the question's main result, shown only while it matches the question and only for lines where both
-blind comparers agree and the quote checks. Code: `question_explanations` (one row per question). Do not call it a relation.
+blind comparers agree and the quote checks. A level question gets one when two independent studies' values
+are at least 3x apart; its main result is then the best-graded study's value.
+Code: `question_explanations` (one row per question). Do not call it a relation.
 
 **Fetch horizon** — the maximum age of an article when it is fetched; older ones are skipped.
 Code: `fetch_horizon_days` (formerly `research_horizon_days`, `lookback_days`).
@@ -142,7 +144,7 @@ explanation, or later an entity).
 
 **Level question** — a question of kind `level`: how much, how often, what share is the measure?
 Prevalence, shares, benchmarks, rankings, trends over time without a tested cause. No direction,
-no label.
+no label; an explanation when its values spread (see Explanation).
 
 **Question** — what a study measured and, for a test, what it changed ("Does updating the
 publication date raise AI citations?"). One question exists once per topic; it sits in one subtopic

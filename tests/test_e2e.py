@@ -6,7 +6,6 @@ from evidence_echo.core import store
 from evidence_echo.sources import base
 from evidence_echo.stages import triage, extract, judge, match, verify, embed, report
 from tests.conftest import make_item, FakeBackend
-from tests.test_embed import FakeEmbedder
 from tests.test_judge import SENTENCE, VERDICT
 
 
@@ -26,7 +25,7 @@ def test_full_pipeline(db, tmp_path, monkeypatch, topic):
     match.run_api(db, FakeBackend([]), topic)
     verify.run_api(db, FakeBackend(
         ['{"tier": "A", "red_flags": [], "note": "ok"}']), topic)
-    embed.run(db, FakeEmbedder())
+    embed.run(db)
 
     payload = json.loads(report.emit(db, topic, "en"))
     sid = payload["items"][0]["study_id"]

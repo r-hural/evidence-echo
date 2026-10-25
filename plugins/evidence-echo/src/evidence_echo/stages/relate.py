@@ -1,5 +1,5 @@
 """Relate (SP3b-T): why the studies of one question disagree. One item per difference question
-labelled contested or varied; two blind comparer answers give a short synthesis and one line per study
+labelled contested or varied, or level question whose values spread (B9); two blind comparer answers give a short synthesis and one line per study
 outside the question's main result. A line is stored when both answers give the same reason and the first
 answer's quote is found in that study's text; the summary is kept only when every line agreed."""
 import json
@@ -25,6 +25,7 @@ REASONS = {
 
 RULES = """\
 Each item is one {domain} question with several independent studies whose results on the question's measure differ. main_result is the direction most studies hold. Explain why the studies listed in "explain" differ from that main result; the other studies are context.
+For an item with "kind": "level" (how much / how often / what share), main_result is the value the best-graded study reports and each study's "direction" holds its own value: explain why the studies listed in "explain" report values so far from main_result.
 - studies: exactly one entry for every id in "explain", each id once, no other ids. Each entry has:
   - reason: exactly one code from this list of reasons, relative to the studies with the main result:
 {reasons}
@@ -68,7 +69,8 @@ def _text(conn, study: dict, limit: int) -> str:
 
 def pending_questions(conn) -> list[dict]:
     """Questions to ask about, newest first (by their newest sent study): every difference question
-    labelled contested or varied whose stored row has another inputs hash, or none."""
+    labelled contested or varied, and every level question whose values spread (knowledge.explain_state),
+    whose stored row has another inputs hash, or none."""
     out = []
     for sub in knowledge.evidence(conn):
         if sub.subtopic_id is None:
@@ -95,7 +97,7 @@ def _view(conn, pending: dict) -> dict:
         studies.append({"id": f"s{sid}", "title": study["canonical_name"], "direction": state.directions[sid],
                         "findings": study.get("findings"), "research_timeframe": study.get("research_timeframe"),
                         "sample_scale": study.get("sample_scale"), "text": _text(conn, study, limit)})
-    return {"id": pending["id"], "subtopic": pending["subtopic"], "question": pending["question"],
+    return {"id": pending["id"], "kind": state.kind, "subtopic": pending["subtopic"], "question": pending["question"],
             "measure": pending["measure"], "comparison": pending["comparison"],
             "main_result": state.main_result, "studies": studies,
             "explain": [f"s{sid}" for sid in state.explain]}
@@ -119,6 +121,7 @@ def decide(view: dict, first: dict, second: dict) -> dict:
     """Per study in `explain`: agreed on the reason and the first answer's quote is in that study's text.
     The summary is the first answer's, kept only when every line agreed."""
     text_of = {s["id"]: s["text"] for s in view["studies"]}
+    value_of = {s["id"]: s["direction"] for s in view["studies"]} if view.get("kind") == "level" else {}
     by_a = {line["id"]: line for line in first["studies"]}
     by_b = {line["id"]: line for line in second["studies"]}
     lines = []
@@ -127,7 +130,7 @@ def decide(view: dict, first: dict, second: dict) -> dict:
         if (agreement.agree(line, by_b[sid], "reason", knowledge.PAIR_REASONS) is not None
                 and agreement.quote_found(line["quote"], text_of[sid])):
             lines.append({"study": int(sid[1:]), "reason": line["reason"], "quote": line["quote"],
-                          "note": line["note"]})
+                          "note": line["note"], **({"value": value_of[sid]} if sid in value_of else {})})
     if not lines:
         return {"status": "undecided", "summary": None, "lines": []}
     return {"status": "agreed", "summary": first["summary"] if len(lines) == len(view["explain"]) else None,

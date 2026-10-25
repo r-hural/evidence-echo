@@ -51,7 +51,7 @@ Set in the plugin configuration (Claude Code asks on install; change later via
 |---|---|---|
 | `data_dir` — Data folder (advanced) | empty = `~/.evidence-echo` | Where topics and databases live. Do not use a cloud-synced folder |
 | `anthropic_api_key` | — | Optional; enables faster unattended runs (backends `auto` then choose `api`) |
-| `voyage_api_key` | — | Optional; enables embeddings (embedder `auto` then chooses `voyage`) |
+| `voyage_api_key` | — | Optional; enables embeddings (embedder `auto` then chooses `voyage`); only study cards (the judge's short summary of each item and its title, never article text) are sent, and similar studies then join the match step as candidates |
 | `apify_api_token` | — | Optional; enables LinkedIn sources |
 
 A SessionStart hook passes the settings to the engine; keys never appear in
@@ -103,7 +103,7 @@ also gets HTML pages; during a report run `overview.html` follows the topic's `h
 export; also `EV_ECHO_OBSIDIAN_DIR`; `ev config set` refuses a folder that does not exist and
 never creates one), `relate` (`on|off`, default `on`, also per topic or `EV_ECHO_RELATE`: two blind comparers explain contested evidence, see "What the evidence says"; `off` skips the relate step), `classify_batch` (default `40`, `0` = off, also per topic or `EV_ECHO_CLASSIFY_BATCH`: how many older studies the classify step fills in per run), `overview_studies` (default `10`, `0` = latest report only, also `EV_ECHO_OVERVIEW_STUDIES`, global only: how many recently reported studies each topic lists in the overview), `fetch_cache_minutes` (default `60`, `0` = off, also `EV_ECHO_FETCH_CACHE_MINUTES`, global only: feed and page downloads are kept this long and shared by every topic; `ev fetch --fresh` downloads again). `auto` picks `api` when an Anthropic key is set,
 else `session` (judged by Claude in the session); the embedder picks `voyage`
-when a Voyage key is set, else `none`.
+when a Voyage key is set, else `none`. With a Voyage key, study matching also proposes studies with similar text as candidates; without one, matching uses the rules alone.
 
 ### `topic.json`
 
@@ -397,6 +397,7 @@ topic, and with several topics it refuses (`several topics — pass --topic <id>
     ev [--topic ID] report --render entries.json [--rejections]
     ev [--topic ID] studies list [--all] | show <id> | duplicates [--count]
     ev [--topic ID] studies merge <keep> <other> | unmerge <other>
+    ev [--topic ID] studies similarity          read-only: what the similarity layer would find; needs a Voyage key
     ev [--topic ID] studies metric <id> <slug>
     ev [--topic ID] metrics list | accept <slug> | reject <slug>
     ev [--topic ID] metrics rename <slug> <name> | merge <slug> <into>

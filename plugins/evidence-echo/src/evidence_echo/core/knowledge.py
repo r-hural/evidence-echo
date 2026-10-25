@@ -371,6 +371,8 @@ import hashlib  # noqa: E402  (appended section)
 import json  # noqa: E402
 
 RELATE_HASH_TOKEN = "relate-4"
+RELATE_LEVEL_HASH_TOKEN = "relate-4-level"   # level questions (B9); difference hashes stay as they were
+SPREAD_RATIO = 3.0            # level values at least this many times apart are a spread to explain
 EXPLAIN_RECENT = 12           # representatives sent when a question has more groups than this ...
 EXPLAIN_MAX_STUDIES = 20      # ... plus every one to explain, at most this many in total
 
@@ -380,10 +382,11 @@ class ExplainState:
     question_id: int
     main_result: str
     studies: list             # representative ids sent to the comparer, newest first
-    directions: dict          # representative id -> its group's direction
+    directions: dict          # representative id -> its group's direction (level: its headline value)
     explain: list             # representatives outside the main result, newest first
     inputs_hash: str
     truncated: bool = False   # more representatives were outside the main result than explain holds
+    kind: str = "difference"  # level: main_result is the anchor's value, explain the values far from it
 
 
 def main_result(group: QuestionGroup, tiers: dict) -> str | None:
@@ -408,23 +411,53 @@ def _study_inputs(conn, study: dict) -> dict:
             "sample_scale": study.get("sample_scale"), "items": [i["id"] for i in items]}
 
 
+def _spread(a: tuple, b: tuple) -> bool:
+    """Two number_range values in the same unit, at least SPREAD_RATIO apart."""
+    if a[0] != b[0] or min(a[1], b[1]) <= 0:
+        return False
+    return max(a[1] / b[2], b[1] / a[2]) >= SPREAD_RATIO
+
+
+def _level_choice(rows: dict, tier: dict) -> tuple | None:
+    """(anchor's value, representatives to explain, anchor) for a level question: the anchor is the
+    best-graded representative with a headline value (tie: newest); None without a spread from it."""
+    from evidence_echo.core import grading
+    ranges = {rep: grading.number_range(row.get("headline_value")) for rep, row in rows.items()}
+    ranges = {rep: r for rep, r in ranges.items() if r is not None}
+    if len(ranges) < 2:
+        return None
+    anchor = min(ranges, key=lambda r: (tier[r], -r))
+    explain = sorted((rep for rep in ranges if rep != anchor and _spread(ranges[rep], ranges[anchor])),
+                     reverse=True)
+    return (rows[anchor]["headline_value"], explain, anchor) if explain else None
+
+
 def explain_state(conn, group: QuestionGroup) -> "ExplainState | None":
-    """What relate asks about a difference question labelled contested or varied; None for any other."""
+    """What relate asks about a difference question labelled contested or varied, or a level question
+    whose values spread (B9); None for any other."""
     from evidence_echo.core import store
-    if group.kind != "difference" or group.label not in ("contested", "varied"):
+    level = group.kind == "level"
+    if not level and (group.kind != "difference" or group.label not in ("contested", "varied")):
         return None
     reps = {members[0]: direction for members, direction in zip(group.groups, group.group_dirs())}
     rows = {rep: store.get_study(conn, rep) for rep in reps}
-    main = main_result(group, {rep: row.get("evidence_tier") for rep, row in rows.items()})
-    if main is None:
-        return None
-    explain = sorted((rep for rep, d in reps.items() if d != main), reverse=True)
-    if not explain:
-        return None
+    tier = {rep: _TIER_RANK.get(row.get("evidence_tier"), 9) for rep, row in rows.items()}
+    if level:
+        choice = _level_choice(rows, tier)
+        if choice is None:
+            return None
+        main, explain, best_main = choice
+        reps = {rep: rows[rep].get("headline_value") for rep in reps}
+    else:
+        main = main_result(group, {rep: row.get("evidence_tier") for rep, row in rows.items()})
+        if main is None:
+            return None
+        explain = sorted((rep for rep, d in reps.items() if d != main), reverse=True)
+        if not explain:
+            return None
+        best_main = min((rep for rep, d in reps.items() if d == main), key=lambda r: (tier[r], -r))
     truncated = len(explain) > EXPLAIN_MAX_STUDIES - 4
     explain = explain[:EXPLAIN_MAX_STUDIES - 4]
-    tier = {rep: _TIER_RANK.get(row.get("evidence_tier"), 9) for rep, row in rows.items()}
-    best_main = min((rep for rep, d in reps.items() if d == main), key=lambda r: (tier[r], -r))
     keep = set(explain) | {best_main}                       # the comparer always sees a main-result study
     sent = set(keep)
     for rep in sorted(reps, reverse=True)[:EXPLAIN_RECENT]:
@@ -434,14 +467,18 @@ def explain_state(conn, group: QuestionGroup) -> "ExplainState | None":
             break
         sent.discard(rep)
     studies = sorted(sent, reverse=True)
-    raw = json.dumps({"question": group.text, "measure": group.measure, "comparison": group.comparison,
-                      "main_result": main,
-                      "studies": [{"id": sid, "direction": reps[sid], **_study_inputs(conn, rows[sid])}
-                                  for sid in studies],
-                      "prompt_version": RELATE_HASH_TOKEN}, sort_keys=True, ensure_ascii=False)
+    payload = {"question": group.text, "measure": group.measure, "comparison": group.comparison,
+               "main_result": main,
+               "studies": [{"id": sid, "direction": reps[sid], **_study_inputs(conn, rows[sid])}
+                           for sid in studies],
+               "prompt_version": RELATE_LEVEL_HASH_TOKEN if level else RELATE_HASH_TOKEN}
+    if level:
+        payload["kind"] = "level"
+    raw = json.dumps(payload, sort_keys=True, ensure_ascii=False)
     return ExplainState(question_id=group.question_id, main_result=main, studies=studies,
                         directions={sid: reps[sid] for sid in studies}, explain=explain,
-                        inputs_hash=hashlib.sha256(raw.encode("utf-8")).hexdigest(), truncated=truncated)
+                        inputs_hash=hashlib.sha256(raw.encode("utf-8")).hexdigest(), truncated=truncated,
+                        kind="level" if level else "difference")
 
 
 # --- splits: an overloaded subtopic, a bloated Other subtopic or a bloated "other" metric --------------

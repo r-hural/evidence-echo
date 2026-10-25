@@ -139,3 +139,22 @@ def test_more_than_sixteen_to_explain_is_truncated(subtopiced):
     downs = [add(subtopiced, question=qid, by=f"D{n}", direction="down") for n in range(18)]
     st = knowledge.explain_state(subtopiced, group_of(subtopiced, qid))
     assert st.truncated and st.explain == sorted(downs, reverse=True)[:16] and len(st.studies) == 17   # 16 + the best up study
+
+
+def test_level_explanation_shows_values_not_directions(subtopiced):
+    """B9: a level question's explanation names values ("0.003%"), not directions."""
+    from evidence_echo.render import html as html_render, obsidian
+    qid = q(subtopiced, kind="level")
+    a = add(subtopiced, question=qid, by="A", direction=None, tier="B")
+    b = add(subtopiced, question=qid, by="B", direction=None, tier="D")
+    for sid, value in ((a, "0.003%"), (b, "30–40%")):
+        subtopiced.execute("UPDATE studies SET headline_value=? WHERE id=?", (value, sid))
+    subtopiced.commit()
+    line = {"study": b, "reason": "different_population", "quote": "q q q", "note": "n", "value": "30–40%"}
+    save_agreed(subtopiced, qid, [line])
+    g = group_of(subtopiced, qid)
+    page = html_render.question_explanation(g, {})
+    assert "Main result: 0.003%" in page and "(30–40%)" in page and "not read yet" not in page
+    names = obsidian._Names(base="Evidence Echo/seo", studies={}, series={}, sources={})
+    note = "\n".join(obsidian._question_callout(g, names, {}))
+    assert "Main result: 0\\.003%" in note and "(30–40%)" in note   # _md escapes the dot

@@ -83,3 +83,14 @@ def test_feed_and_llm_text_cannot_form_a_link():
     out = _text(markdown.entry_lines(entry)) + "\n" + markdown.seen_line(seen)
     assert "](javascript" not in out.replace(r"\]", "") and "![x](" not in out
     assert out.count(r"Read \[the data\](javascript:alert(1)) or !\[x\](https://t.example/p.png)") == 5
+
+
+def test_plain_keeps_ampersand():
+    """B8: no HTML entities in Markdown plain text."""
+    assert markdown.plain("Task success & usability") == "Task success & usability"
+
+
+def test_plain_still_blocks_tags_and_links():
+    out = markdown.plain("<b>x</b> [a](https://e.com) `c` *d*")
+    assert "<b>" not in out and "&lt;b>" in out
+    assert "\[a\]" in out and "\`c\`" in out and "\*d\*" in out

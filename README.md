@@ -50,7 +50,7 @@ Terms used throughout: [docs/GLOSSARY.md](docs/GLOSSARY.md).
   session and counts toward your usage there. With an Anthropic API key in the plugin settings
   it can run through the API instead, billed to that key.
 - **What leaves your machine.** Article and feed text goes to Anthropic only through the
-  route above. With a Voyage AI key, short item texts go to Voyage AI for embeddings. The
+  route above. With a Voyage AI key, study cards (the judge's short summary of each item: who ran the study, what was tested, findings, timeframe, sample, title; never article text) go to Voyage AI for embeddings. The
   plugin fetches only your configured sources and the articles and studies they link to:
   public addresses only, at most 5 MB per response, rate-limited per site.
 - **What stays local.** Topics, the fetched text and grades (SQLite), reports, and the

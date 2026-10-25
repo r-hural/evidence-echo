@@ -81,7 +81,7 @@ def test_metrics_end_to_end(workspace, tmp_path):
 
     # 1. open it: step 11 and seeding; old codes map where they fit, the 30 old 'other' wait
     with api._topic_db(cfg) as conn:
-        assert conn.execute("PRAGMA user_version").fetchone()[0] == 13
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION
         assert [m["name"] for m in store.active_metrics(conn)] == cfg.topic.metrics and len(cfg.topic.metrics) == 13
         named = {sid: _metric_slug(conn, sid) for sid in range(1, 41)}
         assert sorted(v for v in named.values() if v) == sorted(

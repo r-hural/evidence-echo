@@ -79,10 +79,77 @@ def test_consistent_yields_no_item(subtopiced):
     assert relate.pending_questions(subtopiced) == []
 
 
-def test_level_question_yields_no_item(subtopiced):
-    qid = q(subtopiced, kind="level")
-    add(subtopiced, question=qid, by="A", direction=None); add(subtopiced, question=qid, by="B", direction=None)
+def headline(db, sid, value):
+    db.execute("UPDATE studies SET headline_value=? WHERE id=?", (value, sid))
+    db.commit()
+
+
+def level(db, *values, tiers=None):
+    """A level question with one study per value (each by its own org); returns (qid, [study ids])."""
+    qid = q(db, kind="level")
+    ids = []
+    for n, value in enumerate(values):
+        sid = add(db, question=qid, by=f"O{n}", direction=None, tier=(tiers or "B" * len(values))[n])
+        if value is not None:
+            headline(db, sid, value)
+        ids.append(sid)
+    return qid, ids
+
+
+def test_level_spread_is_asked_with_the_best_graded_value_as_main_result(subtopiced, topic):
+    """B9: 0.003% (B) vs 30-40% (D) on one level question is a spread to explain."""
+    qid, (a, b) = level(subtopiced, "0.003%", "30–40%", tiers="BD")
+    [item] = json.loads(relate.emit(subtopiced, topic))["items"]
+    assert item["id"] == f"q{qid}" and item["kind"] == "level"
+    assert item["main_result"] == "0.003%" and item["explain"] == [f"s{b}"]
+    assert next(s for s in item["studies"] if s["id"] == f"s{b}")["direction"] == "30–40%"
+
+
+def test_level_values_close_together_yield_no_item(subtopiced):
+    level(subtopiced, "12%", "14%")
     assert relate.pending_questions(subtopiced) == []
+
+
+def test_level_range_ends_at_one_count(subtopiced):
+    """0.4% vs 1-5% overlaps closely (1/0.4 = 2.5): no spread; 1 is not dropped from the range."""
+    level(subtopiced, "0.4%", "1–5%", tiers="BD")
+    assert relate.pending_questions(subtopiced) == []
+
+
+def test_level_spread_needs_the_same_unit(subtopiced):
+    level(subtopiced, "12%", "40,000 sessions")
+    assert relate.pending_questions(subtopiced) == []
+
+
+def test_level_without_two_values_yields_no_item(subtopiced):
+    level(subtopiced, "12%", None)
+    assert relate.pending_questions(subtopiced) == []
+
+
+def test_level_spread_ignores_a_study_without_value(subtopiced):
+    qid, (a, b, c) = level(subtopiced, "0.003%", None, "35%", tiers="BAD")
+    [p] = relate.pending_questions(subtopiced)
+    assert p["state"].explain == [c] and p["state"].main_result == "0.003%"
+
+
+def test_difference_hash_unchanged(subtopiced):
+    """Explanations stored before B9 stay valid: a difference question's inputs hash is as before."""
+    qid = q(subtopiced)
+    contested(subtopiced, qid)
+    [p] = relate.pending_questions(subtopiced)
+    assert p["state"].inputs_hash == "b2ff27c0f588f36a1b774e002d841b12b49ce172a296421cf16fa93b87573ef5"
+
+
+def test_level_agreed_lines_carry_the_value(subtopiced, topic):
+    qid, (a, b) = level(subtopiced, "0.003%", "30–40%", tiers="BD")
+    db = subtopiced
+    db.execute("UPDATE items SET full_text=? WHERE study_id=?", ("Ramp says 30-40% of direct traffic is AI.", b))
+    db.commit()
+    lines = [{"id": f"s{b}", "reason": "different_population", "quote": "Ramp says 30-40% of direct", "note": "One company."}]
+    out = relate.apply(db, results(answer(qid, lines)), results(answer(qid, lines)))
+    assert out["applied"] == 1
+    row = store.get_question_explanation(db, qid)
+    assert row["main_result"] == "0.003%" and row["lines"][0]["value"] == "30–40%"
 
 
 def test_instructions_name_every_reason(topic):

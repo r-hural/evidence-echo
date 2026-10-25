@@ -13,6 +13,14 @@ def direction_text(direction) -> str:
     return DIRECTION_WORDS.get(direction, "not read yet")
 
 
+def result_text(value, kind) -> str:
+    """An explanation's result: a direction for a difference question, the value itself for a level
+    question (B9: "0.003%")."""
+    if kind == "level":
+        return str(value) if value else "no value"
+    return direction_text(value)
+
+
 def date_text(row) -> str:
     if row.date is None:
         return "date unknown"

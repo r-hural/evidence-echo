@@ -171,7 +171,8 @@ def test_numbers_missing_from_the_original_are_recorded(db):
     quote = ORIGINAL_QUOTE.replace("4.2%", "3.9%")
     _apply(db, [answer(oid, quote_primary=quote)], [answer(oid, quote_primary=quote)])
     row = _row(db, oid)
-    assert row["numbers"] == "partial" and json.loads(row["missing"]) == ["4.2%"]
+    # the findings state only 4.2%, so only 4.2% is looked for (B10): none of it is in the original
+    assert row["numbers"] == "none" and json.loads(row["missing"]) == ["4.2%"]
 
 
 def test_an_item_answered_in_one_file_only_stays_pending(db):

@@ -54,7 +54,7 @@ def test_step12_on_a_0_14_0_database_keeps_pair_rows(tmp_path):
     conn.commit()
     conn.close()
     conn = store.connect(path)
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 13
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION
     assert conn.execute("SELECT COUNT(*) FROM question_explanations").fetchone()[0] == 0
     assert [tuple(r) for r in conn.execute("SELECT study_a, study_b, status FROM pair_explanations")] == [
         (1, 2, "agreed")]

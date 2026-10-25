@@ -115,9 +115,10 @@ _SCALE = {"thousand": 1e3, "million": 1e6, "mn": 1e6, "billion": 1e9, "bn": 1e9,
           "trillion": 1e12}
 
 
-def _numbers(text: str):
+def _numbers(text: str, keep_trivial: bool = False):
     """(match start, token end, (is percent, magnitude)) for each result number in `text`: its
-    k/M multiplier and an adjacent scale word count; years and trivial numbers are left out."""
+    k/M multiplier and an adjacent scale word count; years and (unless `keep_trivial`) trivial
+    numbers are left out."""
     out = []
     for m in identity._NUMBER.finditer(text):
         sign, digits, mult, pct = m.groups()
@@ -130,10 +131,23 @@ def _numbers(text: str):
             number *= 1000 if mult.lower() == "k" else 1_000_000
         if not pct and not mult and scale == 1.0 and digits.isdigit() and 1990 <= number <= 2099:
             continue  # a year is an edition, not a result
-        if scale == 1.0 and identity.key_numbers([m.group(0)]) == []:
+        if not keep_trivial and scale == 1.0 and identity.key_numbers([m.group(0)]) == []:
             continue  # trivial (0, 1, 0 %, 100 %)
         out.append((m.start(), end, (bool(pct), round(number, 9))))
     return out
+
+
+def number_range(value) -> tuple[bool, float, float] | None:
+    """(is percent, low, high) over the result numbers of a headline value ("30–40%" ->
+    (True, 30.0, 40.0)), or None when it holds none. A % anywhere makes the whole value a percent.
+    0 and 1 count here: "1–5%" is 1 to 5, not 5."""
+    if not isinstance(value, str):
+        return None
+    keys = [key for _, _, key in _numbers(_minus(value), keep_trivial=True)]
+    if not keys:
+        return None
+    magnitudes = [abs(m) for _, m in keys]
+    return any(pct for pct, _ in keys), min(magnitudes), max(magnitudes)
 
 
 def headline_token(value: str, quote: str) -> str | None:

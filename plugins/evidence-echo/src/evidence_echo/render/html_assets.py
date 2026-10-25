@@ -14,7 +14,7 @@ PALETTES = {
         "mast-bg": "#151412", "mast-fg": "#ffffff", "mast-muted": "#bcb8ae",
         "red": "#ad1328", "warn-bg": "#fbeeee", "warn-fg": "#8f0f22",
         "ok-fg": "#151412", "bad-fg": "#ad1328", "mix-fg": "#58554e",
-        "zebra": "#f9f8f4", "mark": "#fdf0a6",
+        "zebra": "#f9f8f4", "mark": "#fdf0a6", "faint": "#7a766d",
     },
     "dark": {
         "bg": "#161513", "fg": "#ecebe6", "muted": "#aaa69c", "card": "#211f1c",
@@ -22,7 +22,7 @@ PALETTES = {
         "mast-bg": "#0b0b0a", "mast-fg": "#ecebe6", "mast-muted": "#aaa69c",
         "red": "#ff8593", "warn-bg": "#2d1619", "warn-fg": "#ffb3bc",
         "ok-fg": "#ecebe6", "bad-fg": "#ff8593", "mix-fg": "#aaa69c",
-        "zebra": "#1c1b18", "mark": "#4a4220",
+        "zebra": "#1c1b18", "mark": "#4a4220", "faint": "#85817a",
     },
 }
 
@@ -35,7 +35,7 @@ CONTRAST_PAIRS = [("fg", "bg"), ("fg", "card"), ("muted", "bg"), ("muted", "card
                   ("mast-fg", "mast-bg"), ("mast-muted", "mast-bg"),
                   ("ok-fg", "bg"), ("bad-fg", "bg"), ("mix-fg", "bg"),
                   ("fg", "zebra"), ("muted", "zebra"), ("red", "zebra"), ("link", "zebra"),
-                  ("fg", "mark")]
+                  ("fg", "mark"), ("faint", "bg"), ("warn-fg", "card")]
 
 
 def _vars(tokens: dict) -> str:
@@ -110,12 +110,18 @@ _BASE = (
     ".ee-chart .tier{font-size:1.15rem}"
     ".ee-chart td.ee-c-study{font-weight:600;width:44%}"
     ".ee-chart td.ee-c-study a{text-decoration:none}"
-    ".ee-chart td.ee-c-study a:hover{text-decoration:underline}"
+    # a chart row is one target: the title link covers the row; hovering the row underlines the title
+    ".ee-chart tbody tr{position:relative}"
+    ".ee-chart td.ee-c-study a::after{content:'';position:absolute;inset:0}"
+    ".ee-chart td.ee-c-study a:hover,.ee-chart tbody tr:hover td.ee-c-study a{text-decoration:underline}"
     ".ee-chart .ee-none{color:var(--muted)}"
     ".ee-warn,.ee-chart .ee-warn{color:var(--red);font-weight:600}"
     ".ee-mark{font-family:var(--sans);font-weight:800;margin-right:.2em}"
     ".ee-key{margin:-.5rem 0 0;font-size:.875rem;display:flex;flex-wrap:wrap;gap:.25rem 1.5rem}"
     ".ee-key .tier{font-size:1.1em;margin-right:.35rem}.ee-key .ee-mark{font-size:1.1em}"
+    # the ratings key, closed under the chart; open, one entry per line
+    ".ee-key-box{margin:-.5rem 0 0;font-size:.875rem}.ee-key-box>summary{color:var(--muted);padding:.2rem 0}"
+    ".ee-key-box>.ee-key{margin:.4rem 0 0;flex-direction:column;gap:.3rem}"
     "article.card{padding:1.75rem 1rem;border-top:1px solid var(--border);scroll-margin-top:1rem}"
     # zebra: every other write-up; on the topic page the script marks the visible ones (.ee-alt)
     "section>article.card:nth-of-type(even),#ee-studies:not(.ee-js)>article.card:nth-child(even),"
@@ -128,6 +134,8 @@ _BASE = (
     ".ee-card-rate{grid-column:2;grid-row:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .75rem;"
     "padding:0 0 .5rem;margin:0 0 .6rem;border-bottom:1px solid var(--border)}"
     ".ee-card-side{grid-column:2;grid-row:2}"
+    ".ee-grp+.ee-grp{border-top:1px solid var(--border);margin-top:.6rem;padding-top:.6rem}"
+    ".ee-grp>:last-child{margin-bottom:0}"
     ".ee-card-rate .label{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;margin:0;"
     "color:var(--muted);font-size:.85rem;line-height:1.35}"
     ".ee-card-rate .tier{font-size:1.2rem}"
@@ -162,11 +170,20 @@ _BASE = (
     # sources page
     ".ee-src .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}"
     ".ee-src .ee-sub-h{text-transform:none;letter-spacing:0;font-weight:400}"
-    ".ee-src .ee-src-links{font-size:.85rem}"
+    ".ee-src{width:100%}.ee-src td{vertical-align:baseline}"
+    ".ee-src tbody tr:nth-child(even) td{background:var(--card)}"
+    ".ee-src td.ee-url{font-size:.85rem}.ee-src .ee-none{color:var(--muted)}"
+    # Site/Feed: the site on one line, the feed on the next; short columns never break mid-word
+    ".ee-src .ee-site,.ee-src .ee-feed{display:block}.ee-src .ee-feed{margin-top:.15rem}"
+    ".ee-src .ee-nw{white-space:nowrap}"
+    # a source name opens the topic page filtered by it: no underline until hover, like chart titles
+    ".ee-src td b a{text-decoration:none}.ee-src td b a:hover{text-decoration:underline}"
+    ".table-wrap+.ee-key{margin-top:.75rem}"
     ".ee-src .ee-broken{color:var(--warn-fg);font-weight:600}"
     ".ee-src tr.ee-gone td{color:var(--muted)}"
     ".ee-src tr.ee-gone-head th{padding-top:1.25rem;text-align:left}"
     # topic page
+    "#ee-evidence>h2,#ee-all>h2{font-size:1.6rem;line-height:1.15;margin-top:6rem;padding:.75rem 0 .8rem}"
     ".ee-reports{margin:0 0 1rem}"
     ".ee-reports summary{color:var(--muted);font-size:.9rem}"
     ".ee-reports ul{columns:12rem;margin:.5rem 0 0;padding:0;list-style:none;font-size:.9rem}"
@@ -269,10 +286,18 @@ _BASE = (
     "#ee-reset:hover{background:var(--fg);color:var(--bg)}"
     # overview
     ".ee-topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:0 3rem}"
-    "section.card h2{margin-top:2rem}"
+    "section.card h2{margin-top:2rem}section.card h2 .ee-echo{color:var(--faint)}"
     "section.card ul{list-style:none;margin:.5rem 0;padding:0}"
     "section.card li{display:grid;grid-template-columns:3rem minmax(0,1fr);gap:0 .5rem;padding:.45rem 0;"
     "border-bottom:1px solid var(--border)}"
+    # a study row is one target: its link covers the row, the row takes the zebra tone on hover
+    "section.card li{position:relative}section.card li a{text-decoration:none}"
+    "section.card li a::after{content:'';position:absolute;inset:0}"
+    "section.card li:hover{background:var(--card);box-shadow:-.5rem 0 0 var(--card),.5rem 0 0 var(--card)}"
+    "@media (prefers-reduced-motion:no-preference){section.card li{transition:background-color .15s,"
+    "box-shadow .15s}}"
+    "section.card h2 a{color:inherit;text-decoration:none}"
+    "section.card h2 a:hover{text-decoration:underline;text-decoration-thickness:2px}"
     "section.card h3.ee-earlier{font:700 .8rem/1.2 var(--sans);text-transform:uppercase;letter-spacing:.05em;"
     "color:var(--muted);margin:1.25rem 0 0}"
     "section.card li.ee-more{display:block;padding-left:3.5rem}"

@@ -249,3 +249,27 @@ def test_rejudge_failure_clears_study_fields(db):
     item = store.get_item(db, x)
     assert (item["state"], item["study_id"], item["first_study_id"], item["match_reason"]) == \
         ("rejected", None, None, None)
+
+
+def test_api_match_passes_embedder_only_with_key(cfg, monkeypatch):
+    from evidence_echo.core import embedders
+    from evidence_echo.stages import match
+    seen = []
+    monkeypatch.setattr(match, "emit", lambda conn, topic, embedder=None: seen.append(embedder) or "{}")
+    api.emit(cfg, "match")
+    monkeypatch.setenv("VOYAGE_API_KEY", "voyage-test-key")
+    api.emit(config.load(), "match")
+    assert seen[0] is None and isinstance(seen[1], embedders.VoyageEmbedder)
+
+
+def test_reset_judge_drops_vectors(cfg):
+    import numpy as np
+    from tests.test_match import F, judged
+    conn = store.connect(cfg.db_path)
+    x = judged(conn, "https://e.com/x", F())
+    store.save_vector(conn, x, "t/card-v1", np.ones(4, dtype=np.float32).tobytes())
+    conn.close()
+    api.reset(cfg, "judge")
+    conn = store.connect(cfg.db_path)
+    assert not conn.execute("SELECT 1 FROM embeddings WHERE item_id=?", (x,)).fetchall()
+    conn.close()

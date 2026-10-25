@@ -129,4 +129,4 @@ def test_markdown_report_question_is_plain_text(subtopiced, topic):
     add(subtopiced, question=qid, by="A")
     text = markdown.report_markdown(model.build_report(subtopiced, topic, {}, NOW))
     assert "<script>" not in text and "[a](http" not in text
-    assert "Subtopic: Title tags & meta  \nQuestion: &lt;script&gt;" in text
+    assert "Subtopic: Title tags & meta  \nQuestion: &lt;script>" in text

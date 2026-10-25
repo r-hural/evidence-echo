@@ -207,11 +207,12 @@ def _question_callout(g, names: _Names, by_id: dict) -> list[str]:
     lines = ["> [!note]- Why the results differ"]
     if x.get("summary"):
         lines += [f"> {_md(flat(x['summary']))}", ">"]
-    lines += [f"> Main result: {_md(et.direction_text(x.get('main_result')))}", ">"]
+    lines += [f"> Main result: {_md(et.result_text(x.get('main_result'), g.kind))}", ">"]
     for line in x["lines"]:
         sid = line["study"]
         title = _cut(_study_alias(sid, by_id), TITLE_MAX)
-        shown = et.direction_text(direction.get(sid, g.directions.get(sid)))
+        result = line.get("value") if g.kind == "level" else direction.get(sid, g.directions.get(sid))
+        shown = et.result_text(result, g.kind)
         lines.append(f"> - {names.link('studies', sid, title)} ({_md(shown)}) — {_md(metric_text(line.get('reason')))}")
         note = _md(_cut(flat(line.get("note")), NOTE_MAX))
         if note:

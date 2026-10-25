@@ -3,7 +3,6 @@
 The text helpers (tier_label, label_extras, grading_texts, series_text) are shared with the
 HTML and Obsidian renderers so every front end shows the same words.
 """
-import html
 import re
 
 from evidence_echo.render.evidence_text import label_text
@@ -63,11 +62,12 @@ def grading_texts(view: dict) -> list[str]:
 
 def plain(text: str) -> str:
     """Untrusted text (the primary line holds LLM-written strings) as plain text in Markdown:
-    no link, code span or emphasis can form and no tag gets through. The HTML and Obsidian
-    renderers escape the raw primary_text on their own."""
+    no link, code span or emphasis can form and no tag gets through (< becomes &lt;; & stays as
+    written, so no entity shows in the .md). The HTML and Obsidian renderers escape the raw
+    primary_text on their own."""
     for ch in ('\\', "`", "*", "_", "[", "]"):
         text = text.replace(ch, "\\" + ch)
-    return html.escape(text, quote=False)
+    return text.replace("<", "&lt;")
 
 
 def no_tags(text) -> str:

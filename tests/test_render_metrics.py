@@ -136,7 +136,7 @@ def test_metric_name_is_escaped_everywhere():
     assert "<script>alert" not in text
     # Markdown report: plain text, no tag or link can form
     lines = "\n".join(markdown.entry_lines(e))
-    assert "<script>" not in lines and "\\[\\[evil\\]\\]" in lines and "&lt;script&gt;" in lines
+    assert "<script>" not in lines and "\\[\\[evil\\]\\]" in lines and "&lt;script>" in lines
     # Obsidian note body and frontmatter
     t = of.topic([of.study(1, view=view)])
     note = obsidian.render_notes(t, "SEO")[f"SEO/studies/{obsidian._study_stems(t)[1]}.md"]

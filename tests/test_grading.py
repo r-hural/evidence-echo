@@ -109,3 +109,14 @@ def test_compare(judge, skeptic, qc, expected):
 def test_red_flag_list_names_every_code():
     text = grading.red_flag_list()
     assert all(f"- {code}: " in text for code in grading.RED_FLAGS)
+
+
+def test_number_range():
+    """B9: the numbers of a headline value as (is percent, low, high)."""
+    assert grading.number_range("30–40%") == (True, 30.0, 40.0)
+    assert grading.number_range("0.003%") == (True, 0.003, 0.003)
+    assert grading.number_range("1.2 million visits") == (False, 1_200_000.0, 1_200_000.0)
+    assert grading.number_range("no number") is None
+    assert grading.number_range(None) is None
+    assert grading.number_range("1–5%") == (True, 1.0, 5.0)
+    assert grading.number_range("0–40%") == (True, 0.0, 40.0)

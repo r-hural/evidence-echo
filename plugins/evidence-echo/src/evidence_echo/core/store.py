@@ -323,7 +323,7 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-LATEST_VERSION = 13
+LATEST_VERSION = 14
 FAILING_AFTER = 5
 
 
@@ -567,8 +567,15 @@ def _step13(conn) -> None:
         _add_columns(conn, "items", (("entity_names", "TEXT"),))
 
 
+def _step14(conn) -> None:
+    """Study-card embeddings: vectors of the full-text embedder (model without '/card-') are dropped;
+    the embed pass fills the card ones."""
+    if _has_table(conn, "embeddings"):
+        conn.execute("DELETE FROM embeddings WHERE model NOT LIKE '%/card-%'")
+
+
 STEPS = {1: _step1, 2: _step2, 3: _step3, 4: _step4, 5: _step5, 6: _step6, 7: _step7, 8: _step8,
-         9: _step9, 10: _step10, 11: _step11, 12: _step12, 13: _step13}
+         9: _step9, 10: _step10, 11: _step11, 12: _step12, 13: _step13, 14: _step14}
 
 
 def _migrate(conn, path) -> None:
@@ -697,6 +704,8 @@ def set_verdict(conn, item_id: int, passed: bool, tier: str | None, facts: dict,
                 headline: dict | None = None, entity_names: list | None = None,
                 data_date: str | None = None, reason: str | None = None) -> None:
     """Judge result. A passing item waits for match, which gives it its study."""
+    if _has_table(conn, "embeddings"):   # the card is built from the facts: a new verdict, a new vector
+        conn.execute("DELETE FROM embeddings WHERE item_id=?", (item_id,))
     if not passed:
         conn.execute(
             """UPDATE items SET verdict_pass=0, state='rejected', study_id=NULL, first_study_id=NULL,
@@ -870,7 +879,7 @@ def active_studies(conn) -> list[dict]:
     return out
 
 
-DUPLICATE_RULES = ("same primary url", "same series and edition", "shared key numbers")
+DUPLICATE_RULES = ("same primary url", "same series and edition", "shared key numbers", "similar text")
 
 
 def _pair_rule(a: dict, b: dict) -> str | None:
@@ -884,17 +893,26 @@ def _pair_rule(a: dict, b: dict) -> str | None:
     return None
 
 
-def duplicate_pairs(conn) -> list[dict]:
+def duplicate_pairs(conn, vectors: dict | None = None, threshold: float = 0.93) -> list[dict]:
+    """Likely duplicate study pairs. With vectors (study id -> unit vector), a pair no other rule caught
+    and with cosine >= threshold is a "similar text" pair, ranked after every other rule."""
     studies = active_studies(conn)
     pairs = []
     for i, a in enumerate(studies):
         for b in studies[i + 1:]:
-            rule = _pair_rule(a, b)
+            rule, sim = _pair_rule(a, b), 0.0
+            clash = bool(a["editions"]) and bool(b["editions"]) and not set(a["editions"]) & set(b["editions"])
+            if not rule and not clash and vectors and a["id"] in vectors and b["id"] in vectors:
+                sim = float(vectors[a["id"]] @ vectors[b["id"]])
+                if sim >= threshold:
+                    rule = f"similar text: {sim:.2f}"
             if rule:
                 pairs.append({"keep": a["id"], "other": b["id"], "rule": rule,
-                              "keep_study": a, "other_study": b})
+                              "keep_study": a, "other_study": b, "_sim": sim})
     rank = {r: n for n, r in enumerate(DUPLICATE_RULES)}
-    pairs.sort(key=lambda p: (rank[p["rule"].split(":")[0]], p["keep"], p["other"]))
+    pairs.sort(key=lambda p: (rank[p["rule"].split(":")[0]], -p["_sim"], p["keep"], p["other"]))
+    for p in pairs:
+        del p["_sim"]
     return pairs
 
 
@@ -1076,11 +1094,11 @@ def set_ruled_tier(conn, item_id: int, tier: str) -> None:
     conn.commit()
 
 
-def save_embedding(conn, item_id: int, model: str, vector: bytes) -> None:
+def save_vector(conn, item_id: int, model: str, vector: bytes) -> None:
+    """Store an item's vector for one embedder tag; the item's state is not touched."""
     conn.execute(
         "INSERT OR REPLACE INTO embeddings (item_id, model, vector) VALUES (?,?,?)",
         (item_id, model, vector))
-    conn.execute("UPDATE items SET state='embedded' WHERE id=?", (item_id,))
     conn.commit()
 
 
@@ -1222,7 +1240,8 @@ def recent_studies(conn, limit: int) -> dict:
 
     A study belongs to the report that first included it (merges resolved), so a seen-before study
     shown again as "More coverage" is never one of a later report's studies. Rows are
-    {"study_id", "title", "tier", "report_path", "rendered_at"}. latest = the newest report's studies
+    {"study_id", "title", "tier", "report_path", "rendered_at", "card_id"}; card_id is the study id
+    the report showed (its card is #s<card_id> there), before any later merge. latest = the newest report's studies
     (highest report id): all of them when limit == 0, else the best-graded `limit` (ties in report
     order) and `more` counts the rest. earlier = studies first reported by older reports, the
     newest first report first (ties by tier), filling `limit` studies in all; empty when limit == 0."""
@@ -1239,7 +1258,8 @@ def recent_studies(conn, limit: int) -> dict:
             continue
         path, rendered_at, position = reports[row["report_id"]]
         first[sid] = {"study_id": sid, "title": row["title"], "tier": tiers.get(sid),
-                      "report_path": path, "rendered_at": rendered_at, "_report": row["report_id"],
+                      "report_path": path, "rendered_at": rendered_at, "card_id": row["study_id"],
+                      "_report": row["report_id"],
                       "_position": position, "_order": order}
 
     def tier_key(r):

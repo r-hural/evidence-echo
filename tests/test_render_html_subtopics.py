@@ -278,3 +278,10 @@ def test_multi_study_questions_are_highlighted_and_single_questions_bold():
 
 def test_a_link_to_a_subtopic_opens_it():
     assert "details.ee-sub" in html_assets.JS and "addEventListener('hashchange'" in html_assets.JS
+
+
+def test_header_totals_count_studies_and_questions_but_not_unsorted():
+    text = page([sub([question()], [other(3, "Q three?"), other(4)]),
+                 sub([], [other(5)], key=knowledge.UNSORTED, name="Unsorted")])
+    head = text.split('<header class="ee-head">')[1].split("</header>")[0]
+    assert '<p class="meta">2 studies · 2 questions · updated ' in head

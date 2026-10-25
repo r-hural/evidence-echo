@@ -166,7 +166,9 @@ def number_check(facts, text: str) -> tuple[str | None, list[str]]:
     (None, []) when the item states no key number. Every number the original's text contains
     counts (normalised as identity.key_numbers: "12,000" = "12k"); "4.2 percent" counts as 4.2%;
     the sign is ignored (a flipped direction is the comparison's call, not a missing number).
-    Missing entries are shown as the item wrote them (whitespace collapsed, first form only)."""
+    Missing entries are shown as the item wrote them (whitespace collapsed, first form only).
+    Only key numbers the item's findings also state are looked for (B10: a roundup's other studies,
+    the article's own headline); when the findings state none of them, all are."""
     match_keys = facts.get("match_keys") if isinstance(facts, dict) else None
     raw = match_keys.get("key_numbers") if isinstance(match_keys, dict) else None
     raw = raw if isinstance(raw, list) else []
@@ -178,6 +180,9 @@ def number_check(facts, text: str) -> tuple[str | None, list[str]]:
     wanted = identity.key_numbers([_spell(v) if isinstance(v, str) else v for v in raw])
     if not wanted:
         return None, []
+    findings = facts.get("findings") if isinstance(facts, dict) else None
+    stated = {n.lstrip("-") for n in identity.key_numbers([_spell(findings)])} if isinstance(findings, str) else set()
+    wanted = [n for n in wanted if n.lstrip("-") in stated] or wanted
     found = {n.lstrip("-") for n in identity.key_numbers([_spell(text)])}
     absent = [n for n in wanted if n.lstrip("-") not in found]
     if not absent:

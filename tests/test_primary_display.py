@@ -204,7 +204,7 @@ def test_an_unreachable_check_still_says_not_reachable(db, tmp_path, topic):
 
 def test_plain_escapes_markup():
     assert markdown.plain("<b>a_b</b> [x](javascript:y) `c` *d* \\ & ok") == \
-        "&lt;b&gt;a\\_b&lt;/b&gt; \\[x\\](javascript:y) \\`c\\` \\*d\\* \\\\ &amp; ok"
+        "&lt;b>a\\_b&lt;/b> \\[x\\](javascript:y) \\`c\\` \\*d\\* \\\\ & ok"
 
 
 def test_plain_leaves_fixed_texts_alone():
@@ -218,8 +218,8 @@ def test_markdown_report_escapes_the_primary_line():
     e = hf.entry(1, view=hf.view(primary=hostile))
     text = markdown.report_markdown(hf.report(new=[e]))
     assert "<script>" not in text and "<img" not in text and "[[evil]]" not in text
-    assert ("Original: overstated — &lt;script&gt;alert(1)&lt;/script&gt; \\[\\[evil\\]\\] "
-            "\\`x\\` #tag; numbers not found — &lt;img src=x onerror=alert(1)&gt;  ") in text
+    assert ("Original: overstated — &lt;script>alert(1)&lt;/script> \\[\\[evil\\]\\] "
+            "\\`x\\` #tag; numbers not found — &lt;img src=x onerror=alert(1)>  ") in text
 
 
 def test_html_and_obsidian_still_get_the_raw_line():
