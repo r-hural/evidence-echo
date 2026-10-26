@@ -9,7 +9,7 @@
       "name": "evidence-echo",
       "source": "./plugins/evidence-echo",
       "description": "Claude Code plugin for evidence-based research digests from the feeds you follow: keeps only articles with measured results, grades each study's level of evidence, checks quotes and the original study. Templates for SEO, AI coding, A/B testing and exercise science.",
-      "version": "0.16.5",
+      "version": "0.16.6",
       "category": "research",
       "license": "MIT",
       "homepage": "https://github.com/r-hural/evidence-echo"

@@ -38,7 +38,7 @@ def _api_mode(monkeypatch):
     from pathlib import Path
     from tests.conftest import write_plugin_keys
     monkeypatch.setenv("EV_ECHO_JUDGMENT_BACKEND", "api")
-    write_plugin_keys(Path(os.environ["EV_ECHO_PLUGIN_DATA"]), ANTHROPIC_API_KEY="test-key")
+    write_plugin_keys(Path(os.environ["EV_ECHO_PLUGIN_DATA"]), ANTHROPIC_API_KEY="ak-test")
 
 
 def test_primary_is_registered_as_a_two_answer_llm_stage():

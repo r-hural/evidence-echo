@@ -370,8 +370,8 @@ def waiting_count(conn) -> int:
 import hashlib  # noqa: E402  (appended section)
 import json  # noqa: E402
 
-RELATE_HASH_TOKEN = "relate-4"
-RELATE_LEVEL_HASH_TOKEN = "relate-4-level"   # level questions (B9); difference hashes stay as they were
+RELATE_HASH_TAG = "relate-4"
+RELATE_LEVEL_HASH_TAG = "relate-4-level"   # level questions (B9); difference hashes stay as they were
 SPREAD_RATIO = 3.0            # level values at least this many times apart are a spread to explain
 EXPLAIN_RECENT = 12           # representatives sent when a question has more groups than this ...
 EXPLAIN_MAX_STUDIES = 20      # ... plus every one to explain, at most this many in total
@@ -471,7 +471,7 @@ def explain_state(conn, group: QuestionGroup) -> "ExplainState | None":
                "main_result": main,
                "studies": [{"id": sid, "direction": reps[sid], **_study_inputs(conn, rows[sid])}
                            for sid in studies],
-               "prompt_version": RELATE_LEVEL_HASH_TOKEN if level else RELATE_HASH_TOKEN}
+               "prompt_version": RELATE_LEVEL_HASH_TAG if level else RELATE_HASH_TAG}
     if level:
         payload["kind"] = "level"
     raw = json.dumps(payload, sort_keys=True, ensure_ascii=False)

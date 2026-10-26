@@ -2,13 +2,13 @@ from datetime import datetime, timedelta, timezone
 
 from evidence_echo.sources import base, linkedin
 
-SECRET = "apify_api_SECRET123"  # gitleaks:allow (dummy token)
+APIFY_DUMMY = "apify_api_SECRET123"  # gitleaks:allow (dummy token)
 LI_SOURCES = [{"type": "linkedin", "name": "Jane", "slug": "jane"}]
 
 
 def _ctx():
     return base.FetchContext(cutoff=datetime.now(timezone.utc) - timedelta(days=7), client=None,
-                             limiter=base.RateLimiter(), apify_token=SECRET, apify_actor="actor~x")
+                             limiter=base.RateLimiter(), apify_token=APIFY_DUMMY, apify_actor="actor~x")
 
 
 class _Resp:
@@ -54,18 +54,18 @@ def test_apify_token_sent_in_header_not_url(monkeypatch):
 
     assert len(calls) == 3
     for url, kw in calls:
-        assert SECRET not in url
-        assert SECRET not in repr(kw.get("params"))
-        assert kw.get("headers", {}).get("Authorization") == f"Bearer {SECRET}"
+        assert APIFY_DUMMY not in url
+        assert APIFY_DUMMY not in repr(kw.get("params"))
+        assert kw.get("headers", {}).get("Authorization") == f"Bearer {APIFY_DUMMY}"
 
 
 def test_apify_error_message_redacts_token(monkeypatch):
     def failing_post(url, **kw):
-        raise RuntimeError(f"Client error for url {url}?token={SECRET}")
+        raise RuntimeError(f"Client error for url {url}?token={APIFY_DUMMY}")
 
     monkeypatch.setattr(linkedin.httpx, "post", failing_post)
     res = linkedin.list_new(LI_SOURCES, _ctx())
-    assert SECRET not in res["Jane"].error and "***" in res["Jane"].error
+    assert APIFY_DUMMY not in res["Jane"].error and "***" in res["Jane"].error
 
 
 def test_missing_token_is_an_error_per_source(monkeypatch):

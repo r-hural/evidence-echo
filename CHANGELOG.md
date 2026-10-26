@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.6
+
+- **Security policy in the plugin folder:** the installed plugin now carries a short
+  `SECURITY.md`: how to report a vulnerability privately, and a link to the full policy.
+- **No false alarms in secret scanners:** an internal constant and the placeholder keys in the
+  tests were renamed, so automated secret scans of the repository no longer flag them. Nothing
+  changes in how the plugin works.
+
 ## 0.16.5
 
 - **Keys per session:** each Claude Code session now uses only the keys in its own plugin

@@ -162,7 +162,7 @@ def test_rules_text_names_question_and_measure(topic):
     text = relate.instructions(topic)
     assert "one " in text and "question" in text and "measure" in text and "main_result" in text
     assert "Study A" in text and "never" in text          # the summary must not say "Study A"
-    assert relate.PROMPT_VERSION == "relate-4" and knowledge.RELATE_HASH_TOKEN == "relate-4"
+    assert relate.PROMPT_VERSION == "relate-4" and knowledge.RELATE_HASH_TAG == "relate-4"
 
 
 def test_agreed_lines_and_summary_are_stored(subtopiced):
