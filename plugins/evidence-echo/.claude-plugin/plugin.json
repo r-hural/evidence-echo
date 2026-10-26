@@ -2,12 +2,13 @@
   "name": "evidence-echo",
   "displayName": "Evidence Echo",
   "description": "Claude Code plugin for evidence-based research digests from the feeds you follow: keeps only articles with measured results, grades each study's level of evidence, checks quotes and the original study. Templates for SEO, AI coding, A/B testing and exercise science.",
-  "version": "0.16.4",
+  "version": "0.16.5",
   "author": {
     "name": "r-hural"
   },
   "homepage": "https://github.com/r-hural/evidence-echo",
   "repository": "https://github.com/r-hural/evidence-echo",
+  "privacyPolicyUrl": "https://github.com/r-hural/evidence-echo/blob/main/PRIVACY.md",
   "license": "MIT",
   "keywords": ["research", "evidence-based", "levels-of-evidence", "research-digest", "rss", "seo", "seo-experiments", "ab-testing", "ai-coding", "llm-benchmarks", "exercise-science", "obsidian"],
   "skills": "./skills/",
@@ -31,7 +32,7 @@
       "type": "string",
       "title": "Voyage API key",
       "sensitive": true,
-      "description": "Optional; enables embeddings (free tier is ample at this volume)"
+      "description": "Optional; enables embeddings (finds studies with similar text). Without a payment method on the Voyage account the first run is slow"
     },
     "apify_api_token": {
       "type": "string",

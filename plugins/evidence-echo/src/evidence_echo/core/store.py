@@ -2509,9 +2509,18 @@ def adopt_template_subtopics(conn, names, renames) -> dict:
 
 def study_first_published(conn) -> dict[int, str]:
     """study id -> the earliest publication date among its items."""
-    return {r[0]: r[1] for r in conn.execute(
-        "SELECT study_id, MIN(published) FROM items WHERE study_id IS NOT NULL "
-        "AND published IS NOT NULL AND published != '' GROUP BY study_id")}
+    out: dict[int, tuple[datetime, str]] = {}
+    for study_id, raw in conn.execute(
+            "SELECT study_id, published FROM items WHERE study_id IS NOT NULL "
+            "AND published IS NOT NULL AND published != ''"):
+        try:
+            when = datetime.fromisoformat(raw)  # as dates: offsets differ in the text
+        except ValueError:
+            continue
+        when = when.astimezone(timezone.utc) if when.tzinfo else when.replace(tzinfo=timezone.utc)
+        if study_id not in out or when < out[study_id][0]:
+            out[study_id] = (when, raw)
+    return {study_id: raw for study_id, (_, raw) in out.items()}
 
 
 def subtopic_missing(conn, study: dict) -> bool:

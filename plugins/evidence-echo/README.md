@@ -32,7 +32,7 @@ conversion optimization and A/B tests (`cro`) and exercise science (`exercise`);
   optional Obsidian export. Keys live in the plugin's data folder and are never printed or
   passed on the command line.
 
-Details: [SECURITY.md](https://github.com/r-hural/evidence-echo/blob/main/SECURITY.md).
+Details: [Privacy](../../PRIVACY.md), [SECURITY.md](../../SECURITY.md).
 
 ## Install
 
@@ -74,20 +74,23 @@ Set in the plugin configuration (Claude Code asks on install; change later via
 | `apify_api_token` | — | Optional; enables LinkedIn sources |
 
 A SessionStart hook passes the settings to the engine; keys never appear in
-prompts or command lines. The hook writes them to `<plugin data>/keys.json`
-(owner-only permissions on macOS/Linux; on Windows it sits in your user
-profile), which only the engine reads, and never exports them to the session's
-commands. Keys come only from the plugin settings: a key set in your shell's
-environment is never read. Clearing the keys in the
-settings removes the file at the next session start. Never paste a key into the
-chat.
+prompts or command lines. At each session start the hook writes that session's
+keys to `<plugin data>/keys/<session id>.json` (owner-only permissions on
+macOS/Linux; on Windows it sits in your user profile), which only the engine
+reads, and never exports them to the session's commands. Each session uses only
+the keys in its own settings: a key cleared in the settings is no longer used from
+the next session start. Files of older sessions still hold their keys until they
+have been unused for 30 days and are removed; to remove every stored key at once
+(after rotating one, say), delete `<plugin data>/keys/`. Keys come
+only from the plugin settings: a key set in your shell's environment is never
+read. Never paste a key into the chat.
 
 ## Topics and folders
 
 Data folder resolution: `EV_ECHO_DATA_DIR` > the `data_dir` plugin setting >
 `~/.evidence-echo`. The plugin's own data folder (`CLAUDE_PLUGIN_DATA`) is never
 used for studies, because Claude Code deletes it on uninstall; it only holds
-`keys.json` and the launcher's virtual environments (override with
+the keys files and the launcher's virtual environments (override with
 `EV_ECHO_PLUGIN_DATA`; fallback `<data>/cache`).
 
     <data>/                                 default ~/.evidence-echo
@@ -101,7 +104,7 @@ used for studies, because Claude Code deletes it on uninstall; it only holds
       overview.md                           one page across all topics
       <id>/<YYYY-MM-DD>-report.md           reports, unless the topic sets its own folder
 
-Configured paths expand `~`, `%VAR%` and `$VAR`; a path that is still relative is
+Configured paths expand `~` and environment variables; a path that is still relative is
 refused. Missing folders are created on first write.
 
 ### `config.json`
@@ -122,7 +125,7 @@ also gets HTML pages; during a report run `overview.html` follows the topic's `h
 export; also `EV_ECHO_OBSIDIAN_DIR`; `ev config set` refuses a folder that does not exist and
 never creates one), `relate` (`on|off`, default `on`, also per topic or `EV_ECHO_RELATE`: two blind comparers explain contested evidence, see "What the evidence says"; `off` skips the relate step), `classify_batch` (default `40`, `0` = off, also per topic or `EV_ECHO_CLASSIFY_BATCH`: how many older studies the classify step fills in per run), `overview_studies` (default `10`, `0` = latest report only, also `EV_ECHO_OVERVIEW_STUDIES`, global only: how many recently reported studies each topic lists in the overview), `fetch_cache_minutes` (default `60`, `0` = off, also `EV_ECHO_FETCH_CACHE_MINUTES`, global only: feed and page downloads are kept this long and shared by every topic; `ev fetch --fresh` downloads again). `auto` picks `api` when an Anthropic key is set,
 else `session` (judged by Claude in the session); the embedder picks `voyage`
-when a Voyage key is set, else `none`. With a Voyage key, study matching also proposes studies with similar text as candidates; without one, matching uses the rules alone.
+when a Voyage key is set, else `none`. With a Voyage key, study matching also proposes studies with similar text as candidates; without one, matching uses the rules alone. Without a payment method on the Voyage account the rate limit is very low, so the first embedding run is slow (it waits between requests).
 
 ### `topic.json`
 

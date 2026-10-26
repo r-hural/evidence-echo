@@ -88,15 +88,15 @@ def recent_dates(conn, source_name: str) -> list[datetime]:
     rows = conn.execute(
         """SELECT published FROM items WHERE source_name=? AND published IS NOT NULL
            AND date_unknown=0 ORDER BY published DESC LIMIT ?""",
-        (source_name, schedule.SAMPLE_SIZE)).fetchall()
+        (source_name, schedule.SAMPLE_SIZE * 4)).fetchall()  # text order only narrows the rows
     out = []
     for (raw,) in rows:
         try:
             dt = datetime.fromisoformat(raw)
         except ValueError:
             continue  # one unreadable stored date must not stop the fetch
-        out.append(dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc))
-    return out
+        out.append((dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).astimezone(timezone.utc))
+    return sorted(out, reverse=True)[:schedule.SAMPLE_SIZE]  # as dates: offsets differ in the text
 
 
 def _not_due(conn, source, state, now, horizon_days: int) -> dict | None:

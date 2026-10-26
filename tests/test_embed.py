@@ -27,8 +27,9 @@ def test_embed_stage_with_nothing_verified(db):
 
 
 class _Resp:
-    def __init__(self, status=200, n=0, payload=None):
+    def __init__(self, status=200, n=0, payload=None, headers=None):
         self.status_code = status
+        self.headers = headers or {}
         self._payload = payload if payload is not None else {
             "data": [{"embedding": [0.1, 0.2]} for _ in range(n)]}
 
@@ -73,7 +74,64 @@ def test_voyage_retries_once_on_429(monkeypatch):
     monkeypatch.setattr(embedders.time, "sleep", lambda s: sleeps.append(s))
     _patch_post(monkeypatch, lambda n, body: _Resp(429) if n == 1 else _Resp(200, len(body["input"])))
     assert len(embedders.VoyageEmbedder("k").embed(["a"])) == 1
-    assert len(sleeps) == 1
+    assert sleeps == [60]
+
+
+def test_voyage_chunks_respect_the_token_budget(monkeypatch):
+    def respond(n, body):
+        return _Resp(200, len(body["input"]))
+
+    calls = _patch_post(monkeypatch, respond)
+    texts = ["x" * 8000 for _ in range(10)]  # ~2000 tokens each, budget 6000
+    assert len(embedders.VoyageEmbedder("k").embed(texts)) == 10
+    assert [len(c["input"]) for c in calls] == [2, 2, 2, 2, 2]
+    calls.clear()
+    embedders.VoyageEmbedder("k").embed(["a", "x" * 60000, "b"])
+    assert [len(c["input"]) for c in calls] == [1, 1, 1]
+
+
+def test_voyage_429_waits_retry_after(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(embedders.time, "sleep", lambda s: sleeps.append(s))
+    _patch_post(monkeypatch, lambda n, body: _Resp(429, headers={"Retry-After": "7"})
+                if n == 1 else _Resp(200, len(body["input"])))
+    assert len(embedders.VoyageEmbedder("k").embed(["a"])) == 1
+    assert sleeps == [7.0]
+
+
+def test_voyage_429_wait_is_capped(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(embedders.time, "sleep", lambda s: sleeps.append(s))
+    _patch_post(monkeypatch, lambda n, body: _Resp(429, headers={"Retry-After": "3600"})
+                if n == 1 else _Resp(200, len(body["input"])))
+    embedders.VoyageEmbedder("k").embed(["a"])
+    assert sleeps == [embedders.MAX_WAIT]
+
+
+def test_voyage_batches_yield_each_request(monkeypatch):
+    _patch_post(monkeypatch, lambda n, body: _Resp(200, len(body["input"])))
+    texts = ["x" * 8000 for _ in range(3)]
+    got = [(chunk, len(vecs)) for chunk, vecs in embedders.VoyageEmbedder("k").batches(texts)]
+    assert got == [(texts[:2], 2), (texts[2:], 1)]
+
+
+def test_voyage_gives_up_after_repeated_429(monkeypatch):
+    import pytest
+    sleeps = []
+    monkeypatch.setattr(embedders.time, "sleep", lambda s: sleeps.append(s))
+    calls = _patch_post(monkeypatch, lambda n, body: _Resp(429))
+    with pytest.raises(embedders.EmbeddingError) as err:
+        embedders.VoyageEmbedder("secret-key").embed(["a"])
+    assert "secret-key" not in str(err.value)
+    assert len(calls) == 4 and sleeps == [60, 60, 60]
+
+
+def test_voyage_500_retries_once_after_two_seconds(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(embedders.time, "sleep", lambda s: sleeps.append(s))
+    _patch_post(monkeypatch, lambda n, body: _Resp(500) if n == 1 else _Resp(200, len(body["input"])))
+    assert len(embedders.VoyageEmbedder("k").embed(["a"])) == 1
+    assert sleeps == [2]
 
 
 def test_voyage_gives_up_after_second_failure(monkeypatch):

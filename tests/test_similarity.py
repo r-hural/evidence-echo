@@ -61,6 +61,30 @@ def test_embed_pending_embeds_judged_and_backfill_once(db):
     assert len(emb.calls) == 1
 
 
+class BatchEmbedder(FakeEmbedder):
+    """Yields one vector per request and fails on request number `fail_at`."""
+
+    def __init__(self, fail_at):
+        super().__init__()
+        self.fail_at = fail_at
+
+    def batches(self, texts):
+        for n, text in enumerate(texts, 1):
+            if n == self.fail_at:
+                raise EmbeddingError("voyage returned HTTP 429")
+            self.calls.append([text])
+            yield [text], [np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)]
+
+
+def test_embed_pending_keeps_requests_done_before_a_failure(db):
+    a, b, _ = (_item(db, n, "judged") for n in (1, 2, 3))
+    assert similarity.embed_pending(db, BatchEmbedder(fail_at=3)) == "voyage returned HTTP 429"
+    assert {r["item_id"] for r in db.execute("SELECT item_id FROM embeddings")} == {a, b}
+    emb = BatchEmbedder(fail_at=None)
+    assert similarity.embed_pending(db, emb) is None
+    assert len(emb.calls) == 1  # only the missing one
+
+
 def test_embed_pending_reembeds_on_new_tag(db):
     _item(db, 1, "judged")
     emb = FakeEmbedder()

@@ -97,3 +97,35 @@ def test_number_check_ignores_key_numbers_not_in_findings():
 def test_number_check_falls_back_when_findings_name_no_key_number():
     facts = {"match_keys": {"key_numbers": ["39", "12%"]}, "findings": "CTR rose."}
     assert primary.number_check(facts, "CTR rose 12%.") == ("partial", ["39"])
+
+
+@pytest.mark.parametrize("item,text", [
+    ("1,234 Mrd", "Der Umsatz lag bei 1,234 Mrd. Euro."),
+    ("1.234 billion", "Der Umsatz lag bei 1,234 Mrd. Euro."),
+    ("1,234 Mio", "Wir zählten 1,234 Mio Aufrufe."),
+    ("1234k", "Wir zählten 1,234 Mio Aufrufe."),
+    ("1,2 Mio", "We counted 1.2 million views."),
+    ("5 Tsd", "We counted 5 thousand views."),
+])
+def test_german_scale_words_are_read(item, text):
+    assert primary.number_check(_facts(item), text) == ("ok", [])
+
+
+def test_a_comma_thousands_without_german_scale_stays_thousands():
+    assert primary.number_check(_facts("1234"), "We saw 1,234 Besucher.") == ("ok", [])
+
+
+@pytest.mark.parametrize("text", ["Release v1,2 % faster.", "Q3,5 % higher"])
+def test_a_letter_before_a_comma_decimal_keeps_the_number(text):
+    number = "1.2%" if "v1" in text else "3.5%"
+    assert primary.number_check(_facts(number), text) == ("ok", [])
+
+
+@pytest.mark.parametrize("text", ["Die CTR stieg um 10–15 %.", "Die CTR stieg um 10 bis 15 %.",
+                                  "CTR rose 10-15%.", "CTR rose 10 to 15 percent."])
+def test_ranges_read_both_ends(text):
+    assert primary.number_check(_facts("10%", "15%"), text) == ("ok", [])
+
+
+def test_a_range_with_comma_decimals():
+    assert primary.number_check(_facts("2.5%", "3.5%"), "Plus 2,5–3,5 %.") == ("ok", [])

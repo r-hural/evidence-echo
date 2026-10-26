@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from tests.conftest import PLUGIN_DIR, load_script
+from tests.conftest import PLUGIN_DIR, load_script, write_plugin_keys
 
 session_env = load_script("hooks/session_env.py")
 
@@ -35,8 +35,11 @@ def _configured(tmp_path):
     (d / "config.json").write_text('{"version": 1}', encoding="utf-8")
 
 
-def _keys_file(tmp_path):
-    return tmp_path / "plugin-data" / "keys.json"
+SID = "sess-1"
+
+
+def _keys_file(tmp_path, sid=SID):
+    return tmp_path / "plugin-data" / "keys" / f"{sid}.json"
 
 
 def test_export_lines_plugin_data_only():
@@ -68,9 +71,9 @@ def test_single_quotes_escaped():
         ["export EV_ECHO_PLUGIN_DATA='/a'\\''b'"]
 
 
-def test_keys_written_to_plugin_data_file(tmp_path, capsys):
+def test_keys_written_to_the_session_file(tmp_path, capsys):
     _configured(tmp_path)
-    assert session_env.main(_env(tmp_path)) == 0
+    assert session_env.main(_env(tmp_path), session_id=SID) == 0
     assert json.loads(_keys_file(tmp_path).read_text(encoding="utf-8")) == {
         "ANTHROPIC_API_KEY": "sk-ant-secret",
         "VOYAGE_API_KEY": "pa-secret",
@@ -81,21 +84,86 @@ def test_keys_written_to_plugin_data_file(tmp_path, capsys):
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits")
 def test_keys_file_is_owner_only(tmp_path):
-    session_env.main(_env(tmp_path))
+    session_env.main(_env(tmp_path), session_id=SID)
     assert _keys_file(tmp_path).stat().st_mode & 0o777 == 0o600
 
 
-def test_cleared_keys_remove_the_file(tmp_path):
-    session_env.main(_env(tmp_path))
+def _only(**keys):
     cleared = {k: "" for k in FULL if k.endswith(("_API_KEY", "_API_TOKEN"))}
-    session_env.main(_env(tmp_path, **cleared))
+    return dict(cleared, **{"CLAUDE_PLUGIN_OPTION_" + k: v for k, v in keys.items()})
+
+
+def test_sessions_keep_their_own_keys(tmp_path):
+    # B15: a session whose settings lack a key must not remove it for another session
+    session_env.main(_env(tmp_path, **_only(VOYAGE_API_KEY="v")), session_id="one")
+    session_env.main(_env(tmp_path, **_only(ANTHROPIC_API_KEY="a")), session_id="two")
+    assert json.loads(_keys_file(tmp_path, "one").read_text(encoding="utf-8")) == {"VOYAGE_API_KEY": "v"}
+    assert json.loads(_keys_file(tmp_path, "two").read_text(encoding="utf-8")) == {"ANTHROPIC_API_KEY": "a"}
+
+
+def test_cleared_keys_remove_the_session_file(tmp_path):
+    session_env.main(_env(tmp_path), session_id=SID)
+    session_env.main(_env(tmp_path, **_only()), session_id=SID)  # same session, keys cleared
     assert not _keys_file(tmp_path).exists()
 
 
+def test_shared_keys_file_of_older_versions_is_deleted(tmp_path):
+    write_plugin_keys(tmp_path / "plugin-data", ANTHROPIC_API_KEY="stale")
+    session_env.main(_env(tmp_path, **_only()), session_id=SID)
+    assert not (tmp_path / "plugin-data" / "keys.json").exists()
+
+
+def test_old_session_files_are_pruned(tmp_path):
+    session_env.main(_env(tmp_path), session_id="old")
+    old = _keys_file(tmp_path, "old")
+    month = session_env.KEYS_KEEP_DAYS * 86400
+    os.utime(old, (old.stat().st_mtime - month - 60,) * 2)
+    session_env.main(_env(tmp_path), session_id=SID)
+    assert not old.exists() and _keys_file(tmp_path).exists()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits")
+def test_rewritten_keys_file_stays_owner_only(tmp_path):
+    session_env.main(_env(tmp_path), session_id=SID)
+    _keys_file(tmp_path).chmod(0o644)
+    session_env.main(_env(tmp_path, **_only(ANTHROPIC_API_KEY="new-a")), session_id=SID)
+    assert _keys_file(tmp_path).stat().st_mode & 0o777 == 0o600
+
+
 def test_only_set_keys_are_written(tmp_path):
-    session_env.main(_env(tmp_path, CLAUDE_PLUGIN_OPTION_VOYAGE_API_KEY=""))
+    session_env.main(_env(tmp_path, CLAUDE_PLUGIN_OPTION_VOYAGE_API_KEY=""), session_id=SID)
     assert set(json.loads(_keys_file(tmp_path).read_text(encoding="utf-8"))) == \
         {"ANTHROPIC_API_KEY", "APIFY_API_TOKEN"}
+
+
+def test_keys_id_exported_without_key_values(tmp_path):
+    env_file = tmp_path / "env.sh"
+    session_env.main(_env(tmp_path, CLAUDE_ENV_FILE=str(env_file)), session_id=SID)
+    text = env_file.read_text(encoding="utf-8")
+    assert f"export EV_ECHO_KEYS_ID='{SID}'" in text
+    for secret in SECRETS:
+        assert secret not in text
+
+
+def test_keys_id_exported_even_when_writing_fails(tmp_path, monkeypatch):
+    # the engine must not fall back to a stale shared keys.json after a failed write
+    def boom(*a, **k):
+        raise OSError("disk full")
+    monkeypatch.setattr(session_env, "write_keys", boom)
+    env_file = tmp_path / "env.sh"
+    assert session_env.main(_env(tmp_path, CLAUDE_ENV_FILE=str(env_file)), session_id=SID) == 0
+    assert f"export EV_ECHO_KEYS_ID='{SID}'" in env_file.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("raw, expected", [("abc-123_X", "abc-123_X"), ("../../evil", "evil"),
+                                           (r"a/b\c d", "abcd")])
+def test_keys_id_keeps_only_safe_characters(raw, expected):
+    assert session_env.keys_id(raw) == expected
+
+
+def test_keys_id_without_session_id_is_random():
+    a, b = session_env.keys_id(None), session_env.keys_id("../")
+    assert a and b and a != b
 
 
 def test_without_plugin_data_no_keys_file_and_still_exits_0(tmp_path, capsys):
@@ -104,7 +172,7 @@ def test_without_plugin_data_no_keys_file_and_still_exits_0(tmp_path, capsys):
     env = {k: v for k, v in FULL.items() if k != "CLAUDE_PLUGIN_DATA"}
     assert session_env.main(dict(env, CLAUDE_ENV_FILE=str(env_file))) == 0
     assert not env_file.exists()
-    assert not list(tmp_path.rglob("keys.json"))
+    assert not list(tmp_path.rglob("keys*"))
     assert capsys.readouterr() == ("", "")
 
 
@@ -135,9 +203,11 @@ def test_runs_as_hook_script(tmp_path):
            "HOME": home, "USERPROFILE": home}
     env.pop("EV_ECHO_DATA_DIR", None)
     proc = subprocess.run([sys.executable, str(PLUGIN_DIR / "hooks" / "session_env.py")],
-                          env=env, capture_output=True, text=True)
+                          env=env, capture_output=True, text=True,
+                          input=json.dumps({"session_id": SID, "hook_event_name": "SessionStart"}))
     assert (proc.returncode, proc.stdout, proc.stderr) == (0, "", "")
     assert "export EV_ECHO_PLUGIN_DATA=" in env_file.read_text(encoding="utf-8")
+    assert f"export EV_ECHO_KEYS_ID='{SID}'" in env_file.read_text(encoding="utf-8")
     assert _keys_file(tmp_path).exists()
 
 

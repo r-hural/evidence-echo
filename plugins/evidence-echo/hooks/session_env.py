@@ -1,10 +1,15 @@
 """SessionStart hook: hand plugin settings to the engine for this session.
 
-- Keys go to <plugin data>/keys.json (owner-only where the OS supports it), never
-  to CLAUDE_ENV_FILE: everything there reaches every command of the session.
-- CLAUDE_ENV_FILE gets EV_ECHO_PLUGIN_DATA (where keys.json and venvs live) and,
-  when the "Data folder" setting is set, EV_ECHO_DATA_DIR (never a folder inside
-  the plugin data, which is deleted on uninstall).
+- Keys go to <plugin data>/keys/<session id>.json (owner-only where the OS supports
+  it), never to CLAUDE_ENV_FILE: everything there reaches every command of the
+  session. One file per session, so each session uses exactly its own settings (a
+  key cleared there is gone) and sessions starting together never overwrite each
+  other. Files untouched for KEYS_KEEP_DAYS are removed; the engine touches its
+  file on every read. The shared keys.json of 0.16.4 and earlier is deleted.
+- CLAUDE_ENV_FILE gets EV_ECHO_PLUGIN_DATA (where the keys and venvs live),
+  EV_ECHO_KEYS_ID (the session's keys file name, no key values) and, when the
+  "Data folder" setting is set, EV_ECHO_DATA_DIR (never a folder inside the
+  plugin data, which is deleted on uninstall).
 - Until Evidence Echo is set up, the first session shows a one-line hint, once.
 Values are never printed. Always exits 0: a failing hook must not block the session.
 """
@@ -12,10 +17,14 @@ import json
 import os
 import re
 import sys
+import time
+import uuid
 from pathlib import Path
 
 KEYS = ("ANTHROPIC_API_KEY", "VOYAGE_API_KEY", "APIFY_API_TOKEN")
-KEYS_FILE = "keys.json"
+KEYS_FILE = "keys.json"   # the shared file of 0.16.4 and earlier; deleted
+KEYS_DIR = "keys"
+KEYS_KEEP_DAYS = 30
 HINT = ('Evidence Echo is installed but not set up — say "set up Evidence Echo" '
         'or run /evidence-echo:setup.')
 
@@ -52,8 +61,9 @@ def _chosen_data_dir(environ, home=None):
     return "" if chosen and _in_plugin_data(chosen, environ, home) else chosen
 
 
-def export_lines(environ):
+def export_lines(environ, keys_id=None):
     pairs = [("EV_ECHO_PLUGIN_DATA", environ.get("CLAUDE_PLUGIN_DATA", "").strip()),
+             ("EV_ECHO_KEYS_ID", keys_id or ""),
              ("EV_ECHO_DATA_DIR", _chosen_data_dir(environ))]
     return ["export {}={}".format(name, _quote(value)) for name, value in pairs if value]
 
@@ -112,7 +122,24 @@ def hint(environ, home=None):
     return HINT
 
 
-def write_keys(environ):
+def keys_id(session_id):
+    """The session's keys file name: its session id reduced to safe characters, else random."""
+    clean = re.sub(r"[^A-Za-z0-9_-]", "", str(session_id or ""))[:64]
+    return clean or uuid.uuid4().hex
+
+
+def _prune(folder, now):
+    for path in folder.glob("*.json"):
+        try:
+            if now - path.stat().st_mtime > KEYS_KEEP_DAYS * 86400:
+                path.unlink()
+        except OSError:
+            continue
+
+
+def write_keys(environ, kid, now=None):
+    """Writes this session's keys to <plugin data>/keys/<kid>.json, or removes that file
+    when the session's settings hold none."""
     data = environ.get("CLAUDE_PLUGIN_DATA", "").strip()
     if not data:
         return
@@ -121,13 +148,19 @@ def write_keys(environ):
         value = environ.get("CLAUDE_PLUGIN_OPTION_" + name, "").strip()
         if value:
             keys[name] = value
-    path = os.path.join(data, KEYS_FILE)
-    if not keys:  # keys cleared in the settings: drop the old file
-        if os.path.exists(path):
-            os.remove(path)
+    legacy = os.path.join(data, KEYS_FILE)
+    if os.path.exists(legacy):
+        os.remove(legacy)  # shared by every session: a cleared key stayed in use
+    folder = Path(data) / KEYS_DIR
+    path = folder / (kid + ".json")
+    if folder.is_dir():
+        _prune(folder, time.time() if now is None else now)
+    if not keys:
+        if path.exists():
+            path.unlink()
         return
-    os.makedirs(data, exist_ok=True)
-    tmp = path + ".tmp"
+    folder.mkdir(parents=True, exist_ok=True)
+    tmp = folder / (kid + ".json.tmp")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
         json.dump(keys, fh)
@@ -135,15 +168,30 @@ def write_keys(environ):
     os.replace(tmp, path)
 
 
-def main(environ=None, home=None):
-    environ = os.environ if environ is None else environ
+def _session_id(stdin):
+    """The session id from the hook's JSON input; None when run by hand (a terminal)."""
     try:
-        write_keys(environ)
+        if stdin is None or stdin.isatty():
+            return None
+        payload = json.loads(stdin.read() or "{}")
+    except (OSError, ValueError):
+        return None
+    return payload.get("session_id") if isinstance(payload, dict) else None
+
+
+def main(environ=None, home=None, session_id=None):
+    environ = os.environ if environ is None else environ
+    kid = keys_id(session_id)
+    try:
+        write_keys(environ, kid)
     except Exception:
         pass  # never block the session, never echo values
     try:
         env_file = environ.get("CLAUDE_ENV_FILE", "")
-        lines = export_lines(environ) if env_file else []
+        # exported even when writing failed: the engine then finds no session file and runs
+        # without keys, never on the shared keys.json of older versions
+        has_data = bool(environ.get("CLAUDE_PLUGIN_DATA", "").strip())
+        lines = export_lines(environ, kid if has_data else None) if env_file else []
         if lines:
             with open(env_file, "a", encoding="utf-8", newline="\n") as fh:
                 fh.write("\n".join(lines) + "\n")
@@ -161,4 +209,4 @@ def main(environ=None, home=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(session_id=_session_id(sys.stdin)))

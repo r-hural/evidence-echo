@@ -1,5 +1,6 @@
 # tests/test_config.py
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -159,6 +160,37 @@ def test_keys_come_only_from_the_plugin_settings(workspace, tmp_path, monkeypatc
     pd.mkdir()
     (pd / "keys.json").write_text(json.dumps({"ANTHROPIC_API_KEY": "plugin"}), encoding="utf-8")
     assert config.load().anthropic_api_key == "plugin"
+
+
+def test_session_keys_file_is_read_by_its_id(workspace, tmp_path, monkeypatch):
+    pd = tmp_path / "plugin-data"
+    (pd / "keys").mkdir(parents=True)
+    (pd / "keys" / "s1.json").write_text(json.dumps({"VOYAGE_API_KEY": "mine"}), encoding="utf-8")
+    (pd / "keys.json").write_text(json.dumps({"ANTHROPIC_API_KEY": "stale"}), encoding="utf-8")
+    monkeypatch.setenv("EV_ECHO_KEYS_ID", "s1")
+    cfg = config.load()
+    assert (cfg.voyage_api_key, cfg.anthropic_api_key) == ("mine", "")  # never the shared file
+    monkeypatch.setenv("EV_ECHO_KEYS_ID", "s2")  # a session without keys has no file
+    assert config.load().voyage_api_key == ""
+
+
+def test_session_keys_file_is_touched_on_read(workspace, tmp_path, monkeypatch):
+    path = tmp_path / "plugin-data" / "keys" / "s1.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps({"VOYAGE_API_KEY": "mine"}), encoding="utf-8")
+    os.utime(path, (1_000_000, 1_000_000))
+    monkeypatch.setenv("EV_ECHO_KEYS_ID", "s1")
+    config.load()
+    assert path.stat().st_mtime > 1_000_000
+
+
+@pytest.mark.parametrize("kid", ["../keys", "a/b", "x" * 65])
+def test_unsafe_keys_id_reads_no_keys(workspace, tmp_path, monkeypatch, kid):
+    pd = tmp_path / "plugin-data"
+    pd.mkdir()
+    (pd / "keys.json").write_text(json.dumps({"ANTHROPIC_API_KEY": "stale"}), encoding="utf-8")
+    monkeypatch.setenv("EV_ECHO_KEYS_ID", kid)
+    assert config.load().anthropic_api_key == ""
 
 
 def test_invalid_keys_file_names_the_file(workspace, tmp_path):

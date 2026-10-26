@@ -72,7 +72,7 @@ Terms used throughout: [docs/GLOSSARY.md](docs/GLOSSARY.md).
   optional Obsidian export. Keys live in the plugin's data folder and are never printed or
   passed on the command line.
 
-Details: [SECURITY.md](SECURITY.md).
+Details: [Privacy](PRIVACY.md), [SECURITY.md](SECURITY.md).
 
 ## Content, copyright and personal data
 

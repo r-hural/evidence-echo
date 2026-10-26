@@ -51,6 +51,64 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text.translate(_QUOTES)).strip()
 
 
+# Numbers written in words ("four in five", "half", "two thirds", "twenty"): read only after the
+# digit check failed, so identity.key_numbers (study fingerprints) stays untouched.
+_WORDS = {w: i for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
+    "sixteen seventeen eighteen nineteen twenty".split())}
+_WORD = "|".join(sorted(_WORDS, key=len, reverse=True))
+_RATIO = re.compile(rf"\b({_WORD}|\d+) (?:in|out of) ({_WORD}|\d+)\b", re.IGNORECASE)
+# "half" of a period ("the first half of 2024") is no result
+_FRACTION = re.compile(r"\b(?:(a|one|two|three) (third|quarter)s?|"
+                       r"(?<!first )(?<!second )(?<!latter )(?<!other )(half))\b", re.IGNORECASE)
+_BIG = re.compile(r"\b(?:a|one) (hundred|thousand)\b", re.IGNORECASE)
+_CARDINAL = re.compile(rf"\b({_WORD})\b(\s*(?:%|per ?cent\b))?", re.IGNORECASE)
+_PERCENT_WORD = re.compile(r"(?<=\d)\s*per ?cent\b", re.IGNORECASE)  # "4.2 percent" -> "4.2%"
+_FRACTION_PARTS = {"third": 3, "quarter": 4}
+_FRACTION_COUNT = {"a": 1, "one": 1, "two": 2, "three": 3}
+
+
+def _word_value(token: str) -> float:
+    token = token.lower()
+    return float(token) if token.isdigit() else float(_WORDS[token])
+
+
+def _word_numbers(quote: str) -> list[tuple[bool, float]]:
+    """(is percent, value) for each number written in words in `quote`."""
+    out = []
+    for m in _RATIO.finditer(quote):
+        whole = _word_value(m.group(2))
+        if whole:
+            out.append((True, _word_value(m.group(1)) / whole * 100))
+    for m in _FRACTION.finditer(quote):
+        if m.group(3):
+            out.append((True, 50.0))
+        else:
+            out.append((True, _FRACTION_COUNT[m.group(1).lower()]
+                        / _FRACTION_PARTS[m.group(2).lower()] * 100))
+    for m in _BIG.finditer(quote):
+        out.append((False, 100.0 if m.group(1).lower() == "hundred" else 1000.0))
+    rest = _FRACTION.sub(" ", _RATIO.sub(" ", quote))
+    out.extend((bool(m.group(2)), _word_value(m.group(1))) for m in _CARDINAL.finditer(rest))
+    return out
+
+
+def _word_match(number: str, quote: str) -> bool:
+    pct = number.endswith("%")
+    try:
+        wanted = float(number.rstrip("%"))
+    except ValueError:
+        return False
+    for is_pct, value in _word_numbers(quote):
+        if is_pct != pct:
+            continue
+        if pct and wanted in (round(value, 2), round(value, 1), float(round(value))):
+            return True  # a third is 33.33, 33.3 or 33
+        if not pct and wanted == value:
+            return True
+    return False
+
+
 def _verified(number: str, quotes: list, text: str) -> bool:
     for q in quotes:
         if not (isinstance(q, dict) and isinstance(q.get("number"), str)
@@ -60,7 +118,9 @@ def _verified(number: str, quotes: list, text: str) -> bool:
         if (number in identity.key_numbers([q["number"]])
                 and len(quote.split(" ")) >= MIN_QUOTE_WORDS
                 and quote in text
-                and number in identity.key_numbers([quote])):
+                and (number in identity.key_numbers([quote])
+                     or number in identity.key_numbers([_PERCENT_WORD.sub("%", quote)])
+                     or _word_match(number, quote))):
             return True
     return False
 
@@ -115,6 +175,36 @@ _SCALE = {"thousand": 1e3, "million": 1e6, "mn": 1e6, "billion": 1e9, "bn": 1e9,
           "trillion": 1e12}
 
 
+def _bare_unit(unit, text: str, start: int) -> bool:
+    """A lone "b" that is not a unit: "3 b" without a currency sign ("$3 B" is billions, "3b"
+    attached is too). A lone "s" stays seconds ("LCP fell to 2.3 s after the fix")."""
+    if unit.group(1).lower() == "b":
+        return unit.group(0)[0].isspace() and not (start and text[start - 1] in _CURRENCY)
+    return False
+
+
+_FELL = re.compile(r"\b(fell|fall|falls|drop|dropped|drops|declin\w*|decreas\w*|lost|loss|lower|down|"
+                   r"dip\w*|shrank|shrunk|sank|slump\w*|reduc\w*)\b", re.IGNORECASE)
+_ROSE = re.compile(r"\b(rose|rise|rises|grew|grow|grows|growth|increas\w*|gain\w*|higher|up|"
+                   r"improv\w*|climb\w*|jump\w*|surg\w*|boost\w*)\b", re.IGNORECASE)
+# a "," or "." before a digit is part of a number ("3.5%", "1,234"), not a clause end
+_CLAUSE_END = re.compile(r"[,.](?!\d)|[;:]|\b(?:while|whereas|but|and|however)\b", re.IGNORECASE)
+
+
+def _sign(text: str, start: int) -> int:
+    """-1, +1 or 0 (unknown) for the number at `start`: its own sign, else the direction word
+    nearest before it in the same clause."""
+    if text[start] in "+-":
+        return -1 if text[start] == "-" else 1
+    before = text[:start]
+    ends = list(_CLAUSE_END.finditer(before))
+    clause = before[ends[-1].end():] if ends else before
+    fell, rose = list(_FELL.finditer(clause)), list(_ROSE.finditer(clause))
+    if fell and (not rose or fell[-1].start() > rose[-1].start()):
+        return -1
+    return 1 if rose else 0
+
+
 def _numbers(text: str, keep_trivial: bool = False):
     """(match start, token end, (is percent, magnitude)) for each result number in `text`: its
     k/M multiplier and an adjacent scale word count; years and (unless `keep_trivial`) trivial
@@ -124,6 +214,8 @@ def _numbers(text: str, keep_trivial: bool = False):
         sign, digits, mult, pct = m.groups()
         end, scale = m.end(), 1.0
         unit = None if pct else _UNIT.match(text, m.end())
+        if unit and _bare_unit(unit, text, m.start()):
+            unit = None
         if unit:
             end, scale = unit.end(), _SCALE.get(unit.group(1).lower(), 1.0)
         number = float(digits.replace(",", "")) * scale
@@ -158,10 +250,14 @@ def headline_token(value: str, quote: str) -> str | None:
     wanted = {key for _, _, key in _numbers(_minus(value))}
     if len(wanted) != 1:
         return None
-    for start, end, key in _numbers(_minus(quote)):
-        if key in wanted:
-            start -= 1 if start and quote[start - 1] in _CURRENCY else 0
-            return quote[start:end].strip()
+    plain, value = _minus(quote), _minus(value)
+    hits = [(start, end) for start, end, key in _numbers(plain) if key in wanted]
+    if len(hits) > 1:  # the same magnitude twice: take the one with the sign the value has
+        want = _sign(value, _numbers(value)[0][0])
+        hits = [h for h in hits if _sign(plain, h[0]) == want] or hits if want else hits
+    for start, end in hits[:1]:
+        start -= 1 if start and quote[start - 1] in _CURRENCY else 0
+        return quote[start:end].strip()
     return None
 
 

@@ -27,11 +27,19 @@ def embed_pending(conn, embedder) -> str | None:
         pending = [(it["id"], card) for it in map(dict, rows) if (card := cards.study_card(it))]
         if not pending:
             return None
-        vectors = embedder.embed([card for _, card in pending])
-        if len(vectors) != len(pending):
+        texts = [card for _, card in pending]
+        batches = getattr(embedder, "batches", None)
+        groups = batches(texts) if batches else [(texts, embedder.embed(texts))]
+        done = 0
+        for chunk, vectors in groups:  # saved per request: a later failure keeps earlier work
+            if len(vectors) != len(chunk):
+                return "embedder returned the wrong number of vectors"
+            for (item_id, _), vec in zip(pending[done:done + len(chunk)], vectors):
+                store.save_vector(conn, item_id, embedder.tag,
+                                  np.asarray(vec, dtype=np.float32).tobytes())
+            done += len(chunk)
+        if done != len(pending):
             return "embedder returned the wrong number of vectors"
-        for (item_id, _), vec in zip(pending, vectors):
-            store.save_vector(conn, item_id, embedder.tag, np.asarray(vec, dtype=np.float32).tobytes())
     except EmbeddingError as e:
         return str(e) or "embedding failed"
     except Exception as e:  # embedding never stops a run

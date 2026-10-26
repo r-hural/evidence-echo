@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.16.5
+
+- **Keys per session:** each Claude Code session now uses only the keys in its own plugin
+  settings. A key saved in one project's settings no longer disappears for other sessions, a
+  key you clear or replace in the settings stops being used at the next session start, and
+  sessions starting at the same time no longer overwrite each other's keys. Keys of sessions
+  unused for 30 days are removed.
+- **Embeddings on free Voyage AI accounts:** requests are smaller and wait when the rate limit
+  is reached, so accounts without a payment method (very low limits) work, only slowly at
+  first. Finished requests are kept, so an interrupted run resumes where it stopped.
+- **Quote check reads numbers in words:** "four in five", "one in three", "half", "a third",
+  "twenty percent" or "4.2 percent" in a quote now confirm 80%, 33.3%, 50%, 33.3%, 20% or 4.2%,
+  so such studies are no longer marked disputed for a missing number. "The first half of 2024"
+  does not count as 50%.
+- **Number checks:** the headline number takes the occurrence whose direction matches ("fell
+  12%" vs "rose 12%"), also when a decimal number stands between them; "Mrd", "Mio" and "Tsd"
+  read as billions, millions and thousands; "v1,2 %" keeps its number; ranges like "10–15 %"
+  read both ends; "3 b2b companies" is no longer three billion, and "2.3 s" keeps its seconds.
+- **Fetch:** publication dates with different time zones are compared as dates, so a source's
+  most recent items are found correctly.
+- **Privacy policy:** a short `PRIVACY.md` says what is stored, what is sent where and how to
+  delete it; both READMEs link to it.
+
 ## 0.16.4
 
 - **API keys only from the plugin settings:** the Anthropic, Voyage AI and Apify keys are read

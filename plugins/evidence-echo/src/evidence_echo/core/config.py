@@ -3,12 +3,13 @@
 effective settings for one topic.
 
 Data folder: EV_ECHO_DATA_DIR > ~/.evidence-echo (CLAUDE_PLUGIN_DATA is deleted on
-uninstall, so it only holds disposable things: keys.json and venvs; an
+uninstall, so it only holds disposable things: the keys files and venvs; an
 EV_ECHO_DATA_DIR inside it is ignored).
 Settings: EV_ECHO_<NAME> > topic.json override > config.json > default.
 """
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,7 +21,9 @@ from evidence_echo.core.topics import Topic
 PLUGIN_ROOT = Path(__file__).resolve().parents[3]  # plugins/evidence-echo/ (core -> evidence_echo -> src -> root)
 TEMPLATES_DIR = PLUGIN_ROOT / "templates"
 HOME_DATA_DIR = Path.home() / ".evidence-echo"
-KEYS_FILE = "keys.json"  # written by hooks/session_env.py into the plugin data dir
+KEYS_FILE = "keys.json"  # the shared keys file of 0.16.4 and earlier (and of tests)
+KEYS_DIR = "keys"        # hooks/session_env.py writes keys/<EV_ECHO_KEYS_ID>.json per session
+_KEYS_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 NOT_SET_UP = "Evidence Echo is not set up — run the setup (/evidence-echo:setup)"
 NO_TOPICS = "no topics yet — run the setup (/evidence-echo:setup)"
 
@@ -143,11 +146,22 @@ def select_topic(ws: Workspace, requested: str | None) -> str:
 KEY_NAMES = ("ANTHROPIC_API_KEY", "VOYAGE_API_KEY", "APIFY_API_TOKEN")
 
 
+def _keys_path(plugin_data: Path) -> Path | None:
+    kid = _env("EV_ECHO_KEYS_ID")
+    if not kid:
+        return plugin_data / KEYS_FILE  # no session hook ran (the CLI by hand, tests)
+    return plugin_data / KEYS_DIR / f"{kid}.json" if _KEYS_ID.fullmatch(kid) else None
+
+
 def _read_keys(plugin_data: Path) -> dict:
-    """Keys the SessionStart hook wrote from the plugin settings (never exported)."""
-    path = plugin_data / KEYS_FILE
-    if not path.exists():
+    """Keys the SessionStart hook wrote from this session's plugin settings (never exported)."""
+    path = _keys_path(plugin_data)
+    if path is None or not path.exists():
         return {}
+    try:
+        os.utime(path)  # in use: the hook removes keys files untouched for 30 days
+    except OSError:
+        pass
     try:
         keys = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:

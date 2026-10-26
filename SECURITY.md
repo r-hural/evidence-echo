@@ -28,8 +28,10 @@ Only the latest release gets fixes.
 - **Local files:** the data folder (default `~/.evidence-echo`: topics, SQLite databases with
   fetched text and grades, and `cache/fetch/` with downloaded pages and LinkedIn posts kept for
   `fetch_cache_minutes`, deleted when they expire or when the cache is turned off), the reports folder, the optional Obsidian export, and the plugin
-  data folder (`keys.json`, the engine's Python environment).
-- **Keys** are kept only in `keys.json`, written from the plugin settings; keys in your
+  data folder (`keys/`, the engine's Python environment).
+- **Keys** are kept only in one file per session under `keys/`, written from that session's
+  plugin settings and removed after 30 days unused (older sessions' files keep their keys until
+  then; delete `keys/` to remove them all at once); keys in your
   environment are not read. They are never printed, put on a command line or passed into the
   session.
 

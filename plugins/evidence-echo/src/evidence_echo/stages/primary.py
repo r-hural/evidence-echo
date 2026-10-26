@@ -21,13 +21,17 @@ TEXT_LIMIT = 15000
 PROMPT_VERSION = "primary-1"
 FLAG = "misrepresented_primary"
 _PERCENT_WORDS = re.compile(r"(?<=\d)\s*(?:per\s?cent|pct|percentage\s+points?|pp)\b", re.IGNORECASE)
-_MILLION_WORDS = re.compile(r"(?<=\d)\s*million\b", re.IGNORECASE)
-_THOUSAND_WORDS = re.compile(r"(?<=\d)\s*thousand\b", re.IGNORECASE)
+_MILLION_WORDS = re.compile(r"(?<=\d)\s*(?:million|mio)\b\.?", re.IGNORECASE)
+_THOUSAND_WORDS = re.compile(r"(?<=\d)\s*(?:thousand|tsd)\b\.?", re.IGNORECASE)
 _SPACES = " \u2009\u00a0\u202f"  # space, thin, no-break and narrow no-break space
 _SPACE_THOUSANDS = re.compile(rf"(?<![\d.,])(\d{{1,3}})((?:[{_SPACES}]\d{{3}})+)(?!\d)")
 _BOTH_SEPARATORS = re.compile(r"(?<![\d.,])(\d{1,3}(?:\.\d{3})+),(\d+)(?!\d)")
-_COMMA_DECIMAL = re.compile(r"(?<![\d.,])(\d+(?:,\d{3})*),(\d{1,2})(?=\s*(?:%|billion\b|bn\b|mrd\b))",
-                            re.IGNORECASE)
+_COMMA_DECIMAL = re.compile(r"(?<![\d.,])(\d+(?:,\d{3})*),(\d{1,2})"
+                            r"(?=\s*(?:%|billion\b|bn\b|mrd\b|mio\b|tsd\b))", re.IGNORECASE)
+# German scale words are never English thousands: "1,234 Mrd" is 1.234 billion.
+_GERMAN_SCALE = re.compile(r"(?<![\d.,])(\d{1,3}),(\d{3})(?=\s*(?:mrd|mio|tsd)\b)", re.IGNORECASE)
+_RANGE = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)?)\s*(?:[-\u2013\u2014]|bis\b|to\b)\s*"
+                    r"(\d+(?:[.,]\d+)?)(?=\s*%)", re.IGNORECASE)
 _BILLION_WORDS = re.compile(r"(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*"
                             r"(?:billion\b|bn\b|mrd\b\.?)", re.IGNORECASE)
 
@@ -36,10 +40,17 @@ def _european(text: str) -> str:
     """Unambiguous European number formats in the shape identity.key_numbers reads: "12 000" ->
     "12,000", "1.234,5" -> "1234.5", "12,5 %" -> "12.5 %". Ambiguous ones ("1.234", "1,234") are
     left alone."""
+    text = _GERMAN_SCALE.sub(lambda m: m.group(1) + "." + m.group(2), text)
     text = _SPACE_THOUSANDS.sub(
         lambda m: m.group(1) + re.sub(f"[{_SPACES}]", ",", m.group(2)), text)
     text = _BOTH_SEPARATORS.sub(lambda m: m.group(1).replace(".", "") + "." + m.group(2), text)
-    return _COMMA_DECIMAL.sub(lambda m: m.group(1).replace(",", "") + "." + m.group(2), text)
+
+    def decimal(m):
+        number = m.group(1).replace(",", "") + "." + m.group(2)
+        # a letter before it ("v1,2 %") would make the number regex drop it
+        return (" " if m.start() and m.string[m.start() - 1].isalpha() else "") + number
+
+    return _COMMA_DECIMAL.sub(decimal, text)
 
 
 def _billions(match) -> str:
@@ -54,7 +65,8 @@ def _spell(text) -> str:
     """Number words in the shape identity.key_numbers reads: "4.2 percent" -> "4.2%", "1.2 billion"
     -> "1200M", "1.2 million" -> "1.2M", "5 thousand" -> "5k"; European formats are normalised
     first (see _european)."""
-    text = _european(_PERCENT_WORDS.sub("%", str(text or "")))
+    text = _PERCENT_WORDS.sub("%", str(text or ""))
+    text = _european(_RANGE.sub(r"\1% \2", text))  # "10-15 %": both ends are percents
     text = _BILLION_WORDS.sub(_billions, text)
     return _THOUSAND_WORDS.sub("k", _MILLION_WORDS.sub("M", text))
 

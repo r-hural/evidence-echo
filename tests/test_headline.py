@@ -94,3 +94,34 @@ def test_token_keeps_the_quotes_unit_and_scale(value, quote, shown):
 def test_value_of_another_scale_fails(value, quote):
     out = grading.check_headline(h(value, quote, "x"), quote)
     assert out["checked"] is False and out["value"] == value
+
+
+def test_headline_takes_the_number_with_the_matching_sign():
+    quote = "Traffic fell 12%, while impressions rose 12% over the period."
+    assert grading.headline_token("-12%", quote) == "12%"
+    assert grading.headline_token("+12%", quote) == "12%"
+    assert grading.headline_token("impressions rose 12%", quote) == "12%"
+
+
+def test_headline_sign_picks_the_right_clause():
+    quote = "Traffic fell 12%, while impressions rose 12% over the period."
+    first, second = [s for s, _, _ in grading._numbers(quote)]
+    assert grading._sign(quote, first) == -1 and grading._sign(quote, second) == 1
+
+
+def test_decimal_point_does_not_end_the_clause():
+    quote = "Desktop CTR fell 12%; mobile CTR rose from 3.5% to 12%, while tablet dropped 12%."
+    hits = [s for s, _, (pct, n) in grading._numbers(quote) if n == 12]
+    assert [grading._sign(quote, s) for s in hits] == [-1, 1, -1]
+
+
+def test_undecidable_sign_keeps_the_first_match():
+    assert grading.headline_token("12%", "It was 12% here and 12% there today.") == "12%"
+
+
+def test_bare_b_is_not_a_unit_and_s_stays_seconds():
+    assert grading.headline_token("3", "Among 3 b2b companies we looked at") == "3"
+    assert grading.headline_token("3", "Among 3 b companies we looked at") == "3"
+    assert grading.headline_token("$3B", "Revenue reached $3 B in total") == "$3 B"
+    assert grading.headline_token("5 s", "The page loads in 5 s.") == "5 s"
+    assert grading.headline_token("2.3 s", "LCP fell to 2.3 s after the fix") == "2.3 s"

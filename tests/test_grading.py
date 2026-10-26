@@ -120,3 +120,53 @@ def test_number_range():
     assert grading.number_range(None) is None
     assert grading.number_range("1–5%") == (True, 1.0, 5.0)
     assert grading.number_range("0–40%") == (True, 0.0, 40.0)
+
+
+def _words(number, quote, text=None):
+    return grading.check_quotes([{"number": number, "quote": quote}], [number], text or quote)
+
+
+@pytest.mark.parametrize("number,quote", [
+    ("80%", "Four in five marketers said they would switch tools."),
+    ("33.3%", "About one in three sites lost traffic after the update."),
+    ("33%", "About one in three sites lost traffic after the update."),
+    ("33.3%", "A third of all pages were not indexed at all."),
+    ("50%", "Half of all sites had no structured data."),
+    ("66.7%", "Roughly two thirds of the pages were redirected."),
+    ("25%", "Only a quarter of the audited sites passed."),
+    ("75%", "Three quarters of respondents saw gains."),
+    ("20%", "1 out of 5 respondents saw gains in clicks."),
+    ("12", "The agency tested twelve sites over six weeks."),
+    ("20%", "Twenty percent of pages lost rankings after the update."),
+    ("20%", "Twenty per cent of pages lost rankings after the update."),
+    ("4.2%", "Clicks grew 4.2 percent over the test period."),
+    ("33.33%", "A third of sites saw gains in the test."),
+    ("66.67%", "Two thirds of sites saw gains in the test."),
+])
+def test_numbers_in_words_verify(number, quote):
+    assert _words(number, quote) == "ok"
+
+
+@pytest.mark.parametrize("period", ["first", "second", "latter"])
+def test_half_of_a_period_is_not_fifty_percent(period):
+    quote = f"In the {period} half of 2024 we tested title changes on 12 sites."
+    assert _words("50%", quote) == "none"
+
+
+def test_plain_number_word_with_percent_is_not_plain():
+    assert _words("20", "Twenty percent of pages lost rankings after the update.") == "none"
+    assert _words("4.2", "Clicks grew 4.2 percent over the test period.") == "ok"  # digits as before
+
+
+def test_four_in_five_is_not_75_percent():
+    assert _words("75%", "Four in five marketers said they would switch tools.") == "none"
+
+
+def test_words_do_not_cross_percent_and_plain():
+    assert _words("4", "Four in five marketers said they would switch tools.") == "none"
+
+
+def test_word_quote_still_needs_enough_words_and_the_text():
+    assert _words("50%", "Half of", "Half of it was fine") == "none"
+    assert grading.check_quotes([{"number": "80%", "quote": "Four in five marketers said so."}],
+                                ["80%"], "Other text entirely.") == "none"

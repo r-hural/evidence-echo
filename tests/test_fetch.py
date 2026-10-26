@@ -339,3 +339,24 @@ def test_backfill_ignores_adaptive_skip(db, kinds):
     ctx = _ctx()
     ctx.backfill = SimpleNamespace(per_source={"Quiet": 10})
     assert fetch.run(db, _cfg([SRC2], adaptive="on"), ctx=ctx)["skipped"] == 0
+
+
+def test_recent_dates_orders_as_dates_not_text(db):
+    for i, published in enumerate(["2026-10-20T23:30:00-05:00", "2026-10-21T02:00:00+00:00"]):
+        store.insert_item(db, {"url": f"https://tz.example/p{i}", "canonical_url": f"https://tz.example/p{i}",
+                               "source_name": "TZ", "source_type": "rss", "title": "T", "excerpt": "",
+                               "published": published, "fetched_at": NOW.isoformat(),
+                               "state": "seen", "date_unknown": 0})
+    dates = fetch.recent_dates(db, "TZ")
+    assert dates[0] == datetime(2026, 10, 21, 4, 30, tzinfo=timezone.utc)  # text order puts it second
+    assert dates[1] == datetime(2026, 10, 21, 2, 0, tzinfo=timezone.utc)
+
+
+def test_study_first_published_compares_dates_not_text(db):
+    for i, published in enumerate(["2026-10-21T02:00:00+00:00", "2026-10-20T23:30:00-05:00"]):
+        item_id = store.insert_item(db, {
+            "url": f"https://fp.example/p{i}", "canonical_url": f"https://fp.example/p{i}",
+            "source_name": "FP", "source_type": "rss", "title": "T", "excerpt": "",
+            "published": published, "fetched_at": NOW.isoformat(), "state": "seen", "date_unknown": 0})
+        db.execute("UPDATE items SET study_id = 7 WHERE id = ?", (item_id,))
+    assert store.study_first_published(db) == {7: "2026-10-21T02:00:00+00:00"}  # the -05:00 one is later
