@@ -3,6 +3,7 @@
   "name": "SEO Echo",
   "domain": "SEO and AI search",
   "scope": "Organic search: rankings, CTR, traffic, indexing, technical SEO, content, links, SERP features, AI Overviews and LLM/AI-search citations. Out of scope: PPC/paid ads, social media, email marketing.",
+  "grouping_mode": "questions",
   "subtopics": ["Title tags & meta", "Internal links", "Content depth & updates", "Structured data", "Core Web Vitals & speed", "Crawling & indexing", "Backlinks", "AI Overviews & AI search", "SERP features & CTR", "Local", "E-E-A-T & authorship", "Programmatic & AI content", "International", "Site migrations", "Other"],
   "subtopic_renames": {"AI search / GEO": "AI Overviews & AI search"},
   "metrics": ["Clicks", "Impressions", "Rankings", "Organic traffic", "CTR", "Conversions & revenue", "Crawling & indexing", "Engagement", "AI citations", "AI share of voice & mentions", "AI Overview presence", "AI referral traffic", "Other"],

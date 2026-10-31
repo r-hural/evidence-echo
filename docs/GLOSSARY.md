@@ -40,6 +40,8 @@ Code: `item` (`items` table). Deprecated in prose: post, publication. *See also*
 **Backfill** — the research spike: a one-time load of older articles for a new topic or source
 (`ev backfill`).
 
+**Cap** — a code rule in a topic's grading rules that limits a tier when a study fact holds (an animal study never above C). Applied to both the judge's and the skeptic's grade; the report shows "capped from A: reason".
+
 **Category** — deprecated; means subtopic.
 
 **Cell** — deprecated; the old subtopic × metric row of "What the evidence says". Replaced by
@@ -49,6 +51,8 @@ question.
 grouping. Studies with the same `conducted_by` count as one independent study.
 
 **Corroboration** — independent studies (different `conducted_by`) agreeing. Opposite of echo.
+
+**Coverage** — how well the studies found answer a question: how many, how many independent groups (different `conducted_by`) and their best grade, with a note such as "2 studies, best grade C". Thin = fewer than two independent groups, or a best grade of C or D. Code: `query.coverage`, key `coverage` of `find_evidence`.
 
 **Data date** — the month or year a study's data was collected. Code: `data_date`, filled from
 the judge's `research_timeframe` (raw text of the period). Fallback when unknown: "reported" +
@@ -63,7 +67,14 @@ produces is a report.
 and not shown (the columns `items.direction` and `studies.direction` remain, unused). *Not* a row
 label; see varied.
 
+**Disclaimer** — one line in a topic's grading rules, shown under the topic's name on its pages and files (health, money, law, safety).
+
 **Domain / scope** — free-text fields of a topic, read by the judge and skeptic prompts.
+
+**Duplicate check** — the second look at a possible-duplicate pair of studies that only a weak rule found
+(shared key numbers, similar text): two blind comparers say same, different or unsure. A pair both call
+different leaves the duplicate review; the owner's "different studies" (`ev studies distinct`) is kept for
+good. Never merges. Code: stage `dupcheck`, table `study_pairs`.
 
 **Echo** — one study repeated by several articles ("1 study · 4 articles"). Opposite of
 corroboration. (Also part of the product name.)
@@ -92,7 +103,13 @@ Code: `question_explanations` (one row per question). Do not call it a relation.
 **Fetch horizon** — the maximum age of an article when it is fetched; older ones are skipped.
 Code: `fetch_horizon_days` (formerly `research_horizon_days`, `lookback_days`).
 
-**Finding** — deprecated; use study (the overview's "top findings" are studies).
+**Finding** — one measured result of a study: one line of text in the study's words, a verbatim quote from the article (checked in code), the metric and the measure. A study has up to four. Code: `findings` table. Not `studies.findings` / `facts.findings` (the study's summary string), and not the overview's "N new findings" (that counts studies; unchanged wording).
+
+**Grade label** — a study fact shown next to the tier: observational, animal, preprint ... Not a question's label.
+
+**Grading rules** — a topic's `grading` block: tier definitions, study types, caps, grade labels, field red flags and disclaimer. Read from `topic.json`, else the template, else the generic rules (`ev topic grading`).
+
+**Grouping mode** — how a topic's studies are grouped on its pages: `questions` (one question per study) or `quotes` (no questions; checked findings listed by subtopic) or `findings` (each finding joins a question of its own, so one study can sit under several questions). Code: `grouping_mode`.
 
 **Incomplete** — retired with questions: the topic page no longer notes studies with a missing
 metric or direction. It says "N studies wait to be grouped" instead.
@@ -110,7 +127,7 @@ measurement gaps. Only difference questions carry per-study directions and a lab
 **Label** — a secondary signal on a difference question: its verdict on its studies' directions, only with two or more independent
 studies and every direction read: `consistent` (all the same direction), `contested` (up and down),
 `varied` (any other mix). A question with one independent study has no label (`single` is retired).
-A single study's own direction `mixed` stays.
+A single study's own direction `mixed` stays. Not a grade label.
 
 **Measure** — a question's quantity that directions are read against ("AI citations of the page";
 "up" = it went up / is higher). Code: `questions.measure`. Not the metric and not "Measured".
@@ -135,8 +152,10 @@ primary check. Do not call it a source.
 **Primary check** — comparing articles with their original: number check plus two blind
 verdicts (faithful, overstated, direction flipped, wrong metric, cherry-picked). Stage `primary`.
 
+**Re-grade** — grading a stored study again with the topic's current rules (stage `regrade`, then `reverify`). Never changes an item's state or an owner's ruling.
+
 **Red flag** — a coded methodology problem tagged by the skeptic (or `misrepresented_primary` by
-the primary check). Never changes the tier.
+the primary check). Never changes the tier. A topic's grading rules add field red flags for its own field.
 
 **Relation** — provenance only: how the study's runner relates to its subject (`vendor`,
 `independent`, `agency`, `platform`, `unknown`). Not a link between studies (that's an
@@ -164,6 +183,8 @@ Deprecated: issue.
 
 **Run** — one execution of the pipeline for a topic, ending in a report.
 
+**Search** — one question looked up on the web with `/evidence-echo:search`; its candidate pages are graded by the usual chain in a scratch database, and nothing joins the topic until the owner keeps it. Kept studies come from one-time sources marked "found by search". Not a research spike (that is backfill).
+
 **Series** — a study repeated over time (Stack Overflow developer survey 2023–2025);
 its members are editions.
 
@@ -182,6 +203,8 @@ The owner accepts, renames or rejects each part (`ev split`); nothing moves befo
 accepted subtopic split the owner chooses to keep the source for leftovers or retire it. Code: tables
 `split_proposals`, `split_groups`, `split_moves`.
 
+**Study type** — the kind of study a judge records (randomized trial, observational, animal ...), from the topic's own list; `other` is always allowed.
+
 **Subtopic** — a curated aspect of a topic ("AI Overviews & AI search"); seeded from the topic's
 list, the judge picks one or proposes a new one, the owner confirms. Statuses: seeded, confirmed,
 proposed, rejected, retired. Slug never changes. Code and CLI: `subtopic` (`ev subtopics`, `subtopics`
@@ -190,7 +213,8 @@ table, `topic.json` `subtopics`). Deprecated in prose: theme, category.
 **Template** — a ready-made topic definition shipped with the plugin (`templates/seo.json`),
 including its subtopic list and renames (`subtopic_renames`).
 
-**Tier** — evidence grade: A controlled, B large-scale, C case study, D practitioner anecdote.
+**Tier** — evidence grade. Definitions are per topic (the topic's grading rules); the generic ones are A controlled,
+B large-scale, C case study, D practitioner anecdote.
 
 **Topic** — one monitored area the user configures: own `topic.json`, sources, database
 (`echo.db`) and reports. The top level of grouping inside a workspace.

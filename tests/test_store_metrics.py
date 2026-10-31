@@ -119,7 +119,7 @@ def test_metric_owner_ops(bare_db):
         store.rename_metric(bare_db, "rankings", "x" * 81)
     # merge moves studies and resolves
     out = store.merge_metrics(bare_db, "clicks", "rankings")
-    assert out == {"merged": "clicks", "into": "rankings", "moved_studies": 1}
+    assert out == {"merged": "clicks", "into": "rankings", "moved_studies": 1, "moved_findings": 0}
     assert _metric_of(bare_db, a) == "rankings"
     assert store.metric_for_slug(bare_db, "clicks")["slug"] == "rankings"
     with pytest.raises(ConfigError, match="not an active"):

@@ -1,4 +1,6 @@
 """Grading rules (SP2): red-flag codes, tier caps, quote check, blind-grade comparison. Pure, no I/O."""
+import hashlib
+import json
 import re
 
 from evidence_echo.core import identity
@@ -30,15 +32,240 @@ def stated(value) -> bool:
     return isinstance(value, str) and value.strip() != "" and value.strip().lower() != "unstated"
 
 
-def cap_tier(tier, facts: dict) -> tuple:
-    """A needs has_controls true; B needs a stated sample_scale. Returns (tier, capped_from)."""
+STUDY_TYPES = {
+    "controlled_test": "A/B, split or holdout test",
+    "rct": "randomised controlled trial",
+    "meta_analysis": "meta-analysis or systematic review",
+    "observational": "cohort, correlation or dataset analysis",
+    "survey": "survey or questionnaire",
+    "case_series": "before/after test or case study",
+    "anecdote": "personal or practitioner anecdote",
+    "animal": "animal study",
+    "lab": "in vitro, mechanism or simulation study",
+    "benchmark": "benchmark run",
+    "backtest": "backtest on historical data",
+    "other": "none of the above",
+}
+PEER_REVIEW = ("reviewed", "preprint", "not_applicable", "unknown")
+TEXT_BASIS = ("full", "abstract_only", "secondary")
+FACT_VALUES = {"study_type": tuple(STUDY_TYPES), "peer_review": PEER_REVIEW, "text_basis": TEXT_BASIS}
+
+FIELD_RED_FLAGS = {
+    "benchmark_contamination": "test data likely seen in training",
+    "surrogate_outcome": "a marker stands in for the outcome that matters",
+    "animal_to_human": "animal or lab result presented as a human effect",
+    "backtest_overfit": "strategy tuned on the data it is tested on",
+    "small_sample": "too few subjects for the claim",
+}
+ALL_RED_FLAGS = {**RED_FLAGS, **FIELD_RED_FLAGS}
+
+GRADE_LABEL_TEXT = {
+    "controlled_test": "controlled test", "rct": "rct", "meta_analysis": "meta-analysis",
+    "observational": "observational", "survey": "survey", "case_series": "case series",
+    "anecdote": "anecdote", "animal": "animal", "lab": "lab", "benchmark": "benchmark",
+    "backtest": "backtest", "other": "other",
+    "reviewed": "peer reviewed", "preprint": "preprint", "not_applicable": "not peer reviewed",
+    "unknown": "peer review unknown",
+    "full": "full text", "abstract_only": "abstract only", "secondary": "secondary coverage",
+}
+CAP_TEXT = {
+    "no_controls": "no control group", "no_sample": "no stated sample", "animal": "animal study",
+    "lab": "lab study", "observational": "observational study", "preprint": "preprint",
+    "abstract_only": "abstract only",
+}
+
+GENERIC_TIERS = {
+    "A": "controlled: A/B or split test with a stated control group",
+    "B": "large-scale data: correlation/dataset analysis with stated scale",
+    "C": "case study: before/after with real numbers, no control group",
+    "D": "practitioner anecdote: small measured experiment; anecdotes with numbers are valid D",
+}
+
+REGRADE_VERSION = "regrade-1"
+REGRADE_UNAVAILABLE = "unavailable"
+BLOCK_KEYS = ("tiers", "study_types", "caps", "labels", "red_flags", "disclaimer")
+TIER_TEXT_MAX = 300
+DISCLAIMER_MAX = 200
+
+
+def generic() -> dict:
+    return {"tiers": dict(GENERIC_TIERS), "study_types": list(STUDY_TYPES), "caps": {},
+            "labels": [], "red_flags": [], "disclaimer": None}
+
+
+def rules_errors(block) -> list[str]:
+    """Every problem in a grading block, each naming its key."""
+    if block is None:
+        return []
+    if not isinstance(block, dict):
+        return ["grading: must be an object"]
+    errs = [f"grading.{k}: unknown key" for k in block if k not in BLOCK_KEYS]
+    if "tiers" in block:
+        tiers = block["tiers"]
+        if not isinstance(tiers, dict):
+            errs.append("grading.tiers: must be an object with keys A, B, C, D")
+        else:
+            errs += [f"grading.tiers.{t}: missing" for t in TIERS if t not in tiers]
+            errs += [f"grading.tiers.{k}: not a tier" for k in tiers if k not in TIERS]
+            for t in TIERS:
+                text = tiers.get(t)
+                if t in tiers and (not isinstance(text, str) or not text.strip()):
+                    errs.append(f"grading.tiers.{t}: must be a non-empty string")
+                elif isinstance(text, str) and len(text) > TIER_TEXT_MAX:
+                    errs.append(f"grading.tiers.{t}: longer than {TIER_TEXT_MAX} characters")
+    types = list(STUDY_TYPES)
+    if "study_types" in block:
+        given = block["study_types"]
+        if not isinstance(given, list) or not all(isinstance(v, str) for v in given):
+            errs.append("grading.study_types: must be a list of study types")
+        else:
+            errs += [f"grading.study_types: {v!r} is not a study type"
+                     for v in given if v not in STUDY_TYPES]
+            types = [v for v in given if v in STUDY_TYPES] + ["other"]
+    if "caps" in block:
+        caps = block["caps"]
+        if not isinstance(caps, dict):
+            errs.append("grading.caps: must be an object")
+        else:
+            for fact, by_value in caps.items():
+                if fact not in FACT_VALUES:
+                    errs.append(f"grading.caps.{fact}: not a fact (study_type, peer_review, text_basis)")
+                elif not isinstance(by_value, dict):
+                    errs.append(f"grading.caps.{fact}: must be an object")
+                else:
+                    allowed = types if fact == "study_type" else FACT_VALUES[fact]
+                    for value, tier in by_value.items():
+                        where = f"grading.caps.{fact}.{value}"
+                        if value not in FACT_VALUES[fact]:
+                            errs.append(f"{where}: {value!r} is not a {fact} value")
+                        elif value not in allowed:
+                            errs.append(f"{where}: {value!r} is not in grading.study_types")
+                        if tier not in TIERS:
+                            errs.append(f"{where}: {tier!r} is not a tier")
+    if "labels" in block:
+        labels = block["labels"]
+        every = {v for values in FACT_VALUES.values() for v in values}
+        if not isinstance(labels, list) or not all(isinstance(v, str) for v in labels):
+            errs.append("grading.labels: must be a list of fact values")
+        else:
+            errs += [f"grading.labels: {v!r} is not a fact value" for v in labels if v not in every]
+    if "red_flags" in block:
+        flags = block["red_flags"]
+        if not isinstance(flags, list) or not all(isinstance(v, str) for v in flags):
+            errs.append("grading.red_flags: must be a list of field red-flag codes")
+        else:
+            errs += [f"grading.red_flags: {v!r} is not a field red flag" for v in flags
+                     if v not in FIELD_RED_FLAGS]
+    if "disclaimer" in block and block["disclaimer"] is not None:
+        text = block["disclaimer"]
+        if not isinstance(text, str):
+            errs.append("grading.disclaimer: must be a string")
+        elif "\n" in text or "\r" in text:
+            errs.append("grading.disclaimer: must be one line")
+        elif len(text.strip()) > DISCLAIMER_MAX:
+            errs.append(f"grading.disclaimer: longer than {DISCLAIMER_MAX} characters")
+    return errs
+
+
+def effective(block) -> dict:
+    """The validated block with defaults filled; the generic block for None."""
+    if block is None:
+        return generic()
+    errs = rules_errors(block)
+    if errs:
+        raise ValueError("; ".join(errs))
+    out = generic()
+    if "tiers" in block:
+        out["tiers"] = {t: block["tiers"][t].strip() for t in TIERS}
+    if "study_types" in block:
+        given = list(dict.fromkeys(block["study_types"]))
+        out["study_types"] = given if "other" in given else given + ["other"]
+    out["caps"] = {f: dict(v) for f, v in (block.get("caps") or {}).items() if v}
+    out["labels"] = list(dict.fromkeys(block.get("labels") or []))
+    out["red_flags"] = list(dict.fromkeys(block.get("red_flags") or []))
+    text = block.get("disclaimer")
+    out["disclaimer"] = text.strip() if isinstance(text, str) and text.strip() else None
+    return out
+
+
+def rules_of(topic) -> dict:
+    return getattr(topic, "grading", None) or generic()
+
+
+def cap_tier(tier, facts: dict, rules: dict | None = None) -> tuple:
+    """A needs has_controls true; B needs a stated sample_scale; then the topic's caps (the lowest
+    tier wins). Returns (tier, capped_from, cap_reasons)."""
     facts = facts if isinstance(facts, dict) else {}
-    capped = tier
+    capped, reasons = tier, []
     if capped == "A" and facts.get("has_controls") is not True:
         capped = "B"
+        reasons.append("no_controls")
     if capped == "B" and not stated(facts.get("sample_scale")):
         capped = "C"
-    return capped, (tier if capped != tier else None)
+        reasons.append("no_sample")
+    if tier in TIERS:
+        for fact, by_value in ((rules or {}).get("caps") or {}).items():
+            value = facts.get(fact)
+            limit = by_value.get(value) if isinstance(value, str) else None
+            if limit in TIERS and limit > tier:  # "D" > "A": a lower grade
+                capped = max(capped, limit)
+                reasons.append(value)
+    return capped, (tier if capped != tier else None), (reasons if capped != tier else [])
+
+
+def grade_pair(judge_raw, skeptic_raw, facts: dict, rules: dict | None, quote_check) -> dict:
+    """Cap both raw tiers with the topic's rules, then compare."""
+    j_tier, j_from, j_reasons = cap_tier(judge_raw, facts, rules)
+    if skeptic_raw is None:
+        s_tier, s_from, s_reasons = None, None, []
+        final, disputed, why = j_tier, False, None
+    else:
+        s_tier, s_from, s_reasons = cap_tier(skeptic_raw, facts, rules)
+        final, disputed, why = compare(j_tier, s_tier, quote_check)
+    if j_tier == final:
+        capped_from, reasons = j_from, j_reasons
+    elif s_tier == final:
+        capped_from, reasons = s_from, s_reasons
+    else:
+        capped_from, reasons = None, []
+    return {"judge_tier": j_tier, "judge_capped_from": j_from, "judge_reasons": j_reasons,
+            "skeptic_tier": s_tier, "final_tier": final, "disputed": disputed,
+            "dispute_reason": why, "capped_from": capped_from, "cap_reasons": reasons}
+
+
+def _hash(obj) -> str:
+    return hashlib.sha256(json.dumps(obj, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
+def rules_hash(rules: dict) -> str:
+    return _hash({"tiers": rules["tiers"], "study_types": rules["study_types"],
+                  "red_flags": rules["red_flags"], "version": REGRADE_VERSION})
+
+
+def caps_hash(rules: dict) -> str:
+    return _hash(rules["caps"])
+
+
+def _flags(rules: dict | None) -> dict:
+    return {**RED_FLAGS, **{c: FIELD_RED_FLAGS[c] for c in (rules or {}).get("red_flags", [])}}
+
+
+def payload_rules(rules: dict) -> dict:
+    return {"tiers": dict(rules["tiers"]), "red_flags": _flags(rules)}
+
+
+def tier_rules_text(rules: dict) -> str:
+    return "\n".join(f"- Tier {t}: {rules['tiers'][t]}" for t in TIERS)
+
+
+def grade_labels(facts: dict, rules: dict) -> list[str]:
+    facts = facts if isinstance(facts, dict) else {}
+    have = {facts.get(f) for f in FACT_VALUES}
+    return [GRADE_LABEL_TEXT[v] for v in rules.get("labels", []) if v in have and v in GRADE_LABEL_TEXT]
+
+
+def cap_text(reasons: list[str]) -> str:
+    return ", ".join(CAP_TEXT.get(r, GRADE_LABEL_TEXT.get(r, r)) for r in reasons)
 
 
 def fact_numbers(facts) -> list[str]:
@@ -49,6 +276,15 @@ def fact_numbers(facts) -> list[str]:
 
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text.translate(_QUOTES)).strip()
+
+
+def quote_found(quote, text: str) -> bool:
+    """A quote of at least MIN_QUOTE_WORDS words that sits in the article text (curly quotes, dashes and
+    whitespace ignored)."""
+    if not isinstance(quote, str):
+        return False
+    norm = _norm(_minus(quote))
+    return len(norm.split(" ")) >= MIN_QUOTE_WORDS and norm in _norm(_minus(text or ""))
 
 
 # Numbers written in words ("four in five", "half", "two thirds", "twenty"): read only after the
@@ -154,8 +390,8 @@ def compare(judge_tier, skeptic_tier, quote_check) -> tuple:
     return judge_tier, False, None
 
 
-def red_flag_list() -> str:
-    return "\n".join(f"- {code}: {meaning}" for code, meaning in RED_FLAGS.items())
+def red_flag_list(rules: dict | None = None) -> str:
+    return "\n".join(f"- {code}: {meaning}" for code, meaning in _flags(rules).items())
 
 
 # --- wave 4a: headline number -------------------------------------------------------------------

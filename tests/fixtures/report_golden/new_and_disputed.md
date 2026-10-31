@@ -16,7 +16,7 @@ Subtopic: Title tags & meta
 Primary source: <https://one.example.com/a>  
 Coverage: [Example Blog](https://example.com/g1)  
 
-### [C · agency · capped from A · judge: B] Title tag rewrites
+### [C · agency · judge: B] Title tag rewrites
 
 +4.2% organic clicks on variant group
 

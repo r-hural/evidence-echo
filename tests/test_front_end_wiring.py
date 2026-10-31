@@ -100,7 +100,7 @@ def test_obsidian_runs_with_html_off(workspace, tmp_path, calls):
 def test_html_output_lists_the_written_pages(workspace, tmp_path):
     _vault(workspace, tmp_path)
     out = api.render_report(config.load(), EMPTY)
-    assert set(out) == {"path", "applied", "rejected", "overview", "html", "obsidian"}
+    assert set(out) == {"path", "applied", "rejected", "regrade", "overview", "html", "obsidian"}
     assert set(out["html"]) == {"report", "topic", "overview", "sources"}
     assert Path(out["html"]["report"]).is_file() and Path(out["html"]["topic"]).is_file()
     assert set(out["obsidian"]) == {"dir", "written", "removed"}

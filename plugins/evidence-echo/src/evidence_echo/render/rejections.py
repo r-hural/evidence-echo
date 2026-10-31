@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from evidence_echo.render import clock
-from evidence_echo.render.html import _WEB_URL, crumbs, esc, link, masthead, page
+from evidence_echo.render.html import _WEB_URL, crumbs, disclaimer_html, esc, link, masthead, page
 from evidence_echo.render.markdown import plain
 
 NOT_RECORDED = "not recorded"
@@ -111,8 +111,11 @@ def _md_title(r: RejectionRow) -> str:
     return title
 
 
-def markdown(topic_name: str, previous: str | None, rows: list[RejectionRow]) -> str:
+def markdown(topic_name: str, previous: str | None, rows: list[RejectionRow],
+             disclaimer: str | None = None) -> str:
     out = [f"# {_heading(topic_name, previous)}", ""]
+    if disclaimer:
+        out += [f"*{disclaimer}*", ""]
     if not rows:
         return "\n".join(out + [EMPTY, ""])
     out += [_count_line(rows), ""]
@@ -129,12 +132,12 @@ def markdown(topic_name: str, previous: str | None, rows: list[RejectionRow]) ->
 
 def html_page(topic_name: str, previous: str | None, rows: list[RejectionRow],
               report_href: str, overview_href: str | None = None,
-              topic_href: str | None = None) -> str:
+              topic_href: str | None = None, disclaimer: str | None = None) -> str:
     heading = _heading(topic_name, previous)
     trail = (crumbs([("Evidence Echo", overview_href), (topic_name, topic_href),
                      ("Rejections", None)]) if overview_href and topic_href else "")
     mast = masthead(trail, [("Report", report_href)])
-    body = [f'<header class="ee-head"><h1>{esc(heading)}</h1></header>']
+    body = [disclaimer_html(disclaimer), f'<header class="ee-head"><h1>{esc(heading)}</h1></header>']
     if not rows:
         body.append(f'<p class="empty">{esc(EMPTY)}</p>')
         return page(heading, "\n".join(body), mast=mast)

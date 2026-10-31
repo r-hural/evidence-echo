@@ -65,6 +65,9 @@ def _new_study(conn, item: dict, reason: str) -> int:
                              data_date=item.get("data_date"),
                              entity_names=store.item_entity_names(item))
     store.assign_study(conn, item["id"], sid, reason)
+    listed = store.item_findings(item)    # a joining item adds none: the study keeps its creator's
+    if listed:
+        store.write_findings(conn, sid, item["id"], listed, store.FINDINGS_VERSION)
     if (item.get("subtopic_choice") and not store.choice_is_split_name(conn, store._loads(item["subtopic_choice"]))
             and store.study_metric(conn, store.get_study(conn, sid))
             and store.item_entity_names(item) is not None):

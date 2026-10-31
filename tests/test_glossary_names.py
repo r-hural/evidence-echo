@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = ROOT / "plugins" / "evidence-echo"
 OLD = re.compile(r"theme|research_horizon|facts\.entities\b|studies\.entities\b|waiting to be sorted|not_sorted|not-sorted", re.I)
-SCAN_DIRS = ("src", "skills", "agents", "templates", "hooks")
+SCAN_DIRS = ("src", "skills", "agents", "templates", "hooks", "scripts")
 SUFFIXES = {".py", ".md", ".json", ".html", ".txt", ".toml", ".yaml", ".yml", ".sh"}
 
 # file (relative to the plugin) -> predicate on a top-level node name that may keep old names
@@ -42,6 +42,7 @@ def _files():
             if p.is_file() and p.suffix in SUFFIXES and "__pycache__" not in p.parts:
                 yield p
     yield PLUGIN / "README.md"
+    yield PLUGIN / ".mcp.json"
 
 
 def test_no_old_names_in_plugin():
@@ -56,3 +57,8 @@ def test_no_old_names_in_plugin():
                 continue
             hits.append(f"{rel}:{no}: {line.strip()}")
     assert not hits, "old names outside frozen history:\n" + "\n".join(hits)
+
+
+def test_guard_scans_the_server_files():
+    names = {p.relative_to(PLUGIN).as_posix() for p in _files()}
+    assert {"scripts/ev_mcp.py", ".mcp.json", "src/evidence_echo/mcp_server.py"} <= names

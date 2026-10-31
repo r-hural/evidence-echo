@@ -41,6 +41,10 @@ def test_full_pipeline(db, tmp_path, monkeypatch, topic):
     assert not store.items_in_state(db, "fetched")
 
 
+SO_FINDINGS = [{"text": "AI use rose from 44% to 79%", "quote": "Stack Overflow survey: AI use 44% in 2023, 79% in 2025.",
+                "metric": "other", "measure": None}]
+
+
 def test_stack_overflow_case_one_study(db, tmp_path, topic):
     for n, url in enumerate(["https://news.example/so-ai-2025", "https://blog.example/ai-adoption"]):
         store.insert_items(db, [make_item(url=url, title=f"SO survey {n}")])
@@ -49,12 +53,13 @@ def test_stack_overflow_case_one_study(db, tmp_path, topic):
         store.set_full_text(db, it["id"], "Stack Overflow survey: AI use 44% in 2023, 79% in 2025.")
     facts = {"what_was_tested": "Developer AI tool use", "findings": "44% (2023) -> 79% (2025)",
              "research_timeframe": "2023-2025", "series": "Stack Overflow Developer Survey",
-             "editions": ["2023", "2025"], "match_keys": {"key_numbers": ["44%", "79%"]}}
+             "editions": ["2023", "2025"], "match_keys": {"key_numbers": ["44%", "79%"]},
+                 "study_type": "survey", "peer_review": "not_applicable", "text_basis": "full"}
     judge.run_api(db, FakeBackend([
         json.dumps({"pass": True, "tier": "B", "facts": facts, "metric": "other", "entities": [], "direction": "positive",
-                    "primary_url": "https://survey.stackoverflow.co/2025/"}),
+                    "primary_url": "https://survey.stackoverflow.co/2025/", "finding_list": SO_FINDINGS}),
         json.dumps({"pass": True, "tier": "B", "facts": facts, "primary_url": None,
-                    "metric": "other", "entities": [], "direction": "positive"})]), topic)
+                    "metric": "other", "entities": [], "direction": "positive", "finding_list": SO_FINDINGS})]), topic)
     first = store.items_in_state(db, "judged")[0]["id"]
     match.fixed_pass(db)
     sid = store.get_item(db, first)["study_id"]

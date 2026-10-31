@@ -104,6 +104,42 @@ def normalise_data_date(raw, today: "_dt.date | None" = None) -> "str | None":
     return f"{year:04d}-{month:02d}" if 1 <= month <= 12 else None
 
 
+OLD_DATA_YEARS = 3   # data this many years old or more is flagged as old (reports and search answers)
+_YEAR = _re.compile(r"(?<!\d)(19\d{2}|20\d{2})(?!\d)")
+
+
+def data_year(study: dict, published: str | None, today: "_dt.date | None" = None) -> tuple:
+    """(year, basis): the study's data_date year, else the latest year its research_timeframe names
+    (when the data ends), both "data"; else the article's publication year ("published": the data is at
+    least that old); else (None, None)."""
+    today = today or _dt.date.today()
+    if study.get("data_date"):
+        return int(str(study["data_date"])[:4]), "data"
+    years = [int(y) for y in _YEAR.findall(str(study.get("research_timeframe") or ""))
+             if DATA_DATE_FIRST_YEAR <= int(y) <= today.year + 1]
+    if years:
+        return max(years), "data"
+    if published and str(published)[:4].isdigit():
+        return int(str(published)[:4]), "published"
+    return None, None
+
+
+def is_old(year: int | None, today: "_dt.date | None" = None) -> bool:
+    return year is not None and (today or _dt.date.today()).year - year >= OLD_DATA_YEARS
+
+
+def age_note(years: list, today: "_dt.date | None" = None) -> str | None:
+    """One line on old data among the studies' data years, e.g. "2 of 5 studies rest on data from 2016-2019
+    (3 or more years old); results that old may no longer hold." None when no study is old."""
+    old = sorted(y for y in years if is_old(y, today))
+    if not old:
+        return None
+    n = len(years)
+    span = str(old[0]) if old[0] == old[-1] else f"{old[0]}\u2013{old[-1]}"
+    return (f"{len(old)} of {n} {'study rests' if n == 1 else 'studies rest'} on data from {span} "
+            f"({OLD_DATA_YEARS} or more years old); results that old may no longer hold.")
+
+
 # --- wave 4a: study rows and change lines ---------------------------------------------------------
 @dataclass(frozen=True)
 class StudyRow:
@@ -117,6 +153,7 @@ class StudyRow:
     tier: str | None
     series: str | None
     edition: int | None       # position among the series' studies in the cell, when 2 or more
+    finding: dict | None = None   # findings mode: {id, position, text, quote, quote_checked} this row stands for
 
 
 @dataclass(frozen=True)
@@ -129,7 +166,7 @@ def label_key(label: str) -> str:
     return _re.sub(r"[\W_]+", " ", str(label or "").casefold()).strip()
 
 
-def _row_date(study: dict, published: dict, reported: dict) -> tuple:
+def row_date(study: dict, published: dict, reported: dict) -> tuple:
     if study.get("data_date"):
         return study["data_date"], False
     first = published.get(study["id"])
@@ -147,27 +184,29 @@ def _rows(studies: list, published: dict, reported: dict, unsorted: bool) -> tup
     series. Editions are numbered oldest first, before the rows are reordered."""
     drafts = []
     for s in studies:
-        date, is_reported = _row_date(s, published, reported)
+        date, is_reported = row_date(s, published, reported)
         checked = s.get("headline_checked") == 1
         drafts.append((s, date, is_reported, s["headline_value"] if checked else None,
                        s["headline_label"] if checked else None))
     drafts.sort(key=lambda d: (d[1] is None, d[1] or "", _TIER_RANK.get(d[0].get("evidence_tier"), 9),
                                d[0]["id"]))
-    per_series: dict = {}
+    members: dict = {}        # one study is one edition, however many finding rows it has
     for s, *_ in drafts:
         if s.get("series_key"):
-            per_series[s["series_key"]] = per_series.get(s["series_key"], 0) + 1
+            members.setdefault(s["series_key"], set()).add(s["id"])
+    per_series = {key: len(ids) for key, ids in members.items()}
     seen: dict = {}
     rows = []
     for s, date, is_reported, headline, label in drafts:
         edition = None
         if s.get("series_key") and per_series[s["series_key"]] >= 2:
-            seen[s["series_key"]] = seen.get(s["series_key"], 0) + 1
-            edition = seen[s["series_key"]]
+            numbers = seen.setdefault(s["series_key"], {})
+            edition = numbers.setdefault(s["id"], len(numbers) + 1)
         rows.append(StudyRow(study_id=s["id"], name=s["canonical_name"], date=date,
                              reported=is_reported, headline=headline, headline_label=label,
                              direction=s["direction"], tier=s.get("evidence_tier"),
-                             series=s.get("series_name") or None, edition=edition))
+                             series=s.get("series_name") or None, edition=edition,
+                             finding=s.get("finding_ref")))
     rows = sorted([r for r in rows if r.date], key=lambda r: r.date, reverse=True) + [
         r for r in rows if not r.date]
     return rows, ([] if unsorted else _changes(drafts, per_series))
@@ -209,6 +248,7 @@ class QuestionGroup:
     rows: list = field(default_factory=list)      # StudyRow, newest first
     changes: list = field(default_factory=list)   # ChangeLine for repeated studies
     explanation: dict | None = None   # {summary, main_result, lines}: the current agreed one
+    findings: dict = field(default_factory=dict)  # findings mode: study id -> the finding it counts here
 
     def group_dirs(self) -> list:
         """The direction of each independent group, in `groups` order (what labels, echoes and relate use)."""
@@ -221,6 +261,7 @@ class OtherStudy:
     row: StudyRow
     question: str | None      # the question text; None = not grouped yet
     echo: str | None = None
+    question_id: int | None = None   # findings mode: the question (for finding_questions)
 
 
 @dataclass(frozen=True)
@@ -230,6 +271,7 @@ class SubtopicEvidence:
     name: str
     questions: list           # [QuestionGroup]: labelled first, then multi-study questions
     others: list              # [OtherStudy], newest first
+    waiting: list = field(default_factory=list)   # findings mode: StudyRow waiting for the backfill / grouping
 
 
 def _question_label(directions: list) -> str | None:
@@ -263,7 +305,8 @@ def _question_group(question: dict, key: str, studies: list, articles_of: dict,
         groups=[[s["id"] for s in m] for m in groups],
         directions={s["id"]: s["direction"] for s in studies},
         echoes=_echoes(groups, dirs, articles, kind),
-        rows=rows, changes=changes, kind=kind, comparison=question.get("comparison"))
+        rows=rows, changes=changes, kind=kind, comparison=question.get("comparison"),
+        findings={s["id"]: s["finding_ref"] for s in studies if s.get("finding_ref")})
 
 
 def _with_explanation(conn, group: QuestionGroup, row: "dict | None") -> QuestionGroup:
@@ -301,10 +344,52 @@ def placed_studies(conn):
     return out, articles
 
 
-def evidence(conn) -> list[SubtopicEvidence]:
-    """Per subtopic (seeded order, then confirmed, Unsorted last; empty ones left out): its questions
-    with 2+ studies (labelled ones first) and every other study."""
+def _bucket_evidence(conn, key, subtopic, bucket, articles, explained, published, reported,
+                     waiting=()) -> SubtopicEvidence:
+    groups = {qid: _question_group(question, key, studies, articles, published, reported)
+              for qid, (question, studies) in bucket["by_question"].items()}
+    groups = {qid: _with_explanation(conn, g, explained.get(qid)) for qid, g in groups.items()}
+    newest = {qid: max(s["id"] for s in studies) for qid, (_, studies) in bucket["by_question"].items()}
+    multi = [g for g in groups.values() if len(g.rows) >= 2]
+    multi.sort(key=lambda g: (g.label is None, -g.independent if g.label else 0, -newest[g.question_id]))
+    singles = [(bucket["by_question"][qid][0], bucket["by_question"][qid][1][0], g)
+               for qid, g in groups.items() if len(g.rows) < 2]
+    loose = [{**s, "direction": None} for s in bucket["loose"]]
+    rows, _ = _rows(loose + [{**s, "direction": s["question_direction"]} for _, s, _ in singles],
+                    published, reported, True)
+    def _k(study_id, finding):      # one entry per (study, finding): a study may hold several single questions
+        return study_id, (finding or {}).get("id")
+
+    text_of = {_k(s["id"], s.get("finding_ref")): None for s in bucket["loose"]}
+    echo_of: dict = {}
+    qid_of: dict = {}
+    for question, s, g in singles:
+        k = _k(s["id"], s.get("finding_ref"))
+        text_of[k] = question["text"]
+        echo_of[k] = g.echoes.get(s["id"])
+        qid_of[k] = g.question_id
+    waiting_rows = _rows([{**s, "direction": None} for s in waiting], published, reported, True)[0]
+    return SubtopicEvidence(
+        key=key, subtopic_id=subtopic["id"] if subtopic else None,
+        name=subtopic["name"] if subtopic else UNSORTED_NAME, questions=[] if subtopic is None else multi,
+        others=[OtherStudy(r, text_of[_k(r.study_id, r.finding)], echo_of.get(_k(r.study_id, r.finding)),
+                           qid_of.get(_k(r.study_id, r.finding))) for r in rows],
+        waiting=waiting_rows)
+
+
+def _ordered(buckets: dict) -> list:
     from evidence_echo.core import store
+    return sorted(buckets.items(), key=lambda e: (2, 0) if e[1]["subtopic"] is None
+                  else store.subtopic_order(e[1]["subtopic"]))
+
+
+def evidence(conn, mode: str = "questions") -> list[SubtopicEvidence]:
+    """Per subtopic (seeded order, then confirmed, Unsorted last; empty ones left out): its questions
+    with 2+ studies (labelled ones first) and every other study. Findings mode builds one entry per
+    (question, study) from the study's findings, each question in its own subtopic."""
+    from evidence_echo.core import store
+    if mode == "findings":
+        return _findings_evidence(conn)
     placed, articles = placed_studies(conn)
     explained = {x["question_id"]: x for x in store.question_explanations(conn, status="agreed")}
     published, reported = store.study_first_published(conn), store.first_reports(conn)
@@ -316,31 +401,129 @@ def evidence(conn) -> list[SubtopicEvidence]:
             bucket["loose"].append(s)
         else:
             bucket["by_question"].setdefault(question["id"], (question, []))[1].append(s)
-    result = []
-    for key, bucket in sorted(buckets.items(), key=lambda e: (2, 0) if e[1]["subtopic"] is None
-                              else store.subtopic_order(e[1]["subtopic"])):
-        subtopic = bucket["subtopic"]
-        groups = {qid: _question_group(question, key, studies, articles, published, reported)
-                  for qid, (question, studies) in bucket["by_question"].items()}
-        groups = {qid: _with_explanation(conn, g, explained.get(qid)) for qid, g in groups.items()}
-        newest = {qid: max(s["id"] for s in studies) for qid, (_, studies) in bucket["by_question"].items()}
-        multi = [g for g in groups.values() if len(g.rows) >= 2]
-        multi.sort(key=lambda g: (g.label is None, -g.independent if g.label else 0, -newest[g.question_id]))
-        singles = [(bucket["by_question"][qid][0], bucket["by_question"][qid][1][0], g)
-                   for qid, g in groups.items() if len(g.rows) < 2]
-        loose = [{**s, "direction": None} for s in bucket["loose"]]
-        rows, _ = _rows(loose + [{**s, "direction": s["question_direction"]} for _, s, _ in singles],
-                        published, reported, True)
-        text_of = {s["id"]: None for s in bucket["loose"]}
-        echo_of: dict = {}
-        for question, s, g in singles:
-            text_of[s["id"]] = question["text"]
-            echo_of[s["id"]] = g.echoes.get(s["id"])
-        result.append(SubtopicEvidence(
-            key=key, subtopic_id=subtopic["id"] if subtopic else None,
-            name=subtopic["name"] if subtopic else UNSORTED_NAME, questions=[] if subtopic is None else multi,
-            others=[OtherStudy(r, text_of[r.study_id], echo_of.get(r.study_id)) for r in rows]))
-    return result
+    return [_bucket_evidence(conn, key, bucket["subtopic"], bucket, articles, explained, published, reported)
+            for key, bucket in _ordered(buckets)]
+
+
+# --- findings mode ----------------------------------------------------------------------------------
+def _finding_ref(f: dict) -> dict:
+    return {"id": f["id"], "position": f["position"], "text": f["text"], "quote": f.get("quote"),
+            "quote_checked": bool(f.get("quote_checked"))}
+
+
+def _is_failed(study: dict) -> bool:
+    return str(study.get("findings_version") or "").endswith(":failed")
+
+
+def placed_findings(conn):
+    """[(finding, study, subtopic, question)] for every finding of a counting study, and the article
+    counts. subtopic is the study's findings-mode subtopic (store.study_subtopic) when active, else None
+    (Unsorted); question is the finding's resolved findings-mode question in an active subtopic, else None."""
+    from evidence_echo.core import store
+    subtopics = {t["id"]: t for t in store.list_subtopics(conn)}
+    articles = store.study_item_counts(conn)
+    by_study = store.findings_by_study(conn)
+    out = []
+    for s in store.active_studies(conn):
+        if not articles.get(s["id"]):
+            continue
+        own = store.study_subtopic(conn, s, "findings")
+        subtopic = _resolve(subtopics, own["id"]) if own else None
+        for f in by_study.get(s["id"], []):
+            question = None
+            if f.get("question_id") is not None:
+                found = store.resolve_question(conn, f["question_id"])
+                if found and found["mode"] == "findings" and _resolve(subtopics, found["subtopic_id"]):
+                    question = found
+            out.append((f, s, subtopic, question))
+    return out, articles
+
+
+def _findings_layout(conn):
+    """(entries, waiting, loose, articles). entries: (question, the question's subtopic, study dict carrying
+    question_direction and finding_ref), one per (question, study), lowest position first. waiting and
+    loose: {study id: (study, its subtopic or None)}."""
+    from evidence_echo.core import store
+    subtopics = {t["id"]: t for t in store.list_subtopics(conn)}
+    placed, articles = placed_findings(conn)
+    by_study = store.findings_by_study(conn)
+    entries: dict = {}
+    waiting: dict = {}
+    loose: dict = {}
+    for f, s, subtopic, question in sorted(placed, key=lambda p: (p[0]["study_id"], p[0]["position"])):
+        if _is_failed(s):
+            continue
+        if question is None:
+            if subtopic is not None:
+                waiting[s["id"]] = (s, subtopic)
+            continue
+        entries.setdefault((question["id"], s["id"]), (
+            question, _resolve(subtopics, question["subtopic_id"]),
+            {**s, "question_direction": f["direction"], "finding_ref": _finding_ref(f)}))
+    with_entry = {sid for _, sid in entries}
+    for s in store.active_studies(conn):
+        if not articles.get(s["id"]):
+            continue
+        own = store.study_subtopic(conn, s, "findings")
+        subtopic = _resolve(subtopics, own["id"]) if own else None
+        if _is_failed(s) or (subtopic is None and s["id"] not in with_entry):
+            loose[s["id"]] = (s, subtopic)
+        elif not by_study.get(s["id"]) and subtopic is not None:
+            waiting[s["id"]] = (s, subtopic)
+    return list(entries.values()), waiting, loose, articles
+
+
+def _findings_evidence(conn) -> list[SubtopicEvidence]:
+    from evidence_echo.core import store
+    entries, waiting, loose, articles = _findings_layout(conn)
+    explained = {x["question_id"]: x for x in store.question_explanations(conn, status="agreed")}
+    published, reported = store.study_first_published(conn), store.first_reports(conn)
+    buckets: dict = {}
+
+    def bucket_of(subtopic):
+        return buckets.setdefault(subtopic["slug"] if subtopic else UNSORTED,
+                                  {"subtopic": subtopic, "by_question": {}, "loose": [], "waiting": []})
+
+    for question, qsub, study in entries:
+        bucket_of(qsub)["by_question"].setdefault(question["id"], (question, []))[1].append(study)
+    for s, subtopic in loose.values():
+        bucket_of(subtopic)["loose"].append(s)
+    for s, subtopic in waiting.values():
+        bucket_of(subtopic)["waiting"].append(s)
+    return [_bucket_evidence(conn, key, bucket["subtopic"], bucket, articles, explained, published, reported,
+                             bucket["waiting"])
+            for key, bucket in _ordered(buckets)]
+
+
+def finding_questions(evidence_list: list) -> dict[int, list[dict]]:
+    """Findings mode: study id -> the questions its findings joined, in page order (each subtopic's
+    multi-study questions first, then its single-study ones): [{question_id, question, label, independent,
+    echo, finding (the finding's text), quote_checked}]."""
+    out: dict = {}
+    for e in evidence_list:
+        for g in e.questions:
+            for sid, f in g.findings.items():
+                out.setdefault(sid, []).append({
+                    "question_id": g.question_id, "question": g.text, "label": g.label,
+                    "independent": g.independent, "echo": g.echoes.get(sid), "finding": f["text"],
+                    "quote_checked": f["quote_checked"]})
+        for o in e.others:
+            if o.question is not None and o.row.finding:
+                out.setdefault(o.row.study_id, []).append({
+                    "question_id": o.question_id, "question": o.question, "label": None, "independent": 1,
+                    "echo": o.echo, "finding": o.row.finding["text"],
+                    "quote_checked": o.row.finding["quote_checked"]})
+    return out
+
+
+def relate_ready(conn) -> bool:
+    """Findings mode may run relate: no pending findings backfill and no finding of a counting study in an
+    active subtopic without a findings-mode question."""
+    from evidence_echo.core import store
+    if store.findings_progress(conn, store.FINDINGS_VERSION)["pending"]:
+        return False
+    placed, _ = placed_findings(conn)
+    return not any(q is None and sub is not None and not _is_failed(s) for _, s, sub, q in placed)
 
 
 def study_questions(evidence_list: list) -> dict[int, dict]:
@@ -360,8 +543,11 @@ def study_questions(evidence_list: list) -> dict[int, dict]:
     return out
 
 
-def waiting_count(conn) -> int:
-    """Counting studies in an active subtopic that have no counting question yet."""
+def waiting_count(conn, mode: str = "questions") -> int:
+    """Counting studies in an active subtopic that have no counting question yet. Findings mode: studies
+    waiting for the findings backfill or with a finding not grouped yet."""
+    if mode == "findings":
+        return len(_findings_layout(conn)[1])
     placed, _ = placed_studies(conn)
     return sum(1 for _, subtopic, question in placed if subtopic is not None and question is None)
 
@@ -403,12 +589,15 @@ def main_result(group: QuestionGroup, tiers: dict) -> str | None:
     return min(held, key=lambda d: (-len(held[d]), min(r for r, _ in held[d]), -max(i for _, i in held[d])))
 
 
-def _study_inputs(conn, study: dict) -> dict:
+def _study_inputs(conn, study: dict, finding: "dict | None" = None) -> dict:
     from evidence_echo.core import store
     items = store.study_items(conn, study["id"], store.STUDY_ITEM_STATES)
-    return {"findings": study.get("findings"), "what_was_tested": study.get("what_was_tested"),
-            "research_timeframe": study.get("research_timeframe"),
-            "sample_scale": study.get("sample_scale"), "items": [i["id"] for i in items]}
+    inputs = {"findings": study.get("findings"), "what_was_tested": study.get("what_was_tested"),
+              "research_timeframe": study.get("research_timeframe"),
+              "sample_scale": study.get("sample_scale"), "items": [i["id"] for i in items]}
+    if finding is not None:
+        inputs["finding"] = {"id": finding["id"], "text": finding["text"]}
+    return inputs
 
 
 def _spread(a: tuple, b: tuple) -> bool:
@@ -441,6 +630,9 @@ def explain_state(conn, group: QuestionGroup) -> "ExplainState | None":
         return None
     reps = {members[0]: direction for members, direction in zip(group.groups, group.group_dirs())}
     rows = {rep: store.get_study(conn, rep) for rep in reps}
+    for rep, finding in group.findings.items():   # findings mode: only a study's main finding has its headline value
+        if rep in rows and finding["position"] != 1:
+            rows[rep] = {**rows[rep], "headline_value": None}
     tier = {rep: _TIER_RANK.get(row.get("evidence_tier"), 9) for rep, row in rows.items()}
     if level:
         choice = _level_choice(rows, tier)
@@ -469,7 +661,7 @@ def explain_state(conn, group: QuestionGroup) -> "ExplainState | None":
     studies = sorted(sent, reverse=True)
     payload = {"question": group.text, "measure": group.measure, "comparison": group.comparison,
                "main_result": main,
-               "studies": [{"id": sid, "direction": reps[sid], **_study_inputs(conn, rows[sid])}
+               "studies": [{"id": sid, "direction": reps[sid], **_study_inputs(conn, rows[sid], group.findings.get(sid))}
                            for sid in studies],
                "prompt_version": RELATE_LEVEL_HASH_TAG if level else RELATE_HASH_TAG}
     if level:

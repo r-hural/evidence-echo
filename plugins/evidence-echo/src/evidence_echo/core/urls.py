@@ -1,8 +1,6 @@
 """Canonical URLs: the dedup key for items (tracking parameters, scheme and fragment ignored)."""
 from urllib.parse import urlsplit, urlunsplit
 
-import courlan
-
 
 def canonical_url(url: str) -> str | None:
     """https://host/path?query without tracking parameters and fragment; None for non-http(s)."""
@@ -13,6 +11,7 @@ def canonical_url(url: str) -> str | None:
         return None
     if parts.scheme.lower() not in ("http", "https") or not parts.hostname:
         return None
+    import courlan  # third party: the read-only evidence server never normalises URLs
     try:
         normalized = urlsplit(courlan.normalize_url(raw, strict=False))
     except (ValueError, TypeError):

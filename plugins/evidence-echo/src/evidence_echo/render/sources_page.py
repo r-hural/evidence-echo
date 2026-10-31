@@ -7,9 +7,12 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from evidence_echo.core import store
+from evidence_echo.core import grading, store
 from evidence_echo.render import clock
 from evidence_echo.render import html as h
+
+
+SEARCH_ROW = "Found by search"
 
 
 @dataclass(frozen=True)
@@ -27,6 +30,7 @@ class SourceRow:
     quiet_days: int | None = None  # fetched fine but nothing new in this many days (not an error)
     removed: bool = False         # in the database, no longer in topic.json
     last_is_entry: bool = False   # last_fetched_at is the newest entry, there is no fetch record
+    search: bool = False          # the one "Found by search" row that sums every search source
 
 
 @dataclass(frozen=True)
@@ -35,6 +39,7 @@ class SourcesPage:
     topic_name: str
     generated_at: str
     rows: list
+    disclaimer: str | None = None
 
 
 def _when(value) -> datetime | None:
@@ -104,11 +109,23 @@ def build_sources(conn, topic_cfg, now: datetime, horizon_days: int = 7) -> Sour
     def order(row: SourceRow):
         return (-row.all_studies, -row.all_fetched, row.name.casefold(), row.name)
 
-    rows = sorted((row_for(name, s) for name, s in configured.items()), key=order)
+    searched = [name for name, s in configured.items() if s.get("found_by") == "search"]
+    rows = sorted((row_for(name, s) for name, s in configured.items() if name not in searched), key=order)
+    if searched:
+        found = [row_for(name, configured[name]) for name in searched]
+        study_ids = set().union(*(stats[n]["study_ids"] for n in searched if n in stats))
+        times = [r.last_fetched_at for r in found if r.last_fetched_at]
+        rows.append(SourceRow(
+            name=SEARCH_ROW, kind="once", url=None, site_url=None, all_studies=len(study_ids),
+            all_fetched=sum(r.all_fetched for r in found),
+            last_studies=sum(1 for sid in study_ids if newest and first_ids.get(sid) == newest["id"]),
+            last_fetched=sum(r.last_fetched for r in found),
+            last_fetched_at=max(times, key=_when) if times else None, search=True))
     gone = sorted((row_for(name, None) for name in stats if name not in configured
                    and stats[name]["fetched_at"]), key=order)
     return SourcesPage(topic_id=topic_cfg.id, topic_name=topic_cfg.name,
-                       generated_at=now.isoformat(), rows=rows + gone)
+                       generated_at=now.isoformat(), rows=rows + gone,
+                       disclaimer=grading.rules_of(topic_cfg).get("disclaimer"))
 
 
 def _site_feed(row: SourceRow) -> tuple[str | None, str | None]:
@@ -169,7 +186,8 @@ def sources_html(p: SourcesPage, overview_href: str, topic_href: str, report_hre
     gone = [r for r in p.rows if r.removed]
     never = sum(1 for r in live if not r.all_studies)
     noun = "source" if len(live) == 1 else "sources"
-    body = [f'<header class="ee-head"><h1>{h.esc(title)}</h1>',
+    body = [h.disclaimer_html(p.disclaimer),
+            f'<header class="ee-head"><h1>{h.esc(title)}</h1>',
             f'<p class="meta">{len(live)} {noun} · {never} never produced a study</p>',
             f'<p class="meta">Updated {h.esc(clock.local_minute(p.generated_at))}</p></header>']
     if not p.rows:
@@ -179,11 +197,17 @@ def sources_html(p: SourcesPage, overview_href: str, topic_href: str, report_hre
             '<th class="num">All reports<br><span class="ee-sub-h">studies / fetched</span></th>'
             '<th class="num">Last report<br><span class="ee-sub-h">studies / fetched</span></th>'
             '<th class="ee-nw">Last fetched</th></tr></thead>')
-    slugs = h.source_slugs(r.name for r in p.rows if r.all_studies)   # the topic page's Source filter values
-    rows = [_row_html(r, topic_href, slugs.get(r.name)) for r in live]
+    # the topic page's Source filter values; the search row has its own
+    slugs = h.source_slugs((r.name for r in p.rows if r.all_studies and not r.search),
+                           (h.SEARCH_SOURCE_SLUG,) if any(r.search for r in p.rows) else ())
+
+    def slug_of(r: SourceRow) -> str | None:
+        return (h.SEARCH_SOURCE_SLUG if r.all_studies else None) if r.search else slugs.get(r.name)
+
+    rows = [_row_html(r, topic_href, slug_of(r)) for r in live]
     if gone:
         rows.append('<tr class="ee-gone-head"><th colspan="6">No longer in the topic</th></tr>')
-        rows += [_row_html(r, topic_href, slugs.get(r.name)) for r in gone]
+        rows += [_row_html(r, topic_href, slug_of(r)) for r in gone]
     body.append(f'<div class="table-wrap"><table class="ee-src">{head}<tbody>{"".join(rows)}</tbody>'
                 "</table></div>")
     body.append('<p class="meta ee-key">Studies count a study once, in the report that first showed it; '

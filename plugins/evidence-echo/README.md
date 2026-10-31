@@ -31,6 +31,9 @@ conversion optimization and A/B tests (`cro`) and exercise science (`exercise`);
 - **What stays local.** Topics, the fetched text and grades (SQLite), reports, and the
   optional Obsidian export. Keys live in the plugin's data folder and are never printed or
   passed on the command line.
+- **The evidence server** (asking Claude about your studies) is local and read-only: it reads
+  your databases and makes no network calls; what Claude then says is processed in your own
+  Claude Code session.
 
 Details: [Privacy](../../PRIVACY.md), [SECURITY.md](../../SECURITY.md).
 
@@ -59,6 +62,67 @@ plugin update changes the dependencies.
 
 Until it is set up, the engine refuses pipeline commands (exit code 4) and the
 report skill hands over to the setup.
+
+## Ask the evidence
+
+Once a topic has a report, you can ask Claude what your studies say, in any session:
+"what do we know about title tag length?" or "does training to failure build more muscle?".
+Claude searches your graded studies and answers in its own words, naming each cited study's
+grade and labels (observational, preprint, ...) and linking it to its card on the topic page.
+It also says how well the question is covered ("2 studies, best grade C") and, when the
+topic has little evidence on it, offers to search the web for studies
+(`/evidence-echo:search`, below) or suggests adding sources with `/evidence-echo:setup`.
+
+The plugin ships a small read-only MCP server for this. It offers three tools:
+
+- `list_topics`: your topics, study counts, last report and whether each can be searched.
+- `find_evidence`: the best-matching studies for a question, with their grades, labels,
+  red flags, links and the questions they answer.
+- `get_study`: one study in full, with its articles, the check against the original study and
+  a short excerpt around its headline quote.
+
+`ev find "<question>"` gives the same answer on the command line.
+
+Good to know:
+
+- The search matches keywords in study names, findings, questions, metrics and entities, and
+  does not understand synonyms. If Claude finds nothing, ask again with other words.
+- The server only reads. It never writes, upgrades or fetches anything, and it needs no key. A
+  topic whose database is older than the plugin is listed as needing an upgrade until your
+  next report run upgrades it.
+- It needs `python` or `python3` (3.11 or newer) on your PATH; there is no `py -3` fallback
+  here. The plugin starts two entries, `evidence-echo` (`python`) and `evidence-echo-py3`
+  (`python3`); the second one yields when `python` works. `/mcp` may therefore show one of the
+  two as failed, and that is expected.
+- The server finds your data through the plugin's Data folder setting. A `EV_ECHO_DATA_DIR`
+  set in your shell does not reach it.
+
+## Search for studies
+
+`/evidence-echo:search "<question>" [--topic <id>]` goes and looks for studies on one question
+that your sources have not published: Claude writes three to six web queries, collects candidate
+pages and grades them with the same chain as a report (your topic's grading rules, caps, skeptic
+and quote check). Without `--topic` it asks which topic the question belongs to first.
+
+- The grading happens in a scratch copy of the topic's database, in
+  `<data>/searches/<topic>/<run id>/` (`search.json` and a scratch `echo.db`). Nothing joins
+  the topic before you say so.
+- You get a short answer in the session ("what these say", 200 words at most, with each
+  study's grade, labels and data year, and the gaps; studies whose data is 3 or more years old are
+  named with a warning, and the page adds the engine's own line on them) and an answer page (`searches/<run id>.html` in the
+  topic's reports folder) with the ratings chart, the study cards, the rejected pages ("Not
+  studies") and the queries used.
+- Then Claude asks: **keep** all the studies, keep some, or **drop** the run. Kept studies join the
+  topic as one-time sources marked "Found by search"; the topic's next report matches them with
+  existing studies (a study already in the topic absorbs the duplicate) and reports them, and the
+  Source filter lists them under one "Found by search" option. Drop deletes the scratch
+  database; the answer page stays and says "Dropped". An unanswered run stays open:
+  `ev --topic <id> search list` shows it, and `search keep` and `search drop` work later.
+- The topic page lists past searches, newest first (date and question, linked to the answer
+  page), in a closed "Searches (N)" list.
+- `search_max_candidates` (default `15`, 1-50, global only) caps the pages one search adds.
+- A topic needs one finished report before it can be searched. Web search runs in the Claude
+  session, so it is not available as an unattended API run.
 
 ## Plugin settings
 
@@ -123,7 +187,7 @@ as it publishes and quiet sources are skipped until due; no source waits longer 
 `html_reports` (`on|off`, default `on`, also per topic or `EV_ECHO_HTML_REPORTS`: each report
 also gets HTML pages; during a report run `overview.html` follows the topic's `html_reports`, while `ev overview` follows the workspace setting), `md_reports` (`on|off`, default `on`, also `EV_ECHO_MD_REPORTS`, global only: `off` keeps the Markdown report, its rejections report and `overview.md` out of the reports folder, in `<data>/markdown/`, where Claude still reads them; it applies only while HTML is on, so a topic with `html_reports` off keeps its Markdown reports), `rejections_report` (`on|off`, default `off`, also per topic or `EV_ECHO_REJECTIONS_REPORT`: every report also writes the rejections report, see "Rejections report"), `obsidian_dir` (your Obsidian vault's folder, or empty; default empty = no
 export; also `EV_ECHO_OBSIDIAN_DIR`; `ev config set` refuses a folder that does not exist and
-never creates one), `relate` (`on|off`, default `on`, also per topic or `EV_ECHO_RELATE`: two blind comparers explain contested evidence, see "What the evidence says"; `off` skips the relate step), `classify_batch` (default `40`, `0` = off, also per topic or `EV_ECHO_CLASSIFY_BATCH`: how many older studies the classify step fills in per run), `overview_studies` (default `10`, `0` = latest report only, also `EV_ECHO_OVERVIEW_STUDIES`, global only: how many recently reported studies each topic lists in the overview), `fetch_cache_minutes` (default `60`, `0` = off, also `EV_ECHO_FETCH_CACHE_MINUTES`, global only: feed and page downloads are kept this long and shared by every topic; `ev fetch --fresh` downloads again). `auto` picks `api` when an Anthropic key is set,
+never creates one), `relate` (`on|off`, default `on`, also per topic or `EV_ECHO_RELATE`: two blind comparers explain contested evidence, see "What the evidence says"; `off` skips the relate step), `regrade_batch` (default `40`, `0` = off, also per topic or `EV_ECHO_REGRADE_BATCH`: how many studies each regrade round grades again after a rules change), `classify_batch` (default `40`, `0` = off, also per topic or `EV_ECHO_CLASSIFY_BATCH`: how many older studies the classify step fills in per run), `overview_studies` (default `10`, `0` = latest report only, also `EV_ECHO_OVERVIEW_STUDIES`, global only: how many recently reported studies each topic lists in the overview), `grouping_mode` (`questions|quotes|findings`, default `questions`, also per topic or `EV_ECHO_GROUPING_MODE`: `questions` shows each study under its question with labels and explanations; `quotes` lists each study's checked findings by subtopic and skips the group, split and relate steps; `findings` files each finding under a question of its own, so a study can answer several), `findings_batch` (default `40`, `0` = off, also per topic or `EV_ECHO_FINDINGS_BATCH`: how many older studies the findings step splits per round), `search_max_candidates` (default `15`, `1`-`50`, global only: how many pages one `/evidence-echo:search` adds), `fetch_cache_minutes` (default `60`, `0` = off, also `EV_ECHO_FETCH_CACHE_MINUTES`, global only: feed and page downloads are kept this long and shared by every topic; `ev fetch --fresh` downloads again). `auto` picks `api` when an Anthropic key is set,
 else `session` (judged by Claude in the session); the embedder picks `voyage`
 when a Voyage key is set, else `none`. With a Voyage key, study matching also proposes studies with similar text as candidates; without one, matching uses the rules alone. Without a payment method on the Voyage account the rate limit is very low, so the first embedding run is slow (it waits between requests).
 
@@ -133,7 +197,7 @@ Required: `id` (lowercase letters, digits and `-`, up to 40 characters; equals
 the folder name and never changes), `name`, `domain`, `scope`, `sources`.
 Optional: `subtopics`, `template` (informational), `linkedin_apify_actor`. A topic
 can override `reports_dir`, `output_language`, `fetch_horizon_days`, `scan_depth`, `adaptive_fetch`,
-`html_reports`, `relate` and `classify_batch`; `null` or
+`html_reports`, `relate`, `classify_batch`, `grouping_mode` and `findings_batch`; `null` or
 absent means "use `config.json`". Sources are `{"type": "rss", "name", "url"}`,
 `{"type": "page", "name", "url", "scan_depth"?}` (an index page; new article links become
 items), `{"type": "once", "name", "url"}` (one document, analysed once; versions by content
@@ -216,6 +280,27 @@ from elsewhere. Open them in any browser.
   studies (same rule as `overview.md`) and links to the latest report and the topic page. `ev overview`
   rebuilds it too.
 
+With `grouping_mode` set to `quotes` (global, or per topic with `ev topic set <id> grouping_mode quotes`) the topic page 
+lists findings instead of questions: under each subtopic, one line per finding of every study 
+(grade, grade labels, the finding, its study, date and metric), with the exact quote in a closed "Quote" 
+disclosure. A quote that is not in the article is marked `#` ("Quote not found in the article"). The report page 
+shows a Findings line on each card instead of the question. The Metric filter matches a study by its own metric or 
+any finding's. The group, split and relate steps are skipped; the questions are kept and come back when you switch 
+to `questions`.
+
+### Grouping modes
+
+- `questions` (default): each study answers one question, shown with labels and explanations.
+- `quotes`: no questions; each study's checked findings are listed under its subtopic.
+- `findings`: each finding of a study joins a question of its own, so one study can sit under several
+  questions; labels, independence and explanations are computed over findings.
+
+Switch with `ev topic set <id> grouping_mode <mode>` for one topic or `ev config set grouping_mode <mode>`
+for all. A switch to `findings` or `quotes` re-reads each older study once (batched, `findings_batch`);
+until a study is split it shows under "Waiting to be split". Each mode keeps its own questions, so switching
+back restores the old ones, and your moves, renames and merges survive. Templates suggest a mode
+(exercise and nutrition: `findings`; the others: `questions`) and setup asks; nothing changes until you accept.
+
 Times are shown in your local time zone (stored in UTC); report file names keep
 the UTC date. Dates that come from articles are shown as written.
 
@@ -228,11 +313,27 @@ Markdown report still counts, and the command result names the error.
 The judge quotes the sentence behind each key number, and the engine checks every quote against the
 article text; numbers it cannot find are listed in the report, and an item with no verified number
 waits for your review. Tier rules that code can check are enforced: A needs a stated control group,
-B a stated sample scale (the report says "capped from A" when a grade was lowered). The skeptic
+B a stated sample scale (the report says "capped from A: no control group" when a grade was lowered, with the reason). The skeptic
 grades each item again without seeing the judge's grade: one tier apart, the lower grade stands;
 two or more apart, the item is disputed. The skeptic also tags methodology red flags (for example
 "no baseline" or "confounded window"), and the judge records who ran the study and any conflict of
 interest; both are shown next to the grade and never change it.
+
+Each topic can carry its own grading rules (`ev topic grading <id>` shows the effective ones and their
+source: the topic's file, its template, or the generic rules). They hold tier definitions in the field's
+terms, a vocabulary of study types, caps in code (for example an animal study never above C), grade labels,
+field red flags and an optional disclaimer. A grade label is a fact about the study shown next to its tier
+("observational", "animal", "preprint"); it is not a question's label. Field red flags come from the skeptic
+only, like the global ones. The disclaimer appears under the topic's name on its pages and files.
+Caps apply to both the judge's and the skeptic's grade before they are compared, so a judge A and a skeptic A on
+an animal study both become C and agree. Owner rulings stay.
+
+When a topic's rules change, `regrade` re-applies the caps to stored grades without a call, then asks for a new
+grade and the study facts once per study whose rules changed, and `reverify` asks the skeptic again for those
+studies: one regrade call and one reverify call per study. Neither changes an item's state, so earlier
+studies do not come back as new. The first run after updating to this version re-grades every study; at most
+`regrade_batch` studies per round and three rounds per report run, the rest waits for the next run.
+`ev studies regrade <id>` queues one study again; `ev reset --stage regrade` queues all of them.
 
 ### What the evidence says
 
@@ -315,6 +416,12 @@ merge <qid> <into>` merges two questions of the same kind, also across subtopics
 s<id> <qid>` (or `--new "<text>" --measure "<measure>" --kind <kind> [--comparison "<comparison>"]`)
 places a study yourself, also in a question of another subtopic. The group step never undoes such a decision, and
 `ev reset --stage group` groups only the studies you did not place.
+In `findings` mode the questions are findings-mode questions (each mode keeps its own): `ev questions
+list|rename|merge` work on them (add `--mode questions|findings` to reach the other mode's questions),
+`ev questions move` is refused, and you place a finding instead: `ev findings list [--study s<id>]
+[--question q<id>]` shows every finding with its question, `ev findings move f<id> q<id>` (or `--new
+"<text>" --measure "<measure>" --kind <kind> [--comparison "<comparison>"]`) files one under a question
+of your choice and pins it. Two findings of one study never share a question.
 
 Studies judged before these fields existed are filled in by the classify step of a report run
 (`ev classify`, at most `classify_batch` studies per run; it only fills what is empty and never
@@ -322,6 +429,11 @@ changes a tier, facts or a subtopic you decided). `ev subtopics template --adopt
 a topic to its template's current subtopic list: subtopics with the same name (or a rename the template
 declares) are carried over, other seeded subtopics are retired, their studies are sorted again by
 the classify step, and subtopics you accepted stay. The report run asks you once.
+
+Studies created before the judge listed findings are split by the findings step of a report run (`ev findings`, at most
+`findings_batch` studies per round, three rounds per run; only in `quotes` mode). It writes one to four findings per study, each with an exact
+quote checked against the article, and never changes a grade. A study with no text, no measured result or two rejected answers is
+marked failed and not asked again; `ev reset --stage findings [--study s<id>]` asks again.
 
 Before a report is written, `ev primary` checks secondary coverage against the original study it
 cites (setting `primary_check`: `on` by default, `off` to skip; also per topic or
@@ -417,7 +529,10 @@ topic, and with several topics it refuses (`several topics — pass --topic <id>
     ev [--topic ID] apply --stage primary answers_a.json answers_b.json
     ev [--topic ID] reset --stage primary [--url URL]  fetch failed or unreachable originals again
     ev [--topic ID] report --render entries.json [--rejections]
-    ev [--topic ID] studies list [--all] | show <id> | duplicates [--count]
+    ev [--topic ID] studies list [--all] | show <id> | duplicates [--count] [--all]
+    ev [--topic ID] dupcheck                 second look at pairs found only by shared numbers or similar text
+    ev [--topic ID] apply --stage dupcheck answers_a.json answers_b.json
+    ev [--topic ID] studies distinct <a> <b> [--undo]   two different studies: the pair leaves the review
     ev [--topic ID] studies merge <keep> <other> | unmerge <other>
     ev [--topic ID] studies similarity          read-only: what the similarity layer would find; needs a Voyage key
     ev [--topic ID] studies metric <id> <slug>
@@ -426,8 +541,19 @@ topic, and with several topics it refuses (`several topics — pass --topic <id>
     ev [--topic ID] subtopics list | accept <slug> | reject <slug>
     ev [--topic ID] subtopics map <slug> <target> | rename <slug> <name> | merge <slug> <into>
     ev [--topic ID] subtopics template --adopt | --decline
-    ev [--topic ID] questions list [--subtopic <slug>] | rename <qid> <text> [--measure <m>] [--kind <k>] [--comparison <c>]
+    ev [--topic ID] questions list [--subtopic <slug>] [--mode questions|findings] | rename <qid> <text> [--measure <m>] [--kind <k>] [--comparison <c>]
     ev [--topic ID] questions merge <qid> <into> | move <sid> <qid> | move <sid> --new <text> --measure <m> --kind <k> [--comparison <c>]
+    ev [--topic ID] findings list [--study <sid>] [--question <qid>] | move <fid> <qid> | move <fid> --new <text> --measure <m> --kind <k> [--comparison <c>]
+    ev [--topic ID] regrade                 re-cap stored grades, then grade again after a rules change
+    ev [--topic ID] reverify                the skeptic checks the re-graded studies again
+    ev [--topic ID] apply --stage <regrade|reverify> answers.json
+    ev [--topic ID] studies regrade <id>    queue one study for a new grade
+    ev [--topic ID] findings                split older studies into findings (quotes mode; `findings_batch` per round)
+    ev [--topic ID] reset --stage findings [--study s<id>]   split every study (or one) into findings again
+    ev [--topic ID] find "<question>" [--limit N]   read-only keyword search over the graded studies; the same answer the MCP tool gives
+    ev [--topic ID] search start --question "<q>" | add <run> --urls-file F [--query Q] | render <run> --summary F --writeups F
+    ev [--topic ID] search keep <run> [--only s1,s3] | drop <run> | list    search the web for studies on a question; keep or drop
+    ev --topic ID --search <run> <triage|extract|judge|match|verify|primary|fetch-fallback|apply|report>   grade a search run in its scratch database
     ev [--topic ID] status | reset --stage <name>
     (`reset --stage classify` asks every study again; `reset --stage group` groups every study you did not place yourself again.)
 
@@ -438,6 +564,7 @@ topic, and with several topics it refuses (`several topics — pass --topic <id>
     ev topic list | show <id>
     ev topic add <id> --from <template>
     ev topic add <id> --blank --name N --domain D --scope S
+    ev topic grading <id>                   the topic's effective grading rules and their source
     ev topic set <id> <key> <value>         name, domain, scope, subtopics, overrides (not id)
     ev topic remove <id> [--delete-data]
     ev [--topic ID] sources list
@@ -460,6 +587,12 @@ studies writes no report: it prints `{"path": null, "skipped": "no_new_studies",
 `match` gives each graded item its study; Claude is asked only when a study might
 already be known. `ev studies list|show|duplicates|merge|unmerge` lists studies,
 shows one, finds possible duplicates, and merges or un-merges them (only when you run them).
+A pair that only shares numbers or similar text gets a second look first: `ev dupcheck` asks two
+blind comparers whether the two texts describe the same study (at most 20 pairs per run). A pair both
+call different leaves the review; every other pair is still shown, with the check's verdict. Nothing is
+merged without you. `ev studies distinct <a> <b>` keeps your own "different studies" answer, so the pair
+never comes back; `duplicates --all` also lists the hidden pairs and why, and `ev reset --stage dupcheck`
+checks every pair again.
 
 `ev subtopics list` shows the topic's subtopics (seeded from `topic.json`, accepted proposals, proposals
 waiting for review) with their study counts; `accept`, `map` and `reject` settle a proposal, `rename`

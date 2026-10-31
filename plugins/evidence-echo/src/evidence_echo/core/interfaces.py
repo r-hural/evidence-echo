@@ -10,6 +10,8 @@ apply payloads are validated by core/contracts.py before they touch the store.
 import json
 from typing import Protocol
 
+from evidence_echo.core import grading
+
 
 class LLMBackend(Protocol):
     def complete(self, prompt: str, max_tokens: int = 500) -> str: ...
@@ -27,7 +29,8 @@ def envelope(stage: str, instructions: str, items: list[dict], topic) -> str:
     return json.dumps(
         {"stage": stage,
          "topic": {"id": topic.id, "name": topic.name, "domain": topic.domain,
-                   "scope": topic.scope, "subtopics": list(topic.subtopics)},
+                   "scope": topic.scope, "subtopics": list(topic.subtopics),
+                   "grading": grading.payload_rules(grading.rules_of(topic))},
          "instructions": instructions, "items": items},
         ensure_ascii=False, indent=2)
 

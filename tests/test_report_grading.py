@@ -26,7 +26,7 @@ def test_label_shows_relation(db, tmp_path, topic):
 
 def test_label_shows_cap(db, tmp_path, topic):
     _verified(db, skeptic="B", facts=dict(VERDICT["facts"], has_controls=False))
-    assert "[B · agency · capped from A]" in _render(db, tmp_path, topic)
+    assert "[B · agency · capped from A: no control group]" in _render(db, tmp_path, topic)
 
 
 def test_label_shows_the_grade_that_lost(db, tmp_path, topic):
@@ -35,10 +35,9 @@ def test_label_shows_the_grade_that_lost(db, tmp_path, topic):
 
 
 def test_label_when_the_judge_was_lower(db, tmp_path, topic):
-    _verified(db, skeptic="B", facts=dict(VERDICT["facts"], has_controls=False,
-                                          sample_scale="unstated"))  # judge capped to C
+    _verified(db, skeptic="B", tier="C")                # judge C, skeptic B -> C
     text = _render(db, tmp_path, topic)
-    assert "[C · agency · capped from A · skeptic: B]" in text
+    assert "[C · agency · skeptic: B]" in text
 
 
 def test_grading_lines(db, tmp_path, topic):

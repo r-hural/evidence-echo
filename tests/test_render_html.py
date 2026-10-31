@@ -706,7 +706,7 @@ def test_card_groups_name_every_fact():
     named = {n for group in html_render.CARD_GROUPS for n in group}
     e = entry(1, view=full, series="S", subtopic={"key": "k", "name": "Sub", "question": "Q?"})
     names = ([n for n, _ in md_render.fact_pairs(full)] + [n for n, _ in md_render.subtopic_lines(e.subtopic)]
-             + [n for n, _ in md_render.research_pairs(e)] + ["Part of", "Primary source", "Coverage", "Reported"])
+             + [n for n, _ in md_render.research_pairs(e)] + ["Part of", "Primary source", "Coverage", "Reported", "Findings", "Questions", "Found by search"])
     assert set(names) <= named and len(names) == len(named)
 
 

@@ -90,6 +90,7 @@ _BASE = (
     ".ee-crumbs [aria-current]{color:var(--mast-fg)}"
     ".ee-links{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;margin-left:auto;font-size:.875rem}"
     # page head
+    ".ee-disclaimer{color:var(--fg);font-size:.85rem;margin:0 0 1rem}"
     ".ee-head{margin:0 0 1.5rem}"
     ".ee-head .meta{font-size:1rem}"
     # Harvey-ball tier mark: the ball is drawn, the letter carries the meaning
@@ -139,6 +140,7 @@ _BASE = (
     ".ee-card-rate .label{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .6rem;margin:0;"
     "color:var(--muted);font-size:.85rem;line-height:1.35}"
     ".ee-card-rate .tier{font-size:1.2rem}"
+    ".ee-gl{font-variant:small-caps;letter-spacing:.04em;color:var(--fg)}"
     ".ee-card-rate .ee-warn{font-size:.85rem}"
     ".ee-card-main p{font:1.075rem/1.62 var(--serif);margin:0}"
     ".ee-f{margin:0 0 .4rem;padding-left:8.8rem;text-indent:-8.8rem;font-size:.9rem;line-height:1.45}"
@@ -457,3 +459,38 @@ JS = """(function () {
   window.addEventListener('hashchange', open);
   open();
 })();"""
+
+
+# Quotes mode: the same filter script, with the Metric filter reading each study's metric list and the
+# findings list (#ee-findings) hiding the rows of filtered-out studies. Each anchor occurs exactly once.
+_JS_METRIC = "    if (f.metric && s.metric !== f.metric) return false;"
+_JS_HIDE = "      el.hidden = !ok;\n"
+assert JS.count(_JS_METRIC) == 1, "JS metric filter line changed: update JS_FINDINGS"
+assert JS.count(_JS_HIDE) == 1, "JS card-hiding line changed: update JS_FINDINGS"
+JS_FINDINGS = (JS
+               .replace(_JS_METRIC,
+                        "    if (f.metric && (s.metrics || [s.metric]).indexOf(f.metric) < 0) return false;")
+               .replace(_JS_HIDE, _JS_HIDE
+                        + "      Array.prototype.forEach.call(\n"
+                          "        document.querySelectorAll('#ee-findings [data-study=\"' + s.id + '\"]'),\n"
+                          "        function (row) { row.hidden = !ok; });\n"))
+
+FINDINGS_CSS = (
+    ".ee-findings-list{list-style:none;margin:.5rem 0 .75rem;padding:0}"
+    ".ee-finding{padding:.6rem 0;border-bottom:1px solid var(--border)}"
+    ".ee-f-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem;font-size:.9rem}"
+    ".ee-f-text{margin:.2rem 0;font-weight:600;max-width:var(--measure)}"
+    ".ee-f-meta{margin:.1rem 0 .2rem}"
+    ".ee-quote{margin:.25rem 0;font-size:.9rem}"
+    ".ee-quote>summary{cursor:pointer;color:var(--muted)}"
+    ".ee-quote blockquote{margin:.4rem 0 .4rem .25rem;padding-left:.9rem;border-left:1px solid var(--rule);"
+    "font-family:var(--serif);font-size:1rem;max-width:var(--measure)}"
+)
+
+FINDINGS_CSS += (
+    ".ee-row+.ee-quote{margin:.1rem 0 .2rem 1.6rem}"
+    ".ee-qs ul{display:inline-block;vertical-align:top;margin:0;padding-left:1.1rem;text-indent:0}"
+    ".ee-qs li{margin:0 0 .25rem}"
+    ".ee-waiting-split{margin:.5rem 0 .75rem;font-size:.9rem}"
+    ".ee-waiting-split>summary{cursor:pointer;color:var(--muted)}"
+)

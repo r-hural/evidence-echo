@@ -6,12 +6,14 @@ from evidence_echo.core import contracts
 from evidence_echo.core.contracts import ContractError, Field, validate, validate_result
 from tests.conftest import FakeBackend
 
+GRADING_FACTS = {"study_type": "controlled_test", "peer_review": "unknown", "text_basis": "full"}
 FACTS = {"what_was_tested": "Title tags", "findings": "+4.2% clicks",
-         "research_timeframe": "2026-Q2"}
+         "research_timeframe": "2026-Q2", **GRADING_FACTS}
+FINDING_LIST = [{"text": "Clicks rose 4.2%", "quote": "Clicks rose 4.2% on the variant pages", "metric": "clicks", "measure": None}]
 VALID = {
     "triage": {"id": "i1", "pass": True, "reason": "numbers"},
     "judge": {"id": "i1", "pass": True, "tier": "A", "facts": FACTS, "primary_url": None,
-              "metric": "clicks"},
+              "metric": "clicks", "finding_list": FINDING_LIST},
     "verify": {"id": "i1", "tier": "C", "red_flags": ["no_baseline"], "note": "no control"},
     "ruling": {"id": "i1", "agrees": False, "adjusted_tier": "C", "note": "no control"},
     "report": {"study_id": 3, "title": "T", "summary": "S"},
@@ -189,7 +191,7 @@ def test_export_judge_details():
     assert items["properties"]["facts"]["type"] == ["object", "null"]
     assert "findings" in items["properties"]["facts"]["required"]
     assert items["if"]["properties"]["pass"] == {"const": True}
-    assert items["then"]["required"] == ["tier", "facts", "metric", "entities"]
+    assert items["then"]["required"] == ["tier", "facts", "metric", "entities", "finding_list"]
     assert "direction" not in items["properties"]
 
 
@@ -216,8 +218,9 @@ def test_fetch_contract_ids_and_rules():
 
 def _judge(**over):
     base = {"id": "i1", "pass": True, "tier": "B",
-            "facts": {"what_was_tested": "x", "findings": "y", "research_timeframe": "2026"},
-            "metric": "clicks"}
+            "facts": {"what_was_tested": "x", "findings": "y", "research_timeframe": "2026",
+                      **GRADING_FACTS},
+            "metric": "clicks", "finding_list": FINDING_LIST}
     return {**base, **over}
 
 
@@ -271,3 +274,10 @@ def test_ruling_and_verify_export_json_schema():
     assert contracts.export_json_schema("ruling")["properties"]["results"]["items"]["required"] == [
         "id", "agrees", "note"]
     assert "red_flags" in contracts.export_json_schema("verify")["properties"]["results"]["items"]["properties"]
+
+
+def test_judge_requires_grading_facts_when_passing():
+    for name in GRADING_FACTS:
+        facts = {k: v for k, v in _judge()["facts"].items() if k != name}
+        assert f"facts.{name}: required when pass is true" in validate_result("judge", _judge(facts=facts))
+    assert validate_result("judge", _judge(facts=dict(_judge()["facts"], study_type="mouse")))

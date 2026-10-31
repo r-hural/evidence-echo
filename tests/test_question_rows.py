@@ -121,6 +121,6 @@ def test_reported_and_created_month_fallbacks_are_local(monkeypatch):
     from evidence_echo.render import clock
     monkeypatch.setattr(clock, "ZONE", timezone(timedelta(hours=2)))
     late = "2026-10-31T23:30:00+00:00"                  # 1 November, local
-    assert knowledge._row_date({"id": 1}, {}, {1: {"rendered_at": late}}) == ("2026-11", True)
-    assert knowledge._row_date({"id": 1, "created_at": late}, {}, {}) == ("2026-11", True)
-    assert knowledge._row_date({"id": 1}, {1: "2026-10-31"}, {}) == ("2026-10", True)  # article date
+    assert knowledge.row_date({"id": 1}, {}, {1: {"rendered_at": late}}) == ("2026-11", True)
+    assert knowledge.row_date({"id": 1, "created_at": late}, {}, {}) == ("2026-11", True)
+    assert knowledge.row_date({"id": 1}, {1: "2026-10-31"}, {}) == ("2026-10", True)  # article date

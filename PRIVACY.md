@@ -30,6 +30,10 @@ Each service is contacted only when you have set it up.
 
 Each service's own privacy policy applies to what it receives.
 
+The plugin's MCP server (it lets Claude search your graded studies) reads your local databases
+only and makes no network calls. The answers it returns are processed in your own Claude Code
+session like any other tool result.
+
 ## Deleting your data
 
 Delete the data folder, the reports folder and, if you use it, the Obsidian export folder.

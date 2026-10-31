@@ -3,6 +3,7 @@
   "name": "CRO Echo",
   "domain": "Conversion rate optimization and experimentation",
   "scope": "Conversion rate optimization and online experimentation: A/B and multivariate tests, UX studies with measured outcomes, checkout and funnel research, pricing tests, experimentation methods and statistics. Out of scope: SEO, paid-ads bidding, email deliverability, best-practice lists and opinion without test data.",
+  "grouping_mode": "questions",
   "subtopics": ["Landing pages", "Checkout & cart", "Forms & sign-up", "Pricing & plans", "Copy & messaging", "CTAs & buttons", "Navigation & search", "Product pages", "Social proof & trust", "Personalization", "Onboarding & activation", "Mobile UX", "Page speed", "Experimentation methods & statistics", "Other"],
   "metrics": ["Conversion rate", "Revenue per visitor", "Average order value", "Click-through rate", "Sign-ups & leads", "Cart abandonment", "Bounce & engagement", "Activation rate", "Retention & churn", "Task success & usability", "Statistical power & error rates", "Other"],
   "sources": [

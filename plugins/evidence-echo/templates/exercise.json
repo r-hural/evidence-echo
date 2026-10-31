@@ -3,8 +3,49 @@
   "name": "Exercise Echo",
   "domain": "Exercise science",
   "scope": "Exercise science: training studies, RCTs and meta-analyses on strength, hypertrophy, endurance, recovery and injury. Research tracking only, not training, medical or rehabilitation advice. Out of scope: workout programs, gear reviews, athlete news, opinion without data.",
+  "grouping_mode": "findings",
   "subtopics": ["Strength", "Hypertrophy", "Training volume & frequency", "Intensity & proximity to failure", "Endurance training", "HIIT & sprint training", "Concurrent training", "Recovery & sleep", "Injury prevention & rehab", "Flexibility & mobility", "Ageing & sarcopenia", "Exercise & health outcomes", "Sports performance", "Ergogenic aids", "Other"],
   "metrics": ["Maximal strength", "Muscle size", "Power & speed", "VO2max", "Endurance performance", "Body composition", "Injury rate", "Pain & function", "Recovery markers", "Health & mortality outcomes", "Adherence", "Other"],
+  "grading": {
+    "tiers": {
+      "A": "Randomised controlled trial in humans, or a meta-analysis of such trials.",
+      "B": "Large observational cohort in humans, or a meta-analysis of observational studies.",
+      "C": "Small uncontrolled trial, case series or cross-sectional study.",
+      "D": "Single case or practitioner anecdote with measured numbers."
+    },
+    "study_types": [
+      "rct",
+      "meta_analysis",
+      "observational",
+      "survey",
+      "case_series",
+      "anecdote",
+      "animal",
+      "lab"
+    ],
+    "caps": {
+      "study_type": {
+        "animal": "C",
+        "lab": "C"
+      },
+      "text_basis": {
+        "abstract_only": "B"
+      }
+    },
+    "labels": [
+      "observational",
+      "animal",
+      "lab",
+      "preprint",
+      "abstract_only"
+    ],
+    "red_flags": [
+      "surrogate_outcome",
+      "animal_to_human",
+      "small_sample"
+    ],
+    "disclaimer": "Summary of published studies, not medical, health or training advice."
+  },
   "sources": [
     { "type": "rss",   "name": "European Journal of Applied Physiology",              "url": "https://link.springer.com/search.rss?facet-journal-id=421" },
     { "type": "rss",   "name": "BMC Sports Science, Medicine and Rehabilitation",     "url": "https://link.springer.com/search.rss?facet-journal-id=13102" },

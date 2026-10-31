@@ -35,7 +35,9 @@ def test_stated(value, expected):
     (None, {}, (None, None)),
 ])
 def test_cap_tier(tier, facts, expected):
-    assert grading.cap_tier(tier, facts) == expected
+    capped, capped_from, reasons = grading.cap_tier(tier, facts)
+    assert (capped, capped_from) == expected
+    assert bool(reasons) == (capped_from is not None)
 
 
 def test_fact_numbers_tolerates_bad_shapes():
@@ -170,3 +172,15 @@ def test_word_quote_still_needs_enough_words_and_the_text():
     assert _words("50%", "Half of", "Half of it was fine") == "none"
     assert grading.check_quotes([{"number": "80%", "quote": "Four in five marketers said so."}],
                                 ["80%"], "Other text entirely.") == "none"
+
+
+def test_quote_found_normalises():
+    text = 'Variant pages saw "+4.2%" organic clicks - across 12k pages.'
+    assert grading.quote_found("Variant pages saw “+4.2%” organic  clicks – across 12k pages.", text)
+    assert not grading.quote_found("Variant pages saw nothing at all", text)
+    assert not grading.quote_found(None, text) and not grading.quote_found("Variant pages saw", "")
+
+
+def test_quote_found_needs_three_words():
+    assert not grading.quote_found("rose 31%", "Click-through rose 31% on forty pages.")
+    assert grading.quote_found("rose 31% on", "Click-through rose 31% on forty pages.")

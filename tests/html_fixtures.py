@@ -2,7 +2,8 @@
 """Builders for render.model objects, for the pure HTML renderer tests (no database)."""
 from html.parser import HTMLParser
 
-from evidence_echo.render.model import Entry, Link, Report, SeenEntry, Topic, TopicStudy
+from evidence_echo.render.model import (Entry, FindingRow, FindingsSubtopic, FindingView, Link, Report, SeenEntry,
+                                        Topic, TopicStudy)
 
 
 def view(**over) -> dict:
@@ -10,7 +11,8 @@ def view(**over) -> dict:
     base = {"flags": [], "provenance": {"conducted_by": None, "relation": None,
                                         "conflict_of_interest": None},
             "quote_check": "ok", "missing_numbers": [], "capped_from": None,
-            "judged_from": "full_text", "metric": None, "baseline": None, "gap_note": None}
+            "judged_from": "full_text", "metric": None, "baseline": None, "gap_note": None,
+            "grade_labels": [], "cap_reasons": []}
     provenance = over.pop("provenance", None)
     base.update(over)
     if provenance:
@@ -87,3 +89,22 @@ def refs(page: str) -> Refs:
     parser = Refs()
     parser.feed(page)
     return parser
+
+
+def finding(position: int = 1, **over) -> FindingView:
+    base = dict(position=position, text=f"Clicks rose {position}%", quote=f"Clicks rose {position}% on forty pages.",
+                quote_checked=True, metric_slug="clicks", metric_name="Clicks", measure="organic clicks")
+    base.update(over)
+    return FindingView(**base)
+
+
+def finding_row(study_id: int = 3, **over) -> FindingRow:
+    base = dict(study_id=study_id, name=f"Study {study_id}", tier="B", labels=[], date="2026-08",
+                reported=False, finding=finding(), state="done")
+    base.update(over)
+    return FindingRow(**base)
+
+
+def findings_subtopic(rows, key: str = "local", name: str = "Local", subtopic_id: int | None = 1) -> FindingsSubtopic:
+    return FindingsSubtopic(key=key, subtopic_id=subtopic_id, name=name, rows=list(rows))
+

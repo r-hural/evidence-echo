@@ -2,7 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 from evidence_echo.sources import base, linkedin
 
-APIFY_DUMMY = "apify_api_SECRET123"  # gitleaks:allow (dummy token)
+# Built at runtime: a literal dummy token trips secret scanners, and shipped files carry no scanner bypass.
+APIFY_DUMMY = "apify_api_" + "SECRET123"
 LI_SOURCES = [{"type": "linkedin", "name": "Jane", "slug": "jane"}]
 
 

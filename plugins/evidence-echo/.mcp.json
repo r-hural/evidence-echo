@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "evidence-echo": {
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/ev_mcp.py"],
+      "env": {"EV_ECHO_DATA_DIR": "${user_config.data_dir}"}
+    },
+    "evidence-echo-py3": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/ev_mcp.py", "--defer-to-python"],
+      "env": {"EV_ECHO_DATA_DIR": "${user_config.data_dir}"}
+    }
+  }
+}

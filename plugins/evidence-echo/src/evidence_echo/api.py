@@ -15,7 +15,7 @@ from pathlib import Path
 
 import numpy as np
 
-from evidence_echo.core import config, embedders, interfaces, knowledge, legacy, llm_api, overview as overview_mod, settings, similarity, store, topics
+from evidence_echo.core import config, embedders, grading, interfaces, knowledge, legacy, llm_api, overview as overview_mod, settings, similarity, store, topics
 from evidence_echo.core.settings import ConfigError
 from evidence_echo.core.urls import canonical_url
 from evidence_echo.render import html as html_render
@@ -33,6 +33,9 @@ from evidence_echo.sources import page as page_kind
 from evidence_echo.sources import rss as rss_kind
 from evidence_echo.stages import fallback as fallback_stage
 from evidence_echo.stages import classify
+from evidence_echo.stages import dupcheck
+from evidence_echo.stages import findings as findings_stage
+from evidence_echo.stages import regrade, reverify
 from evidence_echo.stages import group as group_stage
 from evidence_echo.stages import fetch as fetch_stage
 from evidence_echo.stages import judge, match, relate, report, schedule, triage, verify
@@ -41,13 +44,17 @@ from evidence_echo.stages import split as split_stage
 
 LLM_STAGES = {"triage": triage, "judge": judge, "match": match, "verify": verify,
               "relate": relate, "primary": primary_stage, "classify": classify,
-              "group": group_stage, "split": split_stage}
+              "group": group_stage, "split": split_stage, "regrade": regrade, "reverify": reverify,
+              "findings": findings_stage, "dupcheck": dupcheck}
 EMIT_STAGES = {**LLM_STAGES, "report": report}
 # Stages answered twice, blind (SP3b): `apply --stage <stage> <file_a> <file_b>`. Each name is also
 # an LLM_STAGES entry whose module has apply(conn, payload_a: str, payload_b: str) -> dict.
-# Append only: SP3b-T adds "relate", SP3b-P adds "primary".
-TWO_ANSWER_STAGES: tuple[str, ...] = ("relate", "primary")
+# Append only: SP3b-T adds "relate", SP3b-P adds "primary", the duplicate check adds "dupcheck".
+TWO_ANSWER_STAGES: tuple[str, ...] = ("relate", "primary", "dupcheck")
 RELATE_OFF = "relate is off (ev config set relate on, or EV_ECHO_RELATE=on)"
+QUOTES_MODE = "grouping_mode quotes"   # group, split and relate work on questions, which quotes mode does not show
+NOT_READY = "findings not grouped yet"   # findings mode: relate waits for the backfill and the grouping
+QUOTES_SKIPPED = ("group", "split", "relate")
 FRONT_END_ERRORS = Exception  # HTML / Obsidian run after the commit: any failure is reported, never raised
 RESET_TARGET = {  # reset --stage X puts items of these states back one step
     "triage": (("triaged", "rejected_triage"), "fetched"),
@@ -56,7 +63,7 @@ RESET_TARGET = {  # reset --stage X puts items of these states back one step
     "verify": (("verified",), "matched"),
     "report": (("reported",), "verified"),
 }
-RESET_STAGES = (*RESET_TARGET, "classify", "group", "split", "relate")   # classify and group re-arm studies; split drops proposals; relate asks every question again
+RESET_STAGES = (*RESET_TARGET, "classify", "group", "split", "relate", "regrade", "findings", "dupcheck")   # classify and group re-arm studies; split drops proposals; relate asks every question again
 
 
 def _connect(cfg):
@@ -143,8 +150,20 @@ def sources_doctor(cfg) -> dict:
     return {"topic": cfg.topic.id, "sources": rows}
 
 
+def _findings_skipped(cfg) -> str | None:
+    """Why the findings stage emits nothing: questions mode keeps no findings list; batch 0 is off."""
+    if cfg.grouping_mode == "questions":
+        return findings_stage.QUESTIONS_MODE
+    if cfg.findings_batch == 0:
+        return findings_stage.OFF
+    return None
+
+
 def emit(cfg, stage: str) -> str:
     mod = _pick(stage, EMIT_STAGES)
+    if stage in QUOTES_SKIPPED and cfg.grouping_mode == "quotes":
+        return json.dumps({**json.loads(interfaces.envelope(stage, QUOTES_MODE, [], cfg.topic)),
+                           "skipped": QUOTES_MODE}, ensure_ascii=False, indent=2)
     if stage == "relate" and cfg.relate == "off":
         return interfaces.envelope("relate", RELATE_OFF, [], cfg.topic)
     if mod is primary_stage and cfg.primary_check != "on":
@@ -154,15 +173,32 @@ def emit(cfg, stage: str) -> str:
     if mod is classify and cfg.classify_batch == 0:
         return json.dumps({**json.loads(interfaces.envelope("classify", classify.OFF, [], cfg.topic)),
                            "skipped": classify.OFF}, ensure_ascii=False, indent=2)
+    if mod is findings_stage and (reason := _findings_skipped(cfg)):
+        return json.dumps({**json.loads(interfaces.envelope("findings", reason, [], cfg.topic)),
+                           "skipped": reason, "done": 0, "pending": 0}, ensure_ascii=False, indent=2)
     with _topic_db(cfg) as conn:
         if mod is report:
             return report.emit(conn, cfg.topic, cfg.output_language)
         if mod is classify:
             return classify.emit(conn, cfg.topic, cap=cfg.classify_batch)
+        if mod is regrade:
+            return regrade.emit(conn, cfg.topic, cap=cfg.regrade_batch)
+        if mod is findings_stage:
+            return findings_stage.emit(conn, cfg.topic, cap=cfg.findings_batch)
         if mod is primary_stage:
             return mod.emit(conn, cfg.topic, primary_stage.default_ctx(fetch_cache.for_config(cfg)))
+        if mod is dupcheck:
+            return mod.emit(conn, cfg.topic, _study_vectors(cfg, conn))
         if mod is match:
             return mod.emit(conn, cfg.topic, embedder=embedders.build(cfg))
+        if mod is group_stage:
+            return mod.emit(conn, cfg.topic, store.question_mode(cfg.grouping_mode))
+        if mod is relate:
+            mode = store.question_mode(cfg.grouping_mode)
+            if mode == "findings" and not knowledge.relate_ready(conn):
+                return json.dumps({**json.loads(interfaces.envelope("relate", NOT_READY, [], cfg.topic)),
+                                   "skipped": NOT_READY}, ensure_ascii=False, indent=2)
+            return mod.emit(conn, cfg.topic, mode)
         return mod.emit(conn, cfg.topic)
 
 
@@ -179,6 +215,10 @@ def apply(cfg, stage: str, payload: str, ruling: bool = False, payload_b: str | 
                               f"apply --stage {stage} <file_a> <file_b>")
         mod = _pick(stage, LLM_STAGES)
         with _topic_db(cfg) as conn:
+            if mod is relate:
+                return mod.apply(conn, payload, payload_b, store.question_mode(cfg.grouping_mode))
+            if mod is dupcheck:
+                return mod.apply(conn, payload, payload_b, _study_vectors(cfg, conn))
             return mod.apply(conn, payload, payload_b)
     if payload_b is not None:
         raise ConfigError(f"--stage {stage} takes one results file, got two")
@@ -190,14 +230,26 @@ def apply(cfg, stage: str, payload: str, ruling: bool = False, payload_b: str | 
     mod = _pick(stage, LLM_STAGES)
     with _topic_db(cfg) as conn:
         if ruling:
-            return verify.apply(conn, payload, ruling=True)
+            return verify.apply(conn, payload, cfg.topic, ruling=True)
+        if mod is judge:
+            return judge.apply(conn, payload, cfg.topic)
+        if mod is verify:
+            return verify.apply(conn, payload, cfg.topic)
+        if mod is reverify:
+            return reverify.apply(conn, payload, cfg.topic)
+        if mod is regrade:
+            return regrade.apply(conn, payload, cfg.topic)
         if mod is match:
             embedder = embedders.build(cfg)
             return mod.apply(conn, payload, tag=embedder.tag if embedder else None)
+        if mod is group_stage:
+            return mod.apply(conn, payload, store.question_mode(cfg.grouping_mode))
         return mod.apply(conn, payload)
 
 
 def run_api(cfg, stage: str) -> dict:
+    if stage in QUOTES_SKIPPED and cfg.grouping_mode == "quotes":
+        return {"processed": 0, "rejected": [], "skipped": QUOTES_MODE}
     if stage == "relate" and cfg.relate == "off":
         return {"processed": 0, "rejected": [], "skipped": RELATE_OFF}
     mod = _pick(stage, LLM_STAGES)
@@ -207,15 +259,34 @@ def run_api(cfg, stage: str) -> dict:
         return {"processed": 0, "agreed": 0, "undecided": 0, "rejected": [], **PRIMARY_OFF}
     if mod is classify and cfg.classify_batch == 0:
         return {"processed": 0, "rejected": [], "waiting": 0, "skipped": classify.OFF}
+    if mod is findings_stage and (reason := _findings_skipped(cfg)):
+        return {"processed": 0, "rejected": [], "done": 0, "pending": 0, "skipped": reason}
+    if mod is regrade and cfg.regrade_batch == 0:   # off, but the code-only re-cap still runs
+        with _topic_db(cfg) as conn:
+            return regrade.run_api(conn, None, cfg.topic, cap=0)
+    if mod is relate and cfg.grouping_mode == "findings":   # nothing to ask (and no key needed) until grouped
+        with _topic_db(cfg) as conn:
+            if not knowledge.relate_ready(conn):
+                return {"processed": 0, "rejected": [], "skipped": NOT_READY}
     backend = llm_api.AnthropicBackend(cfg.anthropic_api_key)
     with _topic_db(cfg) as conn:
+        if mod is regrade:
+            return regrade.run_api(conn, backend, cfg.topic, cap=cfg.regrade_batch)
         if mod is classify:
             return classify.run_api(conn, backend, cfg.topic, cap=cfg.classify_batch)
+        if mod is findings_stage:
+            return findings_stage.run_api(conn, backend, cfg.topic, cap=cfg.findings_batch)
         if mod is primary_stage:
             return mod.run_api(conn, backend, cfg.topic,
                                primary_stage.default_ctx(fetch_cache.for_config(cfg)))
         if mod is match:
             return mod.run_api(conn, backend, cfg.topic, embedder=embedders.build(cfg))
+        if mod is group_stage:
+            return mod.run_api(conn, backend, cfg.topic, store.question_mode(cfg.grouping_mode))
+        if mod is relate:
+            return mod.run_api(conn, backend, cfg.topic, store.question_mode(cfg.grouping_mode))
+        if mod is dupcheck:
+            return mod.run_api(conn, backend, cfg.topic, _study_vectors(cfg, conn))
         return mod.run_api(conn, backend, cfg.topic)
 
 
@@ -230,8 +301,13 @@ def embed(cfg) -> dict:
 
 
 def _topic_model(cfg) -> render_model.Topic:
+    from evidence_echo import search   # search.py imports api
+    try:
+        runs = search.list_runs(cfg.data_dir, cfg.topic.id)
+    except OSError:
+        runs = []
     with _connect(cfg) as conn:
-        return render_model.build_topic(conn, cfg.topic, datetime.now(timezone.utc))
+        return render_model.build_topic(conn, cfg.topic, datetime.now(timezone.utc), cfg.grouping_mode, runs)
 
 
 def _json_safe(result):
@@ -240,9 +316,14 @@ def _json_safe(result):
 
 
 def render_report(cfg, payload: str, rejections: bool = False) -> dict:
+    if cfg.search_run:
+        raise ConfigError("a search has no topic report; its answer page comes from `ev search render`")
     with _connect(cfg) as conn:
         out, rep, previous = report.render_with_model(conn, payload, cfg.reports_dir, cfg.output_language,
-                                            cfg.topic, md_dir=cfg.md_dir)
+                                            cfg.topic, md_dir=cfg.md_dir, mode=cfg.grouping_mode)
+    with _connect(cfg) as conn:   # re-grades since the previous report, and what is still queued
+        out["regrade"] = store.regrade_counts(conn, grading.rules_hash(grading.rules_of(cfg.topic)),
+                                              store.latest_report_time(conn) if out.get("skipped") else previous)
     if out.get("skipped"):   # no new studies: nothing was written, so nothing to rebuild
         return out
     # the report is committed: no failure below may invite a re-render (exit code stays 0)
@@ -285,6 +366,18 @@ def render_report(cfg, payload: str, rejections: bool = False) -> dict:
     return out
 
 
+def refresh_topic_page(cfg) -> dict:
+    """Write the topic page again outside a report run, so its Searches list links a search's answer page
+    as soon as the page exists. `cfg` is the topic's (not a search run's). Returns {"topic": path}, {} when
+    nothing was written, or {"topic_page_error": ...}: the caller's own result always stands."""
+    if cfg.html_reports != "on" or not cfg.db_path.exists():
+        return {}
+    try:
+        return _json_safe(html_render.write_topic_page(_topic_model(cfg), cfg.reports_dir, cfg.overview_dir))
+    except FRONT_END_ERRORS as exc:
+        return {"topic_page_error": str(exc)}
+
+
 def _write_rejections(cfg, out: dict, previous: str | None) -> None:
     """The paired rejections report (Markdown, and HTML when html_reports is on) for the window
     since the previous report; sets out["rejections"]. The Markdown sits next to the report's
@@ -295,9 +388,10 @@ def _write_rejections(cfg, out: dict, previous: str | None) -> None:
         rows = rejections_render.rows_in_window(store.rejected_items(conn), previous,
                                                 datetime.now(timezone.utc))
     name = cfg.topic.name
+    disclaimer = grading.rules_of(cfg.topic).get("disclaimer")
     target = rejections_render.paired_path(md)
     with open(target, "x", encoding="utf-8") as fh:
-        fh.write(rejections_render.markdown(name, previous, rows))
+        fh.write(rejections_render.markdown(name, previous, rows, disclaimer))
     info = {"path": str(target), "count": len(rows)}
     if cfg.html_reports == "on":
         html_target = rejections_render.paired_path(visible).with_suffix(".html")
@@ -306,21 +400,39 @@ def _write_rejections(cfg, out: dict, previous: str | None) -> None:
             fh.write(rejections_render.html_page(
                 name, previous, rows, visible.with_suffix(".html").name,
                 html_render.href(cfg.overview_dir / "overview.html", html_target.parent),
-                html_render.href(topic_page, html_target.parent)))
+                html_render.href(topic_page, html_target.parent), disclaimer))
         info["html"] = str(html_target)
     out["rejections"] = info
 
 
-def reset(cfg, stage: str) -> dict:
+def reset(cfg, stage: str, study: str | None = None) -> dict:
+    if study is not None and stage != "findings":
+        raise ConfigError("--study goes only with --stage findings")
+    if stage == "findings":   # every study (or the one) is split into findings again on the next run
+        sid = None
+        if study is not None:
+            if not re.fullmatch(r"s[0-9]+", study):
+                raise ConfigError(f"--study must look like s12, got '{study}'")
+            sid = int(study[1:])
+        with _connect(cfg) as conn:
+            return {"reset": "findings", **store.clear_findings(conn, sid)}
     if stage == "group":      # unpinned studies are grouped again; owner moves and merges survive
         with _connect(cfg) as conn:
+            if cfg.grouping_mode == "findings":
+                return {"reset": "group", "findings": store.clear_finding_grouping(conn)}
             return {"reset": "group", "studies": store.clear_grouping(conn)}
     if stage == "relate":     # every question is asked again on the next run
         with _connect(cfg) as conn:
-            return {"reset": "relate", "questions": store.clear_question_explanations(conn)}
+            return {"reset": "relate", "questions": store.clear_question_explanations(conn, cfg.grouping_mode)}
     if stage == "split":      # pending proposals go; decided ones and accepted moves stay
         with _connect(cfg) as conn:
             return {"reset": "split", **store.clear_pending_splits(conn)}
+    if stage == "dupcheck":   # every weak duplicate pair is checked again; the owner's verdicts stay
+        with _connect(cfg) as conn:
+            return {"reset": "dupcheck", "pairs": store.clear_pair_checks(conn)}
+    if stage == "regrade":    # every study is graded again under the current rules on the next run
+        with _connect(cfg) as conn:
+            return {"reset": "regrade", "items": store.clear_graded_rules(conn)}
     if stage == "classify":   # a separate path: clears the studies' classified marks, no item state
         with _connect(cfg) as conn:
             return {"reset": "classify", "studies": store.clear_classified(conn)}
@@ -333,8 +445,10 @@ def reset(cfg, stage: str) -> dict:
             conn.execute(f"""UPDATE items SET quotes=NULL, quote_check=NULL, capped_from=NULL,
                              judged_from=NULL, provenance=NULL, judge_tier=NULL,
                              subtopic_choice=NULL, metric_code=NULL, direction=NULL, entity_names=NULL,
-                             headline=NULL, data_date=NULL, judge_reason=NULL
+                             headline=NULL, data_date=NULL, judge_reason=NULL, findings=NULL
                              WHERE state IN ({qmarks})""", states)
+            conn.execute("UPDATE items SET " + ", ".join(f"{c}=NULL" for c in store._STEP15_ITEM_NAMES)
+                         + f" WHERE state IN ({qmarks})", states)
         conn.execute(f"UPDATE items SET state=? WHERE state IN ({qmarks})",
                      (target, *states))
         if stage == "match":  # back to judged: match assigns the study again
@@ -430,9 +544,11 @@ def _summaries(ws) -> list:
                     report_row = store.latest_report(conn)
                     recent = store.recent_studies(conn, depth) if report_row else None
             except sqlite3.Error as exc:
-                out.append(overview_mod.TopicSummary(t.id, t.name, error=f"{db}: {exc}"))
+                out.append(overview_mod.TopicSummary(t.id, t.name, error=f"{db}: {exc}",
+                                                     disclaimer=grading.rules_of(t).get("disclaimer")))
                 continue
-        out.append(overview_mod.TopicSummary(t.id, t.name, report=report_row, recent=recent))
+        out.append(overview_mod.TopicSummary(t.id, t.name, report=report_row, recent=recent,
+                                             disclaimer=grading.rules_of(t).get("disclaimer")))
     return out
 
 
@@ -471,11 +587,18 @@ def topic_add(ws, topic_id, template=None, name=None, domain=None, scope=None) -
         t = topics.create_from_template(ws.topics_dir, topic_id, template, config.TEMPLATES_DIR)
     else:
         t = topics.create_blank(ws.topics_dir, topic_id, name, domain, scope)
-    return topics.to_dict(t)
+    return {**topics.to_dict(t),
+            "suggested_grouping_mode": (topics.template_grouping_mode(template, config.TEMPLATES_DIR)
+                                        if template else None)}
 
 
 def topic_show(ws, topic_id) -> dict:
     return topics.to_dict(topics.load_topic(ws.topics_dir, topic_id))
+
+
+def topic_grading(ws, topic_id) -> dict:
+    t = topics.load_topic(ws.topics_dir, topic_id)
+    return {"topic": t.id, "source": t.grading_source, "grading": t.grading}
 
 
 def topic_set(ws, topic_id, key, value) -> dict:
@@ -999,18 +1122,58 @@ def studies_show(cfg, study_id: int) -> dict:
                 "resolves_to": resolves_to}
 
 
-def studies_duplicates(cfg, count_only: bool = False):
+def _study_vectors(cfg, conn) -> dict | None:
+    """Study id -> unit vector for the "similar text" duplicate rule; None without an embedder."""
     embedder = embedders.build(cfg)
+    return similarity.study_vectors(conn, embedder.tag) if embedder else None
+
+
+def _hidden(pair: dict, row: dict) -> str | None:
+    """Why a possible-duplicate pair is left out of the review: the owner said different, or both blind
+    checks did (only for a weak rule, and only under the current check prompt)."""
+    if row.get("owner_verdict") == "different":
+        return "owner: different studies"
+    if (dupcheck.weak(pair["rule"]) and row.get("check_verdict") == "different"
+            and row.get("check_version") == dupcheck.PROMPT_VERSION):
+        return "check: different studies"
+    return None
+
+
+def studies_duplicates(cfg, count_only: bool = False, include_hidden: bool = False):
+    """Possible duplicate pairs still to review. Each carries the duplicate check's verdict (`check`, None
+    when not checked); pairs found different are left out, or listed with `hidden` with include_hidden."""
     with _connect(cfg) as conn:
-        vectors = similarity.study_vectors(conn, embedder.tag) if embedder else None
-        pairs = store.duplicate_pairs(conn, vectors, threshold=similarity.DUPLICATE_SIM)
+        pairs = store.duplicate_pairs(conn, _study_vectors(cfg, conn), threshold=similarity.DUPLICATE_SIM)
+        decided = store.pair_decisions(conn)
+    shown = []
+    for p in pairs:
+        row = decided.get(tuple(sorted((p["keep"], p["other"])))) or {}
+        hidden = _hidden(p, row)
+        if hidden and not include_hidden:
+            continue
+        check = ({"verdict": row["check_verdict"], "note": row.get("check_note")}
+                 if row.get("check_verdict") and row.get("check_version") == dupcheck.PROMPT_VERSION else None)
+        shown.append({**p, "check": check, **({"hidden": hidden} if hidden else {})})
     if count_only:
-        return {"count": len(pairs)}
+        return {"count": sum(1 for p in shown if "hidden" not in p)}
     keep = ("id", "canonical_name", "findings", "research_timeframe", "evidence_tier",
             "editions", "series_name", "primary_url")
-    return {"pairs": [{"keep": p["keep"], "other": p["other"], "rule": p["rule"],
+    return {"pairs": [{"keep": p["keep"], "other": p["other"], "rule": p["rule"], "check": p["check"],
+                       **({"hidden": p["hidden"]} if "hidden" in p else {}),
                        "keep_study": {k: p["keep_study"][k] for k in keep},
-                       "other_study": {k: p["other_study"][k] for k in keep}} for p in pairs]}
+                       "other_study": {k: p["other_study"][k] for k in keep}} for p in shown]}
+
+
+def studies_distinct(cfg, a: int, b: int, undo: bool = False) -> dict:
+    """The owner's "different studies" for one pair: it never comes back to the duplicate review."""
+    if a == b:
+        raise ConfigError("give two different study ids")
+    with _connect(cfg) as conn:
+        for sid in (a, b):
+            if store.get_study(conn, sid) is None:
+                raise ConfigError(f"no study {sid}")
+        store.set_pair_owner(conn, a, b, None if undo else "different")
+    return {"pair": sorted((a, b)), "distinct": not undo}
 
 
 SIMILARITY_CUTOFFS = (0.70, 0.75, 0.80, 0.85, 0.90, 0.95)
@@ -1090,16 +1253,48 @@ def _owner_call(fn, *args, **kwargs):
         raise ConfigError(str(exc)) from exc
 
 
-def questions_list(cfg, subtopic: str | None = None) -> dict:
-    """Every question with its study count, independent groups and label (merged ones show 0 studies)."""
+def _questions_note(cfg, out: dict) -> dict:
+    """Quotes mode keeps the questions but does not show them: say so next to the owner's commands."""
+    if cfg.grouping_mode == "quotes":
+        return {**out, "note": f"topic {cfg.topic.id} is in quotes mode: questions are kept but not shown"}
+    return out
+
+
+def _question_mode(cfg, mode: str | None) -> str:
+    """The question mode a command works with: the flag, else the topic's current one."""
+    if mode is None:
+        return store.question_mode(cfg.grouping_mode)
+    if mode not in store.QUESTION_MODES:
+        raise ConfigError(f"--mode must be one of {', '.join(store.QUESTION_MODES)}")
+    return mode
+
+
+def _check_question_mode(conn, number: int, mode: str | None) -> None:
+    """With an explicit --mode, the question must belong to it."""
+    if mode is None:
+        return
+    question = store.get_question(conn, number)
+    if question is not None and question["mode"] != mode:
+        raise ConfigError(f"q{number} is a {question['mode']}-mode question, not {mode}")
+
+
+def questions_list(cfg, subtopic: str | None = None, mode: str | None = None) -> dict:
+    """Every question of the mode (default: the topic's current one) with its study count, independent
+    groups and label (merged ones show 0 studies)."""
+    mode = _question_mode(cfg, mode)
     with _topic_db(cfg) as conn:
         if subtopic is not None and store.get_subtopic(conn, subtopic) is None:
             raise ConfigError(f"no subtopic '{subtopic}' (ev subtopics list shows them)")
-        groups = {g.question_id: g for sub in knowledge.evidence(conn) for g in sub.questions}
-        placed, _ = knowledge.placed_studies(conn)
-        alone = {question["id"] for _, _, question in placed if question is not None} - set(groups)
+        evidence = knowledge.evidence(conn, mode)
+        groups = {g.question_id: g for sub in evidence for g in sub.questions}
+        if mode == "findings":
+            alone = {o.question_id for sub in evidence for o in sub.others if o.question_id is not None}
+        else:
+            placed, _ = knowledge.placed_studies(conn)
+            alone = {question["id"] for _, _, question in placed if question is not None}
+        alone -= set(groups)
         out = []
-        for question in store.list_questions(conn):
+        for question in store.list_questions(conn, mode):
             resolved = store.resolve_subtopic(conn, question["subtopic_id"])
             slug = resolved["slug"] if resolved else None
             if subtopic is not None and slug != subtopic:
@@ -1113,27 +1308,31 @@ def questions_list(cfg, subtopic: str | None = None) -> dict:
                         "label": group.label if group else None,
                         "merged_into": f"q{question['merged_into']}" if question["merged_into"] else None,
                         "owner_touched": bool(question["owner_touched"])})
-        return {"questions": out}
+        return _questions_note(cfg, {"questions": out})
 
 
 def questions_rename(cfg, qid, text: str, measure: str | None = None, kind: str | None = None,
-                     comparison: str | None = None) -> dict:
+                     comparison: str | None = None, mode: str | None = None) -> dict:
     number = _owner_id(qid, "q", "the question id")
+    if mode is not None:
+        mode = _question_mode(cfg, mode)
     with _topic_db(cfg) as conn:
-        return _owner_call(store.rename_question, conn, number, text, measure, kind, comparison)
+        _check_question_mode(conn, number, mode)
+        return _questions_note(cfg, _owner_call(store.rename_question, conn, number, text, measure, kind,
+                                                comparison))
 
 
-def questions_merge(cfg, qid, into) -> dict:
+def questions_merge(cfg, qid, into, mode: str | None = None) -> dict:
     a, b = _owner_id(qid, "q", "the question id"), _owner_id(into, "q", "the target question id")
+    if mode is not None:
+        mode = _question_mode(cfg, mode)
     with _topic_db(cfg) as conn:
-        return _owner_call(store.merge_questions, conn, a, b)
+        _check_question_mode(conn, a, mode)
+        _check_question_mode(conn, b, mode)
+        return _questions_note(cfg, _owner_call(store.merge_questions, conn, a, b))
 
 
-def questions_move(cfg, sid, qid=None, new: str | None = None, measure: str | None = None,
-                   kind: str | None = None, comparison: str | None = None) -> dict:
-    """Place a study in a question of any subtopic (its subtopic follows), or in a new question of
-    its own subtopic (--new TEXT --measure M --kind K [--comparison C])."""
-    study_id = _owner_id(sid, "s", "the study id")
+def _move_option_rules(qid, new, measure, kind, comparison) -> None:
     if (qid is None) == (new is None):
         raise ConfigError("give either a question id or --new TEXT --measure MEASURE")
     if new is None and (measure is not None or kind is not None or comparison is not None):
@@ -1146,6 +1345,16 @@ def questions_move(cfg, sid, qid=None, new: str | None = None, measure: str | No
         raise ConfigError("a difference question needs --comparison")
     if new is not None and kind != "difference" and comparison:
         raise ConfigError(f"a {kind} question has no --comparison")
+
+
+def questions_move(cfg, sid, qid=None, new: str | None = None, measure: str | None = None,
+                   kind: str | None = None, comparison: str | None = None, mode: str | None = None) -> dict:
+    """Place a study in a question of any subtopic (its subtopic follows), or in a new question of
+    its own subtopic (--new TEXT --measure M --kind K [--comparison C]). Findings mode moves findings."""
+    if _question_mode(cfg, mode) == "findings":
+        raise ConfigError("in findings mode, move a finding: ev findings move f<id> q<id>")
+    study_id = _owner_id(sid, "s", "the study id")
+    _move_option_rules(qid, new, measure, kind, comparison)
     number = None if qid is None else _owner_id(qid, "q", "the question id")
     with _topic_db(cfg) as conn:
         created = None
@@ -1165,12 +1374,74 @@ def questions_move(cfg, sid, qid=None, new: str | None = None, measure: str | No
                 conn.execute("DELETE FROM questions WHERE id=?", (created,))
                 conn.commit()
             raise
+        return _questions_note(cfg, {**out, "created": f"q{created}"} if created is not None else out)
+
+
+def findings_list(cfg, study: str | None = None, question: str | None = None) -> dict:
+    """The topic's findings (optionally of one study, or under one question; merges resolved)."""
+    study_id = None if study is None else _owner_id(study, "s", "the study id")
+    question_id = None if question is None else _owner_id(question, "q", "the question id")
+    with _topic_db(cfg) as conn:
+        if study_id is not None and store.get_study(conn, study_id) is None:
+            raise ConfigError(f"no study s{study_id}")
+        if question_id is not None:
+            final = store.resolve_question(conn, question_id)
+            if final is None:
+                raise ConfigError(f"no question q{question_id}")
+            question_id = final["id"]
+        out = []
+        for owner in ([study_id] if study_id is not None else sorted(store.findings_by_study(conn))):
+            for f in store.study_findings(conn, owner):
+                final = store.resolve_question(conn, f["question_id"]) if f["question_id"] is not None else None
+                if question_id is not None and (final is None or final["id"] != question_id):
+                    continue
+                out.append({"id": f"f{f['id']}", "study": f"s{f['study_id']}", "position": f["position"],
+                            "text": f["text"], "quote_checked": bool(f["quote_checked"]),
+                            "metric": f["metric_slug"], "question": f"q{final['id']}" if final else None,
+                            "direction": f["direction"], "by_owner": bool(f["by_owner"])})
+        return {"findings": out}
+
+
+def findings_move(cfg, fid, qid=None, new: str | None = None, measure: str | None = None,
+                  kind: str | None = None, comparison: str | None = None) -> dict:
+    """Put a finding under a findings-mode question (or a new one in the study's findings subtopic) and
+    pin it. Same option rules as questions_move."""
+    finding_id = _owner_id(fid, "f", "the finding id")
+    _move_option_rules(qid, new, measure, kind, comparison)
+    number = None if qid is None else _owner_id(qid, "q", "the question id")
+    with _topic_db(cfg) as conn:
+        created = None
+        if number is None:
+            finding = store.get_finding(conn, finding_id)
+            if finding is None:
+                raise ConfigError(f"no finding f{finding_id}")
+            subtopic = store.study_subtopic(conn, store.get_study(conn, finding["study_id"]), "findings")
+            if subtopic is None:
+                raise ConfigError(f"s{finding['study_id']} has no subtopic yet, so its findings cannot "
+                                  "have a question")
+            number = created = _owner_call(store.create_question, conn, subtopic["id"], new, measure, kind,
+                                            comparison, "findings")
+        try:
+            out = _owner_call(store.move_finding, conn, finding_id, number)
+        except ConfigError:
+            if created is not None:      # a refused move leaves no empty question behind
+                conn.execute("DELETE FROM questions WHERE id=?", (created,))
+                conn.commit()
+            raise
         return {**out, "created": f"q{created}"} if created is not None else out
 
 
 def studies_merge(cfg, keep: int, other: int) -> dict:
     with _connect(cfg) as conn:
         return store.merge_studies(conn, keep, other)
+
+
+def studies_regrade(cfg, sid) -> dict:
+    """Queue one study for a re-grade on the next regrade run."""
+    study_id = _owner_id(sid, "s", "the study id")
+    with _topic_db(cfg) as conn:
+        _owner_call(store.rearm_regrade, conn, study_id)
+    return {"study": f"s{study_id}", "queued": True}
 
 
 def studies_unmerge(cfg, other: int) -> dict:
@@ -1217,7 +1488,8 @@ def export_obsidian(ws, topic_id: str | None = None) -> dict:
             continue
         try:
             with _connect(cfg) as conn:
-                model_topic = render_model.build_topic(conn, cfg.topic, datetime.now(timezone.utc))
+                model_topic = render_model.build_topic(conn, cfg.topic, datetime.now(timezone.utc),
+                                                       cfg.grouping_mode)
             rows.append({"topic": tid, **obsidian_render.export(model_topic, vault)})
         except (OSError, sqlite3.Error, ValueError) as exc:
             if chosen:

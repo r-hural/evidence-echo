@@ -16,10 +16,10 @@ from evidence_echo.core import overview as overview_mod
 from evidence_echo.render import clock
 from evidence_echo.render import evidence_text as et
 from evidence_echo.render import html_assets
-from evidence_echo.render.markdown import (NOTE_MAX, TITLE_MAX, _cut, counts_text, fact_pairs, metric_text,
+from evidence_echo.render.markdown import (NOTE_MAX, TITLE_MAX, _cut, cap_note, counts_text, fact_pairs, metric_text,
                                            quote_text,
                                            reported_value, research_pairs, subtopic_lines)
-from evidence_echo.render.model import Entry, Report, SeenEntry, Topic, TopicStudy
+from evidence_echo.render.model import Entry, FindingRow, Report, SeenEntry, Topic, TopicStudy
 
 _WEB_URL = re.compile(r"https?://[^\s\x00-\x1f\x7f]+", re.IGNORECASE)
 
@@ -64,8 +64,7 @@ def label_parts(e: Entry) -> tuple[str, list[str]]:
     if e.disputed and not e.no_quote_only:  # double grade: the verdict's tier and the skeptic's
         tier += " / skeptic: " + (", ".join(e.skeptic_tiers) if e.skeptic_tiers else "disputed")
     view = e.view
-    extras = [relation_of(e),
-              f"capped from {view['capped_from']}" if view.get("capped_from") else None,
+    extras = [*(view.get("grade_labels") or []), relation_of(e), cap_note(view),
               None if e.disputed else view.get("gap_note")]
     return tier, [x for x in extras if x]
 
@@ -89,6 +88,8 @@ def subtopic_lines_with_echo(e: Entry) -> list[tuple[str, str]]:
     if not e.subtopic:
         return []
     pairs = subtopic_lines(e.subtopic)
+    if "questions" in e.subtopic:   # findings mode: the card has its own Questions field
+        return pairs[:1]
     echo = e.subtopic.get("echo")
     if echo:
         name, value = pairs[-1]
@@ -129,8 +130,8 @@ def _dispute_html(e: Entry) -> str:
 CARD_GROUPS = (   # the card's fact groups, in order: can I trust it, what was tested, where it fits, sources & dates
     ("Red flags", "Conflict of interest", "Numbers not found in the text", "Original", "Graded from"),
     ("Measured", "Baseline", "Research", "Part of"),
-    ("Subtopic", "Question", "About"),
-    ("Published", "Reported", "Primary source", "Coverage"),
+    ("Subtopic", "Question", "Questions", "Findings", "About"),
+    ("Published", "Reported", "Primary source", "Found by search", "Coverage"),
 )
 
 
@@ -146,13 +147,43 @@ def _fact_groups(dispute: str, fields: list[tuple[str, str]]) -> list[str]:
     return groups
 
 
-def card(e: Entry, reported: str | None = None) -> str:
+def _unchecked_mark() -> str:
+    return ('<span class="ee-warn"><span class="ee-mark" aria-hidden="true">#</span>'
+            f"{esc(UNCHECKED_QUOTE)}</span>")
+
+
+def card_findings(e: Entry) -> str:
+    """The card's Findings field (quotes mode): one line per finding, an unchecked quote marked;
+    a study the findings stage has not reached shows 'waiting'."""
+    if not e.findings:
+        return '<p class="ee-f"><b>Findings:</b> waiting</p>'
+    lines = [f"{esc(f.text)} — “{esc(f.quote)}”" + ("" if f.quote_checked else " " + _unchecked_mark())
+             for f in e.findings]
+    return '<p class="ee-f"><b>Findings:</b> ' + "<br>".join(lines) + "</p>"
+
+
+def card_questions(e: Entry) -> str:
+    """The card's Questions field (findings mode): one line per question the study's findings joined, as
+    'question · label — finding text' (an unchecked quote marked)."""
+    items = []
+    for q in e.subtopic["questions"]:
+        label = f" · {esc(q['label'])}" if q.get("label") else ""
+        mark = "" if q.get("quote_checked", True) else " " + _unchecked_mark()
+        items.append(f"<li>{esc(q['question'])}{label} — {esc(q['finding'])}{mark}</li>")
+    return '<div class="ee-f ee-qs"><b>Questions:</b><ul>' + "".join(items) + "</ul></div>"
+
+
+def card(e: Entry, reported: str | None = None, searches_href: str = "searches/") -> str:
     """One study as a write-up in three columns: the rating (tier, relation, skeptic) in the
     margin, title and summary, then the named facts on one name column, in CARD_GROUPS.
-    reported is the topic page's plain 'Reported' value (escaped here)."""
+    reported is the topic page's plain 'Reported' value (escaped here). searches_href is the folder
+    of the answer pages as seen from the page the card is on (topic and report pages: "searches/")."""
     tier, extras = label_parts(e)
-    rest = (tier[len(e.tier or "?"):] + "".join(f" · {x}" for x in extras)).strip(" ·/")
+    labels = list(e.view.get("grade_labels") or [])
+    others = extras[len(labels):]
+    rest = (tier[len(e.tier or "?"):] + "".join(f" · {x}" for x in others)).strip(" ·/")
     rate = [f'<p class="label">{tier_badge(e.tier)}'
+            + "".join(f'<span class="ee-gl">{esc(x)}</span>' for x in labels)
             + (f"<span>{esc(rest)}</span>" if rest else "") + "</p>"]
     if e.disputed:
         rate.append('<span class="ee-warn"><span class="ee-mark" aria-hidden="true">≠</span>disputed</span>')
@@ -161,11 +192,24 @@ def card(e: Entry, reported: str | None = None) -> str:
         main.append(f"<p>{esc(e.summary)}</p>")
     fields = [(n, _field(n, esc(v), _mark(e) if n == "Original" else "")) for n, v in fact_pairs(e.view)]
     fields += [(n, _field(n, esc(v))) for n, v in subtopic_lines_with_echo(e)]
+    in_findings_mode = bool(e.subtopic) and "questions" in e.subtopic
+    if in_findings_mode:
+        if e.subtopic["questions"]:
+            fields.append(("Questions", card_questions(e)))
+        if e.subtopic.get("waiting"):
+            fields.append(("Findings", '<p class="ee-f"><b>Findings:</b> waiting to be split</p>'))
+    elif e.findings is not None and (e.findings or e.findings_state == "waiting"):
+        fields.append(("Findings", card_findings(e)))
     if e.series:
         fields.append(("Part of", _field("Part of", esc(series_text(e).removeprefix("Part of: ")))))
     fields += [(n, _field(n, esc(v))) for n, v in research_pairs(e)]
     if e.primary_url:
         fields.append(("Primary source", _field("Primary source", link(e.primary_url))))
+    if e.found_by_search:
+        question = esc(e.found_by_search)
+        if e.found_by_search_run:   # the answer page of that search
+            question = f'<a href="{esc(searches_href + e.found_by_search_run)}.html">{question}</a>'
+        fields.append(("Found by search", _field("Found by search", question)))
     if e.coverage:
         fields.append(("Coverage", _field("Coverage", " · ".join(link(c.url, c.name) for c in e.coverage))))
     if reported:
@@ -209,6 +253,11 @@ def masthead(trail: str = "", links: list[tuple[str, str]] = ()) -> str:
     return f'<header class="ee-mast" id="ee-top"><div class="ee-mast-in">{lead}{nav}</div></header>\n'
 
 
+def disclaimer_html(text: str | None) -> str:
+    """The topic's grading disclaimer under the masthead; nothing when the topic has none."""
+    return f'<p class="ee-disclaimer">{esc(text)}</p>' if text else ""
+
+
 def page_footer(now: datetime | None = None) -> str:
     """The end of every page: a link back to the top, the plugin's public repo and when the page
     was generated (local time)."""
@@ -221,10 +270,10 @@ def page_footer(now: datetime | None = None) -> str:
 
 
 def page(title: str, body: str, script: str = "", mast: str | None = None,
-         now: datetime | None = None) -> str:
+         now: datetime | None = None, css_extra: str = "") -> str:
     return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-            f"<title>{esc(title)}</title>\n<style>{html_assets.CSS}</style>\n</head>\n"
+            f"<title>{esc(title)}</title>\n<style>{html_assets.CSS}{css_extra}</style>\n</head>\n"
             f"<body>\n{masthead() if mast is None else mast}<main>\n{body}\n</main>\n"
             f"{page_footer(now)}{script}</body>\n</html>\n")
 
@@ -283,7 +332,10 @@ def original_cell(e: Entry) -> tuple[str, bool]:
     return ("—" if e.primary_url else "no primary source"), False
 
 
-def _chart_row(e: Entry) -> str:
+GRADE_LABELS_HEAD = "Grade labels"
+
+
+def _chart_row(e: Entry, with_labels: bool = False) -> str:
     """One study's row in the ratings chart: grade, skeptic, study (a link to its write-up),
     red flags, original. A problem is set in red and named in words, never by colour alone."""
     if e.disputed:
@@ -302,8 +354,12 @@ def _chart_row(e: Entry) -> str:
     original_html = (f'<span class="ee-warn">{_mark(e)}{esc(original)}</span>' if bad
                      else f'<span class="ee-none">{esc(original)}</span>' if original == "—"
                      else esc(original))
+    labels = (f'<td data-name="{GRADE_LABELS_HEAD}">'
+              + (", ".join(esc(x) for x in e.view.get("grade_labels") or []) or '<span class="ee-none">—</span>')
+              + "</td>") if with_labels else ""
     return (f'<tr><td class="ee-c-grade">{tier_badge(e.tier)}</td>'
             f'<td class="ee-c-study"><a href="#s{e.study_id}">{esc(e.title)}</a></td>'
+            + labels +
             f'<td data-name="Skeptic">{skeptic}</td>'
             f'<td data-name="Red flags">{flags_html}</td>'
             f'<td data-name="Original">{original_html}</td></tr>')
@@ -313,25 +369,32 @@ def _key_mark(symbol: str, text: str) -> str:
     return f'<span class="ee-key-g"><span class="ee-warn"><span class="ee-mark">{symbol}</span></span>{text}</span>'
 
 
-RATINGS_KEY = ('<span class="ee-key-g">' + " ".join(tier_badge(t) for t in ("A", "B", "C", "D"))
-               + " strongest to weakest evidence</span>"
-               + f'<span class="ee-key-g">{tier_badge(None)} ungraded</span>'
-               + '<span class="ee-key-g">Skeptic: the blind second grade, — when it agrees</span>'
-               + _key_mark("≠", "disputed") + _key_mark("#", "numbers not found in the original")
-               + _key_mark("∅", "original not reachable"))
+def _ratings_key(hash_text: str) -> str:
+    return ('<span class="ee-key-g">' + " ".join(tier_badge(t) for t in ("A", "B", "C", "D"))
+            + " strongest to weakest evidence</span>"
+            + f'<span class="ee-key-g">{tier_badge(None)} ungraded</span>'
+            + '<span class="ee-key-g">Skeptic: the blind second grade, — when it agrees</span>'
+            + _key_mark("≠", "disputed") + _key_mark("#", hash_text)
+            + _key_mark("∅", "original not reachable"))
 
 
-def ratings_chart(entries: list[Entry]) -> str:
+RATINGS_KEY = _ratings_key("numbers not found in the original")
+RATINGS_KEY_FINDINGS = _ratings_key("a number or quote not found in the article")   # quotes mode
+
+
+def ratings_chart(entries: list[Entry], findings: bool = False) -> str:
     """The run at a glance, before the write-ups. Empty without entries."""
     if not entries:
         return ""
-    head = "".join(f'<th scope="col">{x}</th>'
-                   for x in ("Grade", "Study", "Skeptic", "Red flags", "Original"))
+    with_labels = any(e.view.get("grade_labels") for e in entries)
+    columns = ("Grade", "Study", *((GRADE_LABELS_HEAD,) if with_labels else ()),
+               "Skeptic", "Red flags", "Original")
+    head = "".join(f'<th scope="col">{x}</th>' for x in columns)
     return ('<table class="ee-chart"><caption>In this report</caption>'
             f"<thead><tr>{head}</tr></thead><tbody>"
-            + "".join(_chart_row(e) for e in entries) + "</tbody></table>"
+            + "".join(_chart_row(e, with_labels) for e in entries) + "</tbody></table>"
             + '<details class="ee-key-box"><summary>How to read this table</summary>'
-            + f'<p class="meta ee-key">{RATINGS_KEY}</p></details>')
+            + f'<p class="meta ee-key">{RATINGS_KEY_FINDINGS if findings else RATINGS_KEY}</p></details>')
 
 
 def report_page(r: Report, topic_href: str, overview_href: str, sources_href: str | None = None) -> str:
@@ -344,9 +407,10 @@ def report_page(r: Report, topic_href: str, overview_href: str, sources_href: st
     mast = masthead(crumbs([("Evidence Echo", overview_href), (r.topic_name, topic_href),
                             (f"Report {r.label or r.date}", None)]),
                     [("All studies", topic_href)] + ([("Sources", sources_href)] if sources_href else []))
-    body = [f'<header class="ee-head"><h1>{esc(title)}</h1>',
+    body = [disclaimer_html(r.disclaimer),
+            f'<header class="ee-head"><h1>{esc(title)}</h1>',
             f'<p class="meta">{esc(" · ".join(counts))}</p></header>',
-            ratings_chart(r.new + r.disputed),
+            ratings_chart(r.new + r.disputed, findings=r.mode != "questions"),
             "<section>", "<h2>New studies</h2>"]
     body += ([card(e) for e in r.new] if r.new
              else ['<p class="empty">No confirmed evidence-backed items this run.</p>'])
@@ -369,18 +433,41 @@ def _study_ref(study_id: int, titles: dict) -> str:
     return esc(f"study {study_id}")
 
 
+UNCHECKED_QUOTE = "Quote not found in the article"
+
+
+def quote_disclosure(quote: str, checked: bool) -> str:
+    """A closed disclosure holding a finding's quote; an unchecked quote is marked in the summary."""
+    summary = "Quote" if checked else _unchecked_mark()
+    return (f'<details class="ee-quote"><summary>{summary}</summary>'
+            f"<blockquote>“{esc(quote)}”</blockquote></details>")
+
+
 def _row_item(r, titles: dict, lead: str = "") -> str:
     """One study entry: the tier mark, then [the question on its own line,] name · headline
     [date] [(edition)]. The whole entry links to the study's card when the page has one."""
     edition = et.edition_text(r)
     name = esc(titles.get(r.study_id, r.name))
-    line = (f'<span class="ee-row-line">{name} · {esc(et.headline_text(r))} '
+    found = getattr(r, "finding", None)
+    shown = esc(found["text"]) if found else esc(et.headline_text(r))
+    line = (f'<span class="ee-row-line">{name} · {shown} '
             f'<span class="ee-date">[{esc(et.date_text(r))}]</span>'
             + (f' <span class="meta">({esc(edition)})</span>' if edition else "") + "</span>")
     body = tier_badge(r.tier) + (f'<span class="ee-q">{esc(lead)}</span>' if lead else "") + line
+    quote = quote_disclosure(found["quote"], bool(found["quote_checked"])) if found else ""
     if r.study_id in titles:
-        return f'<li><a class="ee-row" href="#s{r.study_id}">{body}</a></li>'
-    return f'<li><span class="ee-row">{body}</span></li>'
+        return f'<li><a class="ee-row" href="#s{r.study_id}">{body}</a>{quote}</li>'
+    return f'<li><span class="ee-row">{body}</span>{quote}</li>'
+
+
+def waiting_split(rows, titles: dict) -> str:
+    """Findings mode: the subtopic's studies whose findings are not grouped yet, in a closed <details>
+    at the end of its list. Empty without rows."""
+    if not rows:
+        return ""
+    items = "".join(_row_item(r, titles) for r in rows)
+    return (f'<details class="ee-waiting-split"><summary>Waiting to be split ({len(rows)})</summary>'
+            f"<ol>{items}</ol></details>")
 
 
 def study_rows(c, titles: dict, summary_html: str) -> str:
@@ -453,7 +540,8 @@ def question_item(g, titles: dict) -> str:
 def _study_count(sub) -> int:
     return len({sid for g in sub.questions for grp in g.groups for sid in grp}
                | {r.study_id for g in sub.questions for r in g.rows}
-               | {o.row.study_id for o in sub.others})
+               | {o.row.study_id for o in sub.others}
+               | {r.study_id for r in sub.waiting})
 
 
 def _subtopic_counts(sub, unsorted: bool) -> str:
@@ -466,10 +554,15 @@ def _subtopic_counts(sub, unsorted: bool) -> str:
     return f'{n} {"question" if n == 1 else "questions"} · {studies}'
 
 
+def _findings_study_count(sub) -> int:
+    return len({r.study_id for r in sub.rows})
+
+
 def subtopic_index(t: Topic) -> str:
     """The subtopics as a contents list, each with its study count drawn as a rule in proportion
     to the largest subtopic. Empty with fewer than two subtopics."""
-    counts = [(sub, _study_count(sub)) for sub in t.evidence]
+    counts = ([(sub, _findings_study_count(sub)) for sub in t.findings] if t.mode == "quotes"
+              else [(sub, _study_count(sub)) for sub in t.evidence])
     if len(counts) < 2:
         return ""
     top = max(n for _, n in counts) or 1
@@ -502,7 +595,50 @@ def evidence_section(t: Topic) -> str:
                      f'<details class="ee-sub"><summary><h3>{esc(sub.name)}</h3>'
                      f'<span class="meta">{esc(_subtopic_counts(sub, unsorted))}</span></summary>')
         parts += ['<ul class="ee-questions">', *[question_item(g, titles) for g in sub.questions],
-                  *[single_item(o, titles, unsorted) for o in sub.others], "</ul></details></div>"]
+                  *[single_item(o, titles, unsorted) for o in sub.others],
+                  "</ul>" + waiting_split(sub.waiting, titles) + "</details></div>"]
+    parts.append("</section>")
+    return "\n".join(parts)
+
+
+def finding_row(r: FindingRow, titles: dict) -> str:
+    """One line of the quotes-mode list: the study's grade and labels, the finding, its study (a link to
+    the card when the page has one), date and metric, the quote in a closed disclosure. A study without
+    findings shows its name alone ('findings waiting' when the stage has not reached it)."""
+    name = titles.get(r.study_id, r.name)
+    ref = f'<a href="#s{r.study_id}">{esc(name)}</a>' if r.study_id in titles else esc(name)
+    head = ("<div class=\"ee-f-head\">" + tier_badge(r.tier)
+            + "".join(f'<span class="ee-gl">{esc(x)}</span>' for x in r.labels) + "</div>")
+    open_li = f'<li class="ee-finding" data-study="{r.study_id}">'
+    f = r.finding
+    if f is None:
+        wait = ' <span class="meta">findings waiting</span>' if r.state == "waiting" else ""
+        return f'{open_li}{head}<p class="ee-f-text">{ref}{wait}</p></li>'
+    bits = [ref, esc(et.date_text(r))] + ([esc(f.metric_name)] if f.metric_name else [])
+    return (f'{open_li}{head}<p class="ee-f-text">{esc(f.text)}</p>'
+            f'<p class="meta ee-f-meta">{" · ".join(bits)}</p>'
+            f"{quote_disclosure(f.quote, f.quote_checked)}</li>")
+
+
+def _findings_counts(sub) -> str:
+    n = sum(1 for r in sub.rows if r.finding is not None)
+    m = _findings_study_count(sub)
+    return f'{n} {"finding" if n == 1 else "findings"} · {m} {"study" if m == 1 else "studies"}'
+
+
+def findings_section(t: Topic) -> str:
+    """Quotes mode: per subtopic (the evidence order, Unsorted last) a closed <details> listing every
+    study's findings; the same #sub-<key> markup as the questions list. Empty without studies."""
+    if not t.findings:
+        return ""
+    titles = {ts.entry.study_id: ts.entry.title for ts in t.studies}
+    parts = ['<section id="ee-findings">', "<h2>Findings</h2>", subtopic_index(t)]
+    for sub in t.findings:
+        parts.append(f'<div class="subtopic" id="sub-{esc(sub.key)}" data-subtopic="{esc(sub.key)}">'
+                     f'<details class="ee-sub"><summary><h3>{esc(sub.name)}</h3>'
+                     f'<span class="meta">{esc(_findings_counts(sub))}</span></summary>')
+        parts += ['<ul class="ee-findings-list">', *[finding_row(r, titles) for r in sub.rows],
+                  "</ul></details></div>"]
     parts.append("</section>")
     return "\n".join(parts)
 
@@ -523,6 +659,27 @@ def _report_list(t: Topic, from_dir: Path) -> list[str]:
             f"<ul>{''.join(items)}</ul></details>"]
 
 
+def _search_list(t: Topic, from_dir: Path) -> list[str]:
+    """The closed "Searches (N)" list after the report list, newest first: the local date, then the question
+    (linked to its answer page when the page file exists). A run whose search.json could not be read is
+    left out."""
+    items = []
+    runs = [r for r in t.searches if r.get("status") != "broken" and r.get("question")]
+    for run in sorted(runs, key=lambda r: (r.get("created") or "", r.get("run") or ""), reverse=True):
+        name = esc(run["question"])
+        page = Path(run["page"]) if run.get("page") else None
+        if page is not None and page.suffix == ".md" and page.with_suffix(".html").exists():
+            page = page.with_suffix(".html")
+        if page is not None and page.exists():
+            name = f'<a href="{esc(href(page, from_dir))}">{name}</a>'
+        when = clock.local_date(run["created"]) if run.get("created") else ""
+        items.append(f'<li><span class="meta">{esc(when)}</span> {name}</li>' if when else f"<li>{name}</li>")
+    if not items:
+        return []
+    return [f'<details class="ee-reports ee-searches"><summary>Searches ({len(items)})</summary>'
+            f"<ul>{''.join(items)}</ul></details>"]
+
+
 def _topic_header(t: Topic, overview_href: str, report_href: str,
                   topic_href: str, sources_href: str | None = None) -> tuple[str, list[str]]:
     """The masthead and the page head."""
@@ -531,7 +688,19 @@ def _topic_header(t: Topic, overview_href: str, report_href: str,
                             ("All studies", None)]),
                     [("Latest report", report_href)] + ([("Sources", sources_href)] if sources_href else []))
     totals = [f"Updated {updated}"]
-    if t.studies:   # the issue's totals: studies, then questions (Unsorted has none)
+    if t.studies and t.mode == "quotes":   # studies, then findings
+        n, m = len(t.studies), t.finding_count
+        totals = [f'{n} {"study" if n == 1 else "studies"}', f'{m} {"finding" if m == 1 else "findings"}',
+                  f"updated {updated}"]
+    elif t.studies and t.mode == "findings":   # studies, findings, questions
+        n, m = len(t.studies), t.finding_count
+        q = sum(len(sub.questions) + sum(1 for o in sub.others if o.question)
+                for sub in t.evidence if sub.key != knowledge.UNSORTED)
+        totals = [f'{n} {"study" if n == 1 else "studies"}', f'{m} {"finding" if m == 1 else "findings"}']
+        if q:
+            totals.append(f'{q} {"question" if q == 1 else "questions"}')
+        totals.append(f"updated {updated}")
+    elif t.studies:   # the issue's totals: studies, then questions (Unsorted has none)
         n = len(t.studies)
         q = sum(len(sub.questions) + sum(1 for o in sub.others if o.question)
                 for sub in t.evidence if sub.key != knowledge.UNSORTED)
@@ -539,13 +708,18 @@ def _topic_header(t: Topic, overview_href: str, report_href: str,
         if q:
             totals.append(f'{q} {"question" if q == 1 else "questions"}')
         totals.append(f"updated {updated}")
-    return mast, [f'<header class="ee-head"><h1>{esc(t.topic_name)} — all studies</h1>',
+    return mast, [disclaimer_html(t.disclaimer),
+                  f'<header class="ee-head"><h1>{esc(t.topic_name)} — all studies</h1>',
                   f'<p class="meta">{esc(" · ".join(totals))}</p></header>']
 
 
 def _subtopic_keys(t: Topic) -> dict[int, tuple[str, str]]:
     """study id -> (subtopic key, name) for every study the evidence section lists, Unsorted too."""
     out = {}
+    if t.mode == "quotes":
+        for sub in t.findings:
+            out.update({r.study_id: (sub.key, sub.name) for r in sub.rows})
+        return out
     for sub in t.evidence:
         ids = [o.row.study_id for o in sub.others] + [r.study_id for g in sub.questions for r in g.rows]
         out.update({sid: (sub.key, sub.name) for sid in ids})
@@ -557,10 +731,13 @@ def source_slug(name: str) -> str:
     return store.subtopic_slug(name) or "source"
 
 
-def source_slugs(names) -> dict[str, str]:
-    """name -> unique slug within one topic: a clash gets -2, -3 ... in name order."""
+SEARCH_SOURCE_SLUG = "found-by-search"   # the one Source filter value of every "found by search" source
+
+
+def source_slugs(names, reserved=()) -> dict[str, str]:
+    """name -> unique slug within one topic: a clash gets -2, -3 ... in name order (reserved slugs count as taken)."""
     out: dict[str, str] = {}
-    taken: set[str] = set()
+    taken: set[str] = set(reserved)
     for name in sorted(set(names), key=lambda n: (n.casefold(), n)):
         slug = base = source_slug(name)
         n = 1
@@ -579,22 +756,30 @@ def source_href(topic_href: str, slug: str) -> str:
 
 def _source_options(t: Topic) -> list[tuple[str, str]]:
     """(slug, 'name (count)'), most studies first, then name; empty unless two or more sources."""
-    slugs = source_slugs(s.name for s in t.sources)
-    ordered = sorted(t.sources, key=lambda s: (-len(s.study_ids), s.name.casefold(), s.name))
-    if len(ordered) < 2:
+    searched = {s.name for s in t.sources if s.name in t.search_sources}
+    slugs = source_slugs((s.name for s in t.sources if s.name not in searched),
+                         (SEARCH_SOURCE_SLUG,) if searched else ())
+    options = [(slugs[s.name], s.name, len(s.study_ids)) for s in t.sources if s.name not in searched]
+    if searched:   # all search sources are one option, counting each study once
+        found = {sid for s in t.sources if s.name in searched for sid in s.study_ids}
+        options.append((SEARCH_SOURCE_SLUG, "Search", len(found)))
+    options.sort(key=lambda o: (-o[2], o[1].casefold(), o[1]))
+    if len(options) < 2:
         return []
-    return [(slugs[s.name], f"{s.name} ({len(s.study_ids)})") for s in ordered]
+    return [(slug, f"{name} ({n})") for slug, name, n in options]
 
 
 def filter_data(t: Topic) -> dict:
     """What the topic page's JS filters on; pos = position in the newest-first list."""
     rows = []
     where = _subtopic_keys(t)
-    slugs = source_slugs(s.name for s in t.sources)
-    by_study: dict[int, list[str]] = {}
+    searched = {s.name for s in t.sources if s.name in t.search_sources}
+    slugs = source_slugs((s.name for s in t.sources if s.name not in searched),
+                         (SEARCH_SOURCE_SLUG,) if searched else ())
+    by_study: dict[int, set[str]] = {}
     for s in t.sources:
         for sid in s.study_ids:
-            by_study.setdefault(sid, []).append(slugs[s.name])
+            by_study.setdefault(sid, set()).add(SEARCH_SOURCE_SLUG if s.name in searched else slugs[s.name])
     for pos, ts in enumerate(t.studies):
         e = ts.entry
         row = {"id": e.study_id, "pos": pos, "tier": e.tier,
@@ -607,6 +792,8 @@ def filter_data(t: Topic) -> dict:
             row["subtopic"] = key
         if e.view.get("metric_slug"):
             row["metric"] = e.view["metric_slug"]
+        if t.mode != "questions":   # a study matches the Metric filter by its own metric or any finding's
+            row["metrics"] = [slug for slug, _ in study_metrics(e)]
         row["sources"] = sorted(by_study.get(e.study_id, []))
         names = e.view.get("entities") or []
         if names:
@@ -622,16 +809,28 @@ def _select(name: str, label: str, first: str, options: list[tuple[str, str]]) -
     return f'<label>{esc(label)} <select name="{name}">{opts}</select></label>'
 
 
+def study_metrics(e: Entry) -> list[tuple[str, str]]:
+    """(slug, name) of the study's own metric, then each finding's, no repeats (quotes mode)."""
+    out: dict[str, str] = {}
+    if e.view.get("metric_slug"):
+        out[e.view["metric_slug"]] = e.view.get("metric_name") or "Other"
+    for f in e.findings or []:
+        if f.metric_slug and f.metric_slug not in out:
+            out[f.metric_slug] = f.metric_name or "Other"
+    return list(out.items())
+
+
 def _metric_options(t: Topic, entries: list) -> list[tuple[str, str]]:
     """(slug, 'name (count)') for the metrics the page's studies use, in the topic's list order (Other
     last); empty unless two or more metrics are in use."""
     counts: dict[str, int] = {}
     names: dict[str, str] = {}
     for e in entries:
-        slug = e.view.get("metric_slug")
-        if slug:
+        pairs = (study_metrics(e) if t.mode != "questions" else
+                 [(e.view["metric_slug"], e.view.get("metric_name") or "Other")] if e.view.get("metric_slug") else [])
+        for slug, name in pairs:
             counts[slug] = counts.get(slug, 0) + 1
-            names[slug] = e.view.get("metric_name") or "Other"
+            names[slug] = name
     if len(counts) < 2:
         return []
     listed = [(slug, name) for slug, name in (t.metrics or []) if slug in counts]
@@ -663,13 +862,14 @@ def filters_form(t: Topic) -> str:
     boxes = "".join(f'<label><input type="checkbox" name="tier" value="{x}" checked> '
                     f'{"Ungraded" if x == "?" else x}</label>' for x in tiers)
     used = {c for e in entries for c in (e.view.get("flags") or [])}
-    flags = [c for c in grading.RED_FLAGS if c in used]
+    flags = [c for c in grading.ALL_RED_FLAGS if c in used]
     relations = sorted({r for e in entries if (r := relation_of(e))})
     series = sorted({e.series for e in entries if e.series})
     listed = {(e.subtopic["key"], e.subtopic["name"]) for e in entries if e.subtopic}
     listed |= {(key, name) for sid, (key, name) in _subtopic_keys(t).items()
                if any(e.study_id == sid and not e.subtopic for e in entries)}
-    subtopics = [(sub.key, sub.name) for sub in t.evidence if (sub.key, sub.name) in listed]
+    subtopics = [(sub.key, sub.name) for sub in (t.findings if t.mode == "quotes" else t.evidence)
+                 if (sub.key, sub.name) in listed]
     metrics = _metric_options(t, entries)
     entities = _entity_options(entries)
     sources = _source_options(t)
@@ -704,19 +904,22 @@ def topic_page(t: Topic, overview_href: str, report_href: str, topic_href: str |
     mast, body = _topic_header(t, overview_href, report_href, topic_href or f"{t.topic_id}.html",
                                sources_href)
     body += _report_list(t, reports_dir or Path("."))
+    body += _search_list(t, reports_dir or Path("."))
     n = len(t.studies)
     if not n:
         body.append('<p class="empty">No studies reported yet.</p>')
         return page(title, "\n".join(body), mast=mast)
-    section = evidence_section(t)
+    quotes = t.mode != "questions"
+    section = findings_section(t) if t.mode == "quotes" else evidence_section(t)
     body += ([section] if section else []) + [
         '<section id="ee-all"><h2>Studies</h2>',
         f'<p id="ee-count" class="meta" aria-live="polite">{n} {"study" if n == 1 else "studies"}</p>',
         filters_form(t),
         '<div id="ee-studies">', *[card(ts.entry, _reported(ts)) for ts in t.studies], "</div>",
         "</section>"]
-    script = json_script(filter_data(t), "ee-data") + f"\n<script>{html_assets.JS}</script>\n"
-    return page(title, "\n".join(body), script, mast=mast)
+    script = (json_script(filter_data(t), "ee-data")
+              + f"\n<script>{html_assets.JS_FINDINGS if quotes else html_assets.JS}</script>\n")
+    return page(title, "\n".join(body), script, mast=mast, css_extra=html_assets.FINDINGS_CSS if quotes else "")
 
 
 def write_report(report: Report, topic: Topic, reports_dir, overview_dir, md_path,
@@ -752,22 +955,44 @@ def write_report(report: Report, topic: Topic, reports_dir, overview_dir, md_pat
     return out
 
 
+def write_topic_page(topic: Topic, reports_dir, overview_dir) -> dict:
+    """Only the topic page <topic_id>.html, between report runs (a search was rendered, kept or dropped):
+    its "Latest report" is the newest report in the list and its Sources link the page already written.
+    A topic with no report yet gets no page (the overview has nothing to open it from)."""
+    if not topic.reports:
+        return {}
+    reports_dir = Path(reports_dir)
+    topic_path = reports_dir / f"{topic.topic_id}.html"
+    overview_path = Path(overview_dir) / "overview.html"
+    latest = Path(topic.reports[0].path)
+    for other in (overview_path, latest):
+        if topic_path.resolve() == other.resolve():
+            raise ValueError(f"the topic page {topic_path} would overwrite {other.name}; "
+                             "give the topic its own reports_dir")
+    sources_path = reports_dir / f"{topic.topic_id}-sources.html"
+    _write(topic_path, topic_page(topic, href(overview_path, topic_path.parent), href(latest, topic_path.parent),
+                                  topic_path.name, topic_path.parent,
+                                  href(sources_path, topic_path.parent) if sources_path.exists() else None))
+    return {"topic": str(topic_path)}
+
+
 def _topic_card(s, out_dir: Path) -> str:
     name = esc(s.name)
     if s.name.endswith(" Echo") and s.name[:-5].strip():   # "SEO Echo": the word Echo set lighter
         name = f'{esc(s.name[:-5])} <span class="ee-echo">Echo</span>'
     head = f'<section class="card"><h2>{name}</h2>'
+    note = disclaimer_html(getattr(s, "disclaimer", None))
     if s.error:
-        return f'{head}<p class="warn">{esc("setup error: " + s.error)}</p></section>'
+        return f'{head}{note}<p class="warn">{esc("setup error: " + s.error)}</p></section>'
     if not s.report:
-        return f'{head}<p class="meta">not run yet</p></section>'
+        return f'{head}{note}<p class="meta">not run yet</p></section>'
     md = Path(s.report["path"])
     report_html, topic_html = md.with_suffix(".html"), md.parent / f"{s.id}.html"
     if topic_html.exists():   # the topic head opens the topic page
         head = f'<section class="card"><h2><a href="{esc(href(topic_html, out_dir))}">{name}</a></h2>'
     latest, earlier, more = overview_mod.select(s)
     n = len(latest) + more
-    parts = [head, f'<p class="meta">{esc("last run " + clock.local_date(s.report["rendered_at"]))}'
+    parts = [head, note, f'<p class="meta">{esc("last run " + clock.local_date(s.report["rendered_at"]))}'
                    f" · {n} new finding{'' if n == 1 else 's'}</p>"]
 
     def report_target(path: str) -> Path:

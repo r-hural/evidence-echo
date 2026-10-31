@@ -8,7 +8,7 @@ import json
 import re
 from dataclasses import dataclass
 
-from evidence_echo.core import grading, interfaces, knowledge
+from evidence_echo.core import findings, grading, interfaces, knowledge
 from evidence_echo.core.store import SUBTOPIC_NAME_MAX   # one definition (store; it imports no contracts)
 
 TIERS = grading.TIERS
@@ -46,6 +46,9 @@ FACTS = [
     Field("editions", list, required=False, nullable=True),
     Field("metric", str, required=False, nullable=True),
     Field("baseline", str, required=False, nullable=True),
+    Field("study_type", str, required=False, choices=tuple(grading.STUDY_TYPES)),
+    Field("peer_review", str, required=False, choices=grading.PEER_REVIEW),
+    Field("text_basis", str, required=False, choices=grading.TEXT_BASIS),
 ]
 TRIAGE = [Field("id", str), Field("pass", bool), Field("reason", str)]
 PROVENANCE = [
@@ -67,6 +70,7 @@ JUDGE = [
     Field("data_date", str, required=False, nullable=True),
     Field("headline", dict, required=False, nullable=True),
     Field("reason", str, required=False, nullable=True),
+    Field("finding_list", list, required=False, nullable=True),   # 1-4 findings, required when pass
 ]
 VERIFY = [  # blind skeptic: its own tier, no view of the judge's
     Field("id", str),
@@ -79,6 +83,13 @@ RULING = [  # owner adjudication (apply --stage verify --ruling): the pre-SP2 ve
     Field("agrees", bool),
     Field("adjusted_tier", str, required=False, choices=TIERS, nullable=True),
     Field("note", str),
+]
+REGRADE = [  # grading rules changed: tier and the three grading facts for a stored study (no red flags)
+    Field("id", str),
+    Field("tier", str, choices=TIERS),
+    Field("study_type", str, choices=tuple(grading.STUDY_TYPES)),
+    Field("peer_review", str, choices=grading.PEER_REVIEW),
+    Field("text_basis", str, choices=grading.TEXT_BASIS),
 ]
 REPORT = [Field("study_id", int), Field("title", str), Field("summary", str)]
 MATCH = [Field("id", str), Field("same_as", str, nullable=True), Field("reason", str)]
@@ -101,12 +112,25 @@ CLASSIFY = [  # wave 4a: the judge's knowledge fields for an older study (id "s<
     Field("headline", dict, required=False, nullable=True),
 ]
 
+FINDINGS = [  # grouping modes: 0-4 findings for a stored study (id "s<study id>")
+    Field("id", str),
+    Field("finding_list", list),
+]
+
 GROUP = [  # questions: a study's question (an existing "q<id>" or a new_question key) and direction
     Field("id", str),
     Field("question", str, required=False, nullable=True),
     Field("new_question", dict, required=False, nullable=True),
     Field("question_kind", dict, required=False, nullable=True),
     Field("direction", str, choices=knowledge.QUESTION_DIRECTIONS, required=False, nullable=True),
+]
+
+DUPCHECK = [  # duplicate check: one possible-duplicate pair (id "p<study a>-<study b>")
+    Field("id", str),
+    Field("verdict", str, choices=("same", "different", "unsure")),
+    Field("quote_a", str),
+    Field("quote_b", str),
+    Field("note", str),
 ]
 
 SPLIT = [Field("id", str), Field("groups", list)]   # one answer per target id; the groups are checked in stages/split
@@ -116,14 +140,17 @@ FETCH = [Field("id", str),
          Field("links", list, required=False)]
 
 SCHEMAS = {"triage": TRIAGE, "judge": JUDGE, "verify": VERIFY, "ruling": RULING, "report": REPORT, "fetch": FETCH,
-           "match": MATCH, "relate": RELATE, "primary": PRIMARY, "classify": CLASSIFY, "group": GROUP, "split": SPLIT}
+           "match": MATCH, "relate": RELATE, "primary": PRIMARY, "classify": CLASSIFY, "group": GROUP, "split": SPLIT,
+           "regrade": REGRADE, "reverify": VERIFY, "findings": FINDINGS, "dupcheck": DUPCHECK}
 ID_KEYS = {"triage": "id", "judge": "id", "verify": "id", "ruling": "id", "report": "study_id", "fetch": "id",
-           "match": "id", "relate": "id", "primary": "id", "classify": "id", "group": "id", "split": "id"}
+           "match": "id", "relate": "id", "primary": "id", "classify": "id", "group": "id", "split": "id", "regrade": "id", "reverify": "id", "findings": "id", "dupcheck": "id"}
 ID_PATTERNS = {"fetch": re.compile(r"[is][0-9]+"),  # i<item rowid>, s<source rowid>
                "classify": re.compile(r"s[0-9]+"),  # s<study id>
-               "group": re.compile(r"s[0-9]+"),     # s<study id>
+               "group": re.compile(r"[sf][0-9]+"),  # s<study id>, or f<finding id> in findings mode
+               "findings": re.compile(r"s[0-9]+"),  # s<study id>
                "split": re.compile(r"subtopic:\S+|metric:other"),
-               "relate": re.compile(r"q[0-9]+")}  # q<question id>
+               "relate": re.compile(r"q[0-9]+"),  # q<question id>
+               "dupcheck": re.compile(r"p[0-9]+-[0-9]+")}  # p<lower study id>-<higher study id>
 
 
 def _is_type(value, typ) -> bool:
@@ -198,12 +225,17 @@ def _judge_rules(obj: dict) -> list[str]:
         return errors
     if obj.get("tier") is None:
         errors.append("tier: required when pass is true")
-    if not obj.get("facts"):
+    facts = obj.get("facts")
+    if not facts:
         errors.append("facts: required when pass is true")
+    elif isinstance(facts, dict):
+        errors += [f"facts.{name}: required when pass is true"
+                   for name in ("study_type", "peer_review", "text_basis") if facts.get(name) is None]
     errors += _subtopic_rule(obj.get("subtopic"))
     if obj.get("metric") is None:
         errors.append("metric: required when pass is true")
     errors += headline_rule(obj.get("headline"))
+    errors += findings.shape_errors(obj.get("finding_list"), 1)
     return errors
 
 
@@ -296,9 +328,9 @@ def _split_rules(obj: dict) -> list[str]:
 
 
 def _verify_rules(obj: dict) -> list[str]:
-    unknown = [f for f in obj.get("red_flags") or [] if f not in grading.RED_FLAGS]
+    unknown = [f for f in obj.get("red_flags") or [] if f not in grading.ALL_RED_FLAGS]
     if unknown:
-        return [f"red_flags: unknown code {unknown[0]!r} (allowed: {', '.join(grading.RED_FLAGS)})"]
+        return [f"red_flags: unknown code {unknown[0]!r} (allowed: {', '.join(grading.ALL_RED_FLAGS)})"]
     return []
 
 
@@ -343,9 +375,11 @@ def validate_result(stage: str, obj) -> list[str]:
         errors = _classify_rules(obj)
     if not errors and stage == "group":
         errors = _group_rules(obj)
+    if not errors and stage == "findings":
+        errors = findings.shape_errors(obj.get("finding_list"), 0)
     if not errors and stage == "split":
         errors = _split_rules(obj)
-    if not errors and stage == "verify":
+    if not errors and stage in ("verify", "reverify"):
         errors = _verify_rules(obj)
     if not errors and stage == "fetch":
         errors = _fetch_rules(obj)
@@ -431,7 +465,7 @@ def export_json_schema(stage: str) -> dict:
     items = _object_schema(_schema(stage))
     if stage == "judge":
         items["if"] = {"properties": {"pass": {"const": True}}, "required": ["pass"]}
-        items["then"] = {"required": ["tier", "facts", "metric", "entities"],
+        items["then"] = {"required": ["tier", "facts", "metric", "entities", "finding_list"],
                          "properties": {"tier": {"type": "string"},
                                         "facts": {"type": "object"}}}
     return {

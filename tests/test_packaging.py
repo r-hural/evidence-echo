@@ -2,6 +2,8 @@ import json
 import re
 import tomllib
 
+import pytest
+
 from evidence_echo.core import grading
 from tests.conftest import PLUGIN_DIR, REPO_ROOT
 
@@ -134,19 +136,20 @@ def test_skills_name_only_existing_commands():
     from evidence_echo import cli
     parser = cli._parser()
     commands = set(parser._subparsers._group_actions[0].choices)
-    for skill in ("setup", "report"):
+    for skill in ("setup", "report", "search"):
         text = (PLUGIN_DIR / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
-        for cmd in re.findall(r"`ev (?:--topic <id> )?([a-z-]+)", text):
+        for cmd in re.findall(r"`ev (?:--topic <id> )?(?:--search <run> )?([a-z-]+)", text):
             assert cmd in commands, f"{skill} skill names unknown command '{cmd}'"
     assert "fetch-fallback" in (PLUGIN_DIR / "skills" / "report" / "SKILL.md").read_text(encoding="utf-8")
     assert "backfill" in (PLUGIN_DIR / "skills" / "setup" / "SKILL.md").read_text(encoding="utf-8")
 
 
-def test_skeptic_agent_is_blind_and_lists_every_code():
+def test_skeptic_agent_reads_rules_from_payload():
     text = (PLUGIN_DIR / "agents" / "skeptic.md").read_text(encoding="utf-8")
     assert "claimed_tier" not in text and "claimed_facts" not in text
-    codes = re.findall(r"^- `([a-z_]+)`", text, flags=re.M)
-    assert codes == list(grading.RED_FLAGS)
+    assert "topic.grading.tiers" in text and "topic.grading.red_flags" in text
+    assert not re.findall(r"^- `([a-z_]+)`", text, flags=re.M)
+    assert "A/B or split test" not in text
     assert '"red_flags"' in text and '"tier"' in text
 
 
@@ -333,3 +336,99 @@ def test_public_metadata():
     if not root_licence.exists():
         root_licence = REPO_ROOT / "LICENSE"
     assert root_licence.read_text(encoding="utf-8") == licence
+
+
+def test_report_skill_runs_regrade_and_reverify():
+    for text in ("regrade", "reverify", "--stage reverify", "at most three rounds", "re-graded"):
+        assert text in SKILL
+    verify = SKILL.index("**Verify:**")
+    regrade = SKILL.index("**Re-grade")
+    adjudicate = SKILL.index("**Adjudicate")
+    assert verify < regrade < adjudicate
+
+
+def test_setup_skill_drafts_grading():
+    assert "ev topic set <id> grading" in SETUP
+    assert "ev topic grading" in SETUP
+    assert "keep the generic rules" in SETUP
+
+
+def test_readme_documents_grading_rules():
+    for text in ("regrade_batch", "ev topic grading", "capped from", "grade label"):
+        assert text in README
+
+
+def _ask_section() -> str:
+    start = README.index("## Ask the evidence")
+    end = README.find("\n## ", start + 1)
+    return README[start:end if end != -1 else None]
+
+
+def test_readme_documents_ask_the_evidence():
+    section = _ask_section()
+    for needed in ("find_evidence", "list_topics", "get_study", "ev find", "read-only", "python3",
+                   "evidence-echo-py3", "/mcp"):
+        assert needed in section, needed
+    assert re.search(r"/mcp.*(failed|expected)", section, re.S)
+    assert "expected" in section and "failed" in section
+    assert "read-only" in README[README.index("## Cost and privacy"):README.index("## Install")]
+
+
+def test_overlay_privacy_and_security_name_the_server():
+    overlay = REPO_ROOT / "release" / "overlay"
+    if not overlay.is_dir():
+        pytest.skip("no release/overlay in the public tree")
+    for name in ("PRIVACY.md", "SECURITY.md"):
+        text = (overlay / name).read_text(encoding="utf-8").lower()
+        assert "mcp server" in text, name
+        assert "local" in text and "no network" in text, name
+
+
+SEARCH_SKILL = PLUGIN_DIR / "skills" / "search" / "SKILL.md"
+
+
+def test_search_skill_names_existing_search_actions():
+    from evidence_echo import cli
+    sub = cli._parser()._subparsers._group_actions[0].choices["search"]
+    actions = set(sub._subparsers._group_actions[0].choices)
+    assert actions == {"start", "add", "render", "keep", "drop", "list"}
+    named = re.findall(r"`ev --topic <id> search ([a-z-]+)", SEARCH_SKILL.read_text(encoding="utf-8"))
+    assert named and set(named) <= actions
+    assert set(named) == actions
+
+
+def test_search_skill_frontmatter_launcher_and_no_keys():
+    text = SEARCH_SKILL.read_text(encoding="utf-8")
+    assert text.startswith("---\nname: search\n")
+    description = next(l for l in text.splitlines() if l.startswith("description:"))
+    assert "search for studies" in description and "find evidence for" in description
+    for needed in ('python "${CLAUDE_PLUGIN_ROOT}/scripts/ev.py"', "600000", "py -3", "python3"):
+        assert needed in text
+    for banned in ("${user_config", "ANTHROPIC_API_KEY", "VOYAGE_API_KEY", "APIFY_API_TOKEN", "EV_ECHO_",
+                   "PYTHONPATH"):
+        assert banned not in text
+
+
+def test_search_skill_flow():
+    text = SEARCH_SKILL.read_text(encoding="utf-8")
+    order = ["AskUserQuestion", "A new topic", "evidence-echo:setup", "`ev --topic <id> find", "search start",
+             "WebSearch", "search add", "fetch-fallback", "triage", "extract", "judge", "match", "verify",
+             "evidence-echo:skeptic", "--ruling", "primary", "evidence-echo:comparer", "report",
+             "search render", "Keep these", "Keep all", "Keep some", "multiSelect", "Drop"]
+    at = 0
+    for step in order:
+        found = text.find(step, at)
+        assert found >= 0, f"'{step}' missing or out of order in the search skill"
+        at = found
+    assert re.search(r"evidence-echo:comparer`[^.]*twice", text)
+    assert "untrusted" in text
+    for banned in ("classify", "group", "split", "relate", "regrade", "embed"):
+        assert not re.search(rf"`ev [^`]*{banned}", text), f"search skill names a '{banned}' step"
+    assert "research spike" not in text.lower()
+
+
+def test_readme_documents_search():
+    section = README.split("## Search for studies", 1)[1].split("\n## ", 1)[0]
+    for needed in ("/evidence-echo:search", "keep", "drop", "Found by search", "search_max_candidates",
+                   "searches/"):
+        assert needed in section

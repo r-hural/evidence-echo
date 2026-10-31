@@ -36,9 +36,22 @@ def test_status_filter(subtopiced):
 def test_clear_returns_count(subtopiced):
     a, b = q(subtopiced), q(subtopiced, text="Does Z raise Y?")
     save(subtopiced, a); save(subtopiced, b)
-    assert store.clear_question_explanations(subtopiced) == 2
+    assert store.clear_question_explanations(subtopiced, "questions") == 2
     assert store.question_explanations(subtopiced) == []
-    assert store.clear_question_explanations(subtopiced) == 0
+    assert store.clear_question_explanations(subtopiced, "questions") == 0
+
+
+def test_clear_keeps_the_other_modes_rows(subtopiced):
+    a = q(subtopiced)
+    f = store.create_question(subtopiced, store.get_subtopic(subtopiced, "title-tags-meta")["id"], "F?", "Y",
+                              "level", mode="findings")
+    save(subtopiced, a); save(subtopiced, f)
+    assert store.clear_question_explanations(subtopiced, "quotes") == 0
+    assert store.clear_question_explanations(subtopiced, "findings") == 1
+    assert [r["question_id"] for r in store.question_explanations(subtopiced)] == [a]
+    save(subtopiced, f)
+    assert store.clear_question_explanations(subtopiced, "questions") == 1
+    assert [r["question_id"] for r in store.question_explanations(subtopiced)] == [f]
 
 
 def test_step12_on_a_0_14_0_database_keeps_pair_rows(tmp_path):

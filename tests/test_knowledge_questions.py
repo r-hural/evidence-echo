@@ -32,7 +32,7 @@ def add(db, subtopic="title-tags-meta", question=None, direction="up", by=None, 
                    "WHERE url=?", (sid, text, url))
     db.commit()
     if question is not None and direction is not None:
-        store.set_study_question(db, sid, question, direction, "group-2")
+        store.set_study_question(db, sid, question, direction, store.GROUP_VERSION)
     elif question is not None:
         db.execute("UPDATE studies SET question_id=? WHERE id=?", (question, sid))
         db.commit()

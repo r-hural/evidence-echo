@@ -22,11 +22,21 @@ def tier_label(e: Entry) -> str:
     return tier
 
 
+def cap_note(view: dict) -> str | None:
+    """"capped from X: <reason>" (just "capped from X" when no reason was stored), None when not capped."""
+    if not view.get("capped_from"):
+        return None
+    reasons = ", ".join(view.get("cap_reasons") or [])
+    return f"capped from {view['capped_from']}" + (f": {reasons}" if reasons else "")
+
+
 def label_extras(e: Entry) -> list[str]:
-    """Relation (unless unknown), "capped from X" and, for an undisputed entry, the gap note."""
+    """Grade labels, relation (unless unknown), "capped from X: reason" and, for an undisputed
+    entry, the gap note."""
     relation = e.view["provenance"]["relation"]
-    extras = [relation if relation and relation != "unknown" else None,
-              f"capped from {e.view['capped_from']}" if e.view["capped_from"] else None,
+    extras = [*(e.view.get("grade_labels") or []),
+              relation if relation and relation != "unknown" else None,
+              cap_note(e.view),
               None if e.disputed else e.view["gap_note"]]
     return [x for x in extras if x]
 
@@ -144,9 +154,28 @@ def independent_text(n: int) -> str:
     return f"{n} independent stud{'y' if n == 1 else 'ies'}"
 
 
+def questions_lines(subtopic: dict) -> list[tuple[str, str]]:
+    """Findings mode: the card's Subtopic pair, then one Question pair per question the study's findings
+    joined: '<question> · <label> (<n> independent studies) — <finding text>' (label part only with a
+    label; a finding whose quote is not in the article ends with UNCHECKED_NOTE)."""
+    pairs = [("Subtopic", subtopic["name"])]
+    for q in subtopic.get("questions") or []:
+        text = " ".join(str(q["question"] or "").split())
+        if q.get("label"):
+            text += f" · {label_text(q['label'])} ({independent_text(q['independent'])})"
+        text += f" — {' '.join(str(q.get('finding') or '').split())}"
+        if not q.get("quote_checked", True):
+            text += f" {UNCHECKED_NOTE}"
+        pairs.append(("Question", text))
+    return pairs
+
+
 def subtopic_lines(subtopic: dict) -> list[tuple[str, str]]:
     """The card's Subtopic pair, then a Question pair 'text · <label> (<n> independent studies)'
-    when the study has a question (the label part only when the question has one)."""
+    when the study has a question (the label part only when the question has one). In findings mode
+    (the dict has "questions") see questions_lines."""
+    if "questions" in subtopic:
+        return questions_lines(subtopic)
     pairs = [("Subtopic", subtopic["name"])]
     if subtopic.get("question"):
         text = subtopic["question"]
@@ -201,6 +230,33 @@ def quote_text(quote) -> str:
     return f"“{' '.join(str(quote or '').split())}”"
 
 
+UNCHECKED_NOTE = "# quote not found in the article"
+
+
+def inert(text) -> str:
+    """Untrusted one-line text (a finding and its quote) as plain Markdown: no tag, link, emphasis, entity,
+    table cell or heading can form, and a leading - or + cannot open a list inside the list item."""
+    text = " ".join(str(text or "").split())
+    for ch in ("\\", "`", "*", "_", "[", "]", "&", "|", "~", "#", ">"):
+        text = text.replace(ch, "\\" + ch)
+    text = text.replace("<", "&lt;")
+    text = re.sub(r"^(\d+)([.)])", r"\1\\\2", text)    # a leading "1." or "1)" opens no ordered list
+    return "\\" + text if text[:1] in ("-", "+") else text
+
+
+def findings_lines(findings: list, state: str | None) -> list[str]:
+    """A study's findings under its subtopic lines (quotes mode): 'Findings:' then one list line per
+    finding with its quote (marked when the quote is not in the article); 'Findings: waiting' for a study
+    the findings step has not reached; nothing for a failed one."""
+    if state == "waiting":
+        return ["Findings: waiting  "]
+    if not findings:
+        return []
+    return ["Findings:  "] + [
+        f"- {inert(f.text)}: “{inert(f.quote)}”" + ("" if f.quote_checked else f" {UNCHECKED_NOTE}") + "  "
+        for f in findings]
+
+
 def entry_lines(e: Entry) -> list[str]:
     label = " · ".join([tier_label(e)] + label_extras(e))
     lines = [f"### [{label}] {no_tags(e.title)}", "", no_tags(e.summary)]
@@ -213,12 +269,18 @@ def entry_lines(e: Entry) -> list[str]:
     if e.subtopic:
         for name, value in subtopic_lines(e.subtopic):
             lines.append(f"{name}: {plain(value) if name == 'Question' else value}  ")   # LLM question text: plain
+        if e.subtopic.get("waiting"):   # findings mode: some finding is not grouped yet
+            lines.append("Findings: waiting to be split  ")
+    if e.findings is not None and "questions" not in (e.subtopic or {}):   # quotes mode (findings mode: above)
+        lines += findings_lines(e.findings, e.findings_state)
     series = series_text(e)
     if series:
         lines.append(f"*{series}*  ")
     lines += [f"*{name}: {value}*  " for name, value in research_pairs(e)]
     if web_url(e.primary_url):
         lines.append(f"Primary source: <{web_url(e.primary_url)}>  ")
+    if e.found_by_search:
+        lines.append(f"Found by search: {plain(e.found_by_search)}  ")
     for link in e.coverage:
         lines.append(f"Coverage: {_link(link)}  ")
     lines.append("")
@@ -239,6 +301,8 @@ def seen_line(s: SeenEntry) -> str:
 
 def report_markdown(report: Report) -> str:
     lines = [f"# {report.topic_name} Report - {report.date}", ""]
+    if report.disclaimer:
+        lines += [f"*{report.disclaimer}*", ""]
     main = [line for e in report.new for line in entry_lines(e)]
     lines += main if main else [NO_ITEMS, ""]
     if report.disputed:

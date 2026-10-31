@@ -176,7 +176,7 @@ def test_step14_drops_full_text_vectors(tmp_path):
     conn.commit()
     conn.close()
     conn = store.connect(path)
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 14
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION
     assert [r["model"] for r in conn.execute("SELECT model FROM embeddings")] == ["voyage-4-lite/card-v1"]
     conn.close()
 

@@ -35,7 +35,7 @@ def _as_v6(path):
 
 
 def test_latest_version_is_14():
-    assert store.LATEST_VERSION == 14 and 14 in store.STEPS
+    assert store.LATEST_VERSION == 18 and 17 in store.STEPS
 
 
 def test_step7_renames_and_keeps_rows(tmp_path):

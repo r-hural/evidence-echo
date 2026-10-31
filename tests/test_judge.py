@@ -21,6 +21,7 @@ VERDICT = {
         "duration": "6 weeks",
         "match_keys": {"key_numbers": ["4.2%", "12000"]},
         "metric": "organic clicks", "baseline": "control group",
+        "study_type": "controlled_test", "peer_review": "unknown", "text_basis": "full",
     },
     "primary_url": "https://orig.example.com/study",
     "quotes": [{"number": "4.2%", "quote": SENTENCE}, {"number": "12k", "quote": SENTENCE}],
@@ -28,6 +29,8 @@ VERDICT = {
                    "conflict_of_interest": None},
     **CLASSIFY,
     "entities": [],
+    "finding_list": [{"text": "Variant pages saw +4.2% organic clicks", "quote": SENTENCE,
+                      "metric": "clicks", "measure": "organic clicks"}],
 }
 
 

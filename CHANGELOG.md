@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.17.0
+
+- **Grading rules per topic:** each topic now grades by rules that fit its field: its own tier
+  definitions, field-specific red flags and caps (for example, an animal study never above C).
+  The judge also notes the study type, whether it was peer reviewed and what the text is based
+  on. Every page and file shows each grade's labels and why a grade was capped, and a topic can
+  carry a disclaimer (health, money, law, safety). The templates ship with their own rules; for
+  a new topic, setup drafts a set for you to review. When rules change, studies are graded
+  again over the next runs (a set number per run).
+- **Findings:** each study now lists one to four checked findings, each with its exact quote.
+  Older studies get theirs over the next runs.
+- **Grouping modes:** besides grouping studies by question, a topic can list each study's
+  findings by subtopic (`quotes`), or file each finding under a question of its own
+  (`findings`), so one study can answer several questions. Setup suggests a mode per template;
+  `ev topic set <id> grouping_mode <mode>` switches it.
+- **Ask the evidence:** a read-only connection lets Claude answer questions from your graded
+  studies in any session, naming each study's grade and labels and linking it, with a note on
+  how much evidence there is. `ev find` does the same on the command line.
+- **Search for studies:** `/evidence-echo:search "<question>"` looks on the web for studies on
+  one question, grades them in a scratch copy and writes an answer page. You keep all, some or
+  none of them; kept studies join the topic marked "Found by search". The answer names each
+  study's data year and warns when the data is three or more years old. The topic page lists
+  past searches, and a kept study links to its answer page.
+- **Fewer false duplicates:** two studies that only share some numbers or similar wording get a
+  second look before you are asked; pairs found to be different studies are no longer offered
+  for merging, and your own "different studies" answer is remembered.
+- **Old data in reports:** a report's write-up says when a study's data is three or more years
+  old.
+- **Upgrade note:** the first run after the update re-grades your studies and adds findings
+  over several runs; back up your data folder first if you want to keep the old grades. Older
+  versions of the plugin cannot read the upgraded database.
+
 ## 0.16.6
 
 - **Security policy in the plugin folder:** the installed plugin now carries a short

@@ -5,7 +5,7 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-from evidence_echo.core import identity, knowledge
+from evidence_echo.core import grading, identity, knowledge
 from evidence_echo.core.settings import ConfigError
 from evidence_echo.core.urls import canonical_url
 
@@ -54,7 +54,19 @@ CREATE TABLE IF NOT EXISTS items (
   data_date TEXT,
   entity_names TEXT,
   judge_reason TEXT,
-  rejected_at TEXT
+  rejected_at TEXT,
+  study_type TEXT,
+  peer_review TEXT,
+  text_basis TEXT,
+  cap_reasons TEXT,
+  graded_rules TEXT,
+  caps_hash TEXT,
+  judge_version TEXT,
+  verify_version TEXT,
+  judge_tier_raw TEXT,
+  skeptic_tier_raw TEXT,
+  ruled_tier TEXT,
+  findings TEXT
 );
 CREATE TABLE IF NOT EXISTS studies (
   id INTEGER PRIMARY KEY,
@@ -95,6 +107,11 @@ CREATE TABLE IF NOT EXISTS studies (
   grouped_version TEXT,
   question_by_owner INTEGER NOT NULL DEFAULT 0,
   entities_checked INTEGER,
+  study_type TEXT,
+  peer_review TEXT,
+  text_basis TEXT,
+  findings_version TEXT,
+  findings_subtopic_id INTEGER REFERENCES subtopics(id),
   metric_id INTEGER REFERENCES metrics(id)
 );
 CREATE TABLE IF NOT EXISTS embeddings (
@@ -188,7 +205,8 @@ QUESTIONS_DDL = """CREATE TABLE IF NOT EXISTS questions (
   owner_touched INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   kind TEXT,
-  comparison TEXT
+  comparison TEXT,
+  mode TEXT NOT NULL DEFAULT 'questions'
 )"""
 METRICS_DDL = """CREATE TABLE IF NOT EXISTS metrics (
   id INTEGER PRIMARY KEY,
@@ -305,8 +323,37 @@ STUDY_ENTITIES_DDL = """CREATE TABLE IF NOT EXISTS study_entities (
 )"""
 _LEGACY_KNOWLEDGE_DDL = (_LEGACY_THEMES_DDL, _LEGACY_PAIR_EXPLANATIONS_DDL, PRIMARY_SOURCES_DDL,
                          PRIMARY_CHECKS_DDL)       # step 5 creates these (schema 5-6 names)
+FINDINGS_DDL = """CREATE TABLE IF NOT EXISTS findings (
+  id INTEGER PRIMARY KEY,
+  study_id INTEGER NOT NULL REFERENCES studies(id),
+  item_id INTEGER NOT NULL REFERENCES items(id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  quote TEXT NOT NULL,
+  quote_checked INTEGER NOT NULL,
+  metric_id INTEGER REFERENCES metrics(id),
+  measure TEXT,
+  version TEXT NOT NULL,
+  question_id INTEGER REFERENCES questions(id),
+  direction TEXT,
+  grouped_version TEXT,
+  by_owner INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(study_id, position)
+)"""
+STUDY_PAIRS_DDL = """CREATE TABLE IF NOT EXISTS study_pairs (
+  study_a INTEGER NOT NULL REFERENCES studies(id),
+  study_b INTEGER NOT NULL REFERENCES studies(id),
+  check_verdict TEXT,
+  check_note TEXT,
+  check_version TEXT,
+  checked_at TEXT,
+  owner_verdict TEXT,
+  owner_at TEXT,
+  PRIMARY KEY (study_a, study_b)
+)"""
 KNOWLEDGE_DDL = (SUBTOPICS_DDL, QUESTIONS_DDL, PAIR_EXPLANATIONS_DDL, PRIMARY_SOURCES_DDL, PRIMARY_CHECKS_DDL,
-                 *STEP11_DDL, QUESTION_EXPLANATIONS_DDL, ENTITIES_DDL, STUDY_ENTITIES_DDL)
+                 *STEP11_DDL, QUESTION_EXPLANATIONS_DDL, ENTITIES_DDL, STUDY_ENTITIES_DDL, FINDINGS_DDL,
+                 STUDY_PAIRS_DDL)
 REJECTED_AT_TRIGGER = """CREATE TRIGGER IF NOT EXISTS items_rejected_at AFTER UPDATE OF state ON items
 WHEN NEW.state IS NOT OLD.state
 BEGIN
@@ -323,7 +370,15 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-LATEST_VERSION = 14
+LATEST_VERSION = 18
+FINDINGS_VERSION = "findings-1"
+FINDINGS_MAX = 4
+FINDING_TEXT_MAX = 160
+STEP15_STUDY_COLUMNS = (("study_type", "TEXT"), ("peer_review", "TEXT"), ("text_basis", "TEXT"))
+STEP15_ITEM_COLUMNS = (*STEP15_STUDY_COLUMNS, ("cap_reasons", "TEXT"), ("graded_rules", "TEXT"),
+                       ("caps_hash", "TEXT"), ("judge_version", "TEXT"), ("verify_version", "TEXT"),
+                       ("judge_tier_raw", "TEXT"), ("skeptic_tier_raw", "TEXT"), ("ruled_tier", "TEXT"))
+_STEP15_ITEM_NAMES = tuple(name for name, _ in STEP15_ITEM_COLUMNS)
 FAILING_AFTER = 5
 
 
@@ -574,8 +629,47 @@ def _step14(conn) -> None:
         conn.execute("DELETE FROM embeddings WHERE model NOT LIKE '%/card-%'")
 
 
+def _step15(conn) -> None:
+    """Grading rules: the grading facts, raw tiers, cap reasons and rule stamps. Nothing is filled here:
+    a NULL graded_rules queues the item for regrade."""
+    if _has_table(conn, "items"):
+        _add_columns(conn, "items", STEP15_ITEM_COLUMNS)
+    if _has_table(conn, "studies"):
+        _add_columns(conn, "studies", STEP15_STUDY_COLUMNS)
+
+
+def _step16(conn) -> None:
+    """Findings: the findings table, items.findings (the judge's list until match creates the study) and
+    studies.findings_version. Nothing is filled here: the findings stage queues every study."""
+    conn.execute(FINDINGS_DDL)
+    if _has_table(conn, "items"):
+        _add_columns(conn, "items", (("findings", "TEXT"),))
+    if _has_table(conn, "studies"):
+        _add_columns(conn, "studies", (("findings_version", "TEXT"),))
+
+
+def _step17(conn) -> None:
+    """Findings mode: a question, direction, group version and owner pin on findings; a mode on questions
+    (existing rows are questions-mode); studies.findings_subtopic_id. Nothing is filled here."""
+    if _has_table(conn, "findings"):
+        _add_columns(conn, "findings", (("question_id", "INTEGER REFERENCES questions(id)"),
+                                        ("direction", "TEXT"), ("grouped_version", "TEXT"),
+                                        ("by_owner", "INTEGER NOT NULL DEFAULT 0")))
+    if _has_table(conn, "questions"):
+        _add_columns(conn, "questions", (("mode", "TEXT NOT NULL DEFAULT 'questions'"),))
+    if _has_table(conn, "studies"):
+        _add_columns(conn, "studies", (("findings_subtopic_id", "INTEGER REFERENCES subtopics(id)"),))
+
+
+def _step18(conn) -> None:
+    """Duplicate check: study_pairs keeps the two blind checks' verdict and the owner's "different studies"
+    per possible-duplicate pair. Nothing is filled here: the dupcheck stage asks about every weak pair."""
+    conn.execute(STUDY_PAIRS_DDL)
+
+
 STEPS = {1: _step1, 2: _step2, 3: _step3, 4: _step4, 5: _step5, 6: _step6, 7: _step7, 8: _step8,
-         9: _step9, 10: _step10, 11: _step11, 12: _step12, 13: _step13, 14: _step14}
+         9: _step9, 10: _step10, 11: _step11, 12: _step12, 13: _step13, 14: _step14, 15: _step15, 16: _step16, 17: _step17,
+         18: _step18}
 
 
 def _migrate(conn, path) -> None:
@@ -702,8 +796,14 @@ def set_verdict(conn, item_id: int, passed: bool, tier: str | None, facts: dict,
                 primary_url: str | None, *, quotes=None, quote_check=None, capped_from=None,
                 judged_from=None, provenance=None, subtopic_choice=None, metric=None,
                 headline: dict | None = None, entity_names: list | None = None,
-                data_date: str | None = None, reason: str | None = None) -> None:
-    """Judge result. A passing item waits for match, which gives it its study."""
+                data_date: str | None = None, reason: str | None = None,
+                raw_tier: str | None = None, cap_reasons: list | None = None,
+                stamps: dict | None = None, findings: list | None = None) -> None:
+    """Judge result. A passing item waits for match, which gives it its study.
+    raw_tier: the judge's tier before caps; cap_reasons: why it was capped; stamps: graded_rules,
+    caps_hash and judge_version of the rules it was graded with; findings: the judge's checked findings
+    (JSON on a pass, NULL on a fail)."""
+    stamps = stamps or {}
     if _has_table(conn, "embeddings"):   # the card is built from the facts: a new verdict, a new vector
         conn.execute("DELETE FROM embeddings WHERE item_id=?", (item_id,))
     if not passed:
@@ -712,13 +812,17 @@ def set_verdict(conn, item_id: int, passed: bool, tier: str | None, facts: dict,
                match_reason=NULL, quotes=NULL, quote_check=NULL, capped_from=NULL,
                judged_from=NULL, provenance=NULL, judge_tier=NULL,
                subtopic_choice=NULL, metric_code=NULL, entity_names=NULL,
-               headline=NULL, data_date=NULL, judge_reason=? WHERE id=?""", (reason, item_id))
+               headline=NULL, data_date=NULL, judge_reason=?, findings=NULL WHERE id=?""", (reason, item_id))
+        conn.execute("UPDATE items SET " + ", ".join(f"{c}=NULL" for c in _STEP15_ITEM_NAMES)
+                     + " WHERE id=?", (item_id,))   # column names come from the fixed tuple above
         conn.commit()
         return
     conn.execute(
         """UPDATE items SET verdict_pass=1, evidence_tier=?, judge_tier=?, facts=?, primary_url=?,
            quotes=?, quote_check=?, capped_from=?, judged_from=?, provenance=?,
            subtopic_choice=?, metric_code=?, headline=?, data_date=?, entity_names=?,
+           study_type=?, peer_review=?, text_basis=?, judge_tier_raw=?, cap_reasons=?,
+           graded_rules=?, caps_hash=?, judge_version=?, findings=?,
            study_id=NULL, first_study_id=NULL, match_reason=NULL, judge_reason=NULL,
            state='judged' WHERE id=?""",
         (tier, tier, json.dumps(facts), primary_url,
@@ -726,7 +830,11 @@ def set_verdict(conn, item_id: int, passed: bool, tier: str | None, facts: dict,
          None if provenance is None else json.dumps(provenance),
          None if subtopic_choice is None else json.dumps(subtopic_choice), metric,
          None if headline is None else json.dumps(headline), data_date,
-         None if entity_names is None else json.dumps(clean_entity_names(entity_names)), item_id))
+         None if entity_names is None else json.dumps(clean_entity_names(entity_names)),
+         facts.get("study_type"), facts.get("peer_review"), facts.get("text_basis"), raw_tier,
+         None if cap_reasons is None else json.dumps(list(cap_reasons)),
+         stamps.get("graded_rules"), stamps.get("caps_hash"), stamps.get("judge_version"),
+         None if findings is None else json.dumps(findings, ensure_ascii=False), item_id))
     conn.commit()
 
 
@@ -789,8 +897,9 @@ def create_study(conn, tier, facts: dict, primary_url, *, provenance=None,
             series_id, editions, primary_canonical, fingerprint, metric, baseline, conducted_by,
             relation, conflict_of_interest, created_by_item, created_at,
             subtopic_id, metric_code, metric_id,
-            headline_value, headline_label, headline_quote, headline_checked, data_date)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            headline_value, headline_label, headline_quote, headline_checked, data_date,
+            study_type, peer_review, text_basis)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (facts.get("what_was_tested") or "(unnamed study)", facts.get("what_was_tested"),
          facts.get("findings"), tier, facts.get("research_timeframe"), facts.get("sample_scale"),
          None if facts.get("has_controls") is None else int(facts["has_controls"]),
@@ -801,7 +910,8 @@ def create_study(conn, tier, facts: dict, primary_url, *, provenance=None,
          json.dumps(identity.key_numbers(_numbers_of(facts, nested=True))),
          facts.get("metric"), facts.get("baseline"), prov.get("conducted_by"),
          prov.get("relation"), prov.get("conflict_of_interest"), created_by_item, _now(),
-         subtopic_id, metric, found["id"] if found else None, *headline_columns(headline), data_date))
+         subtopic_id, metric, found["id"] if found else None, *headline_columns(headline), data_date,
+         facts.get("study_type"), facts.get("peer_review"), facts.get("text_basis")))
     conn.commit()
     if entity_names is not None:
         link_study_entities(conn, cur.lastrowid, entity_names)
@@ -916,6 +1026,43 @@ def duplicate_pairs(conn, vectors: dict | None = None, threshold: float = 0.93) 
     return pairs
 
 
+def _pair_key(a: int, b: int) -> tuple[int, int]:
+    return (a, b) if a < b else (b, a)
+
+
+def pair_decisions(conn) -> dict[tuple[int, int], dict]:
+    """(lower study id, higher study id) -> its study_pairs row."""
+    return {(r["study_a"], r["study_b"]): dict(r) for r in conn.execute("SELECT * FROM study_pairs")}
+
+
+def save_pair_check(conn, a: int, b: int, verdict: str, note: str | None, version: str) -> None:
+    """The duplicate check's verdict for one pair (same, different or undecided); a new check replaces it."""
+    a, b = _pair_key(a, b)
+    conn.execute("""INSERT INTO study_pairs (study_a, study_b, check_verdict, check_note, check_version, checked_at)
+                    VALUES (?,?,?,?,?,?)
+                    ON CONFLICT(study_a, study_b) DO UPDATE SET check_verdict=excluded.check_verdict,
+                        check_note=excluded.check_note, check_version=excluded.check_version,
+                        checked_at=excluded.checked_at""", (a, b, verdict, note, version, _now()))
+    conn.commit()
+
+
+def set_pair_owner(conn, a: int, b: int, verdict: str | None) -> None:
+    """The owner's word on one pair: "different" hides it from the duplicate review for good; None undoes it."""
+    a, b = _pair_key(a, b)
+    conn.execute("""INSERT INTO study_pairs (study_a, study_b, owner_verdict, owner_at) VALUES (?,?,?,?)
+                    ON CONFLICT(study_a, study_b) DO UPDATE SET owner_verdict=excluded.owner_verdict,
+                        owner_at=excluded.owner_at""", (a, b, verdict, _now() if verdict else None))
+    conn.commit()
+
+
+def clear_pair_checks(conn) -> int:
+    """Every pair is checked again on the next run; the owner's verdicts stay."""
+    n = conn.execute("UPDATE study_pairs SET check_verdict=NULL, check_note=NULL, check_version=NULL, "
+                     "checked_at=NULL WHERE check_verdict IS NOT NULL").rowcount
+    conn.commit()
+    return n
+
+
 def _recompute_study(conn, study_id: int, primary: bool = False) -> None:
     """editions and fingerprint from the study's own match_keys and its items' facts.
     primary=True also drops a primary url no own item carries (one a merge copied in)."""
@@ -962,6 +1109,8 @@ def merge_studies(conn, keep: int, other: int) -> dict:
             _append_link(conn, keep, entity_id)
     if a.get("entities_checked") or b.get("entities_checked"):
         conn.execute("UPDATE studies SET entities_checked=1 WHERE id=?", (keep,))
+    conn.execute("DELETE FROM findings WHERE study_id=?", (other,))   # a merged-away study shows none
+    conn.execute("UPDATE studies SET findings_version=NULL WHERE id=?", (other,))
     conn.execute("UPDATE studies SET merged_into=? WHERE id=?", (keep, other))
     conn.commit()
     return {"kept": keep, "merged": other, "moved_items": moved}
@@ -1050,27 +1199,55 @@ def set_skeptic(conn, item_id: int, agrees: bool, adjusted_tier: str | None,
     conn.execute(
         """UPDATE items SET skeptic_agrees=?, skeptic_tier=?, skeptic_note=?,
            disputed=?, dispute_reason=CASE WHEN ? THEN NULL ELSE dispute_reason END,
-           state='verified' WHERE id=?""",
+           state=CASE WHEN state IN ('embedded', 'reported') THEN state ELSE 'verified' END
+           WHERE id=?""",
         (int(agrees), adjusted_tier, note, int(not agrees), int(resolved), item_id))
     conn.commit()
 
 
 def set_blind_grade(conn, item_id: int, tier: str, red_flags: list, note: str,
-                    final_tier: str, disputed: bool, dispute_reason: str | None) -> None:
+                    final_tier: str, disputed: bool, dispute_reason: str | None, *,
+                    raw_tier: str | None = None, capped_from=None, cap_reasons: list | None = None,
+                    verify_version: str | None = None, keep_state: bool = False) -> None:
     """Blind skeptic result, compared by grading.compare. A study this item created takes the
     final tier; a study it joined keeps its own (SP3a rule). A pre-SP2 item (judge_tier NULL)
-    keeps its old tier as judge_tier, so reset --stage verify can restore it."""
+    keeps its old tier as judge_tier, so reset --stage verify can restore it.
+    tier is the capped skeptic tier, raw_tier the skeptic's own. cap_reasons not None means the caller
+    applied the topic's caps: capped_from and cap_reasons then replace the item's. keep_state leaves
+    items.state as it is (a re-verify never moves an item)."""
     item = get_item(conn, item_id)
     judge_tier = item["judge_tier"] or item["evidence_tier"]
     conn.execute(
         """UPDATE items SET skeptic_tier=?, skeptic_agrees=?, skeptic_note=?, red_flags=?,
            disputed=?, dispute_reason=?, judge_tier=COALESCE(judge_tier, evidence_tier),
-           evidence_tier=?, state='verified' WHERE id=?""",
+           evidence_tier=?, skeptic_tier_raw=?, verify_version=?,
+           state=CASE WHEN ? THEN state ELSE 'verified' END WHERE id=?""",
         (tier, int(tier == judge_tier), note, json.dumps(list(red_flags)), int(disputed),
-         dispute_reason, final_tier, item_id))
-    conn.execute("UPDATE studies SET evidence_tier=? WHERE created_by_item=? AND id=?",
-                 (final_tier, item_id, item["study_id"]))
+         dispute_reason, final_tier, raw_tier, verify_version, int(keep_state), item_id))
+    if cap_reasons is not None:
+        conn.execute("UPDATE items SET capped_from=?, cap_reasons=? WHERE id=?",
+                     (capped_from, json.dumps(list(cap_reasons)), item_id))
+    _creator_study_takes_tier(conn, item_id, item["study_id"], final_tier)
     conn.commit()
+
+
+def _creator_study_takes_tier(conn, item_id: int, study_id, final_tier: str) -> None:
+    """The study an item created takes the item's final tier; a study it joined keeps its own."""
+    conn.execute("UPDATE studies SET evidence_tier=? WHERE created_by_item=? AND id=?",
+                 (final_tier, item_id, study_id))
+
+
+def promote_pregraded(conn) -> int:
+    """Matched items that already carry a blind grade (only kept search items arrive like this: a verify
+    reset clears the skeptic fields) move to `verified` without the skeptic; a study the item created
+    takes its stored final tier, as set_blind_grade writes it. Returns how many moved."""
+    rows = conn.execute("SELECT id, study_id, evidence_tier FROM items "
+                        "WHERE state='matched' AND skeptic_tier IS NOT NULL ORDER BY id").fetchall()
+    for row in rows:
+        conn.execute("UPDATE items SET state='verified' WHERE id=?", (row["id"],))
+        _creator_study_takes_tier(conn, row["id"], row["study_id"], row["evidence_tier"])
+    conn.commit()
+    return len(rows)
 
 
 def clear_blind_grades(conn) -> None:
@@ -1081,17 +1258,129 @@ def clear_blind_grades(conn) -> None:
                       AND skeptic_tier IS NOT NULL AND judge_tier IS NOT NULL)""")
     conn.execute("""UPDATE items SET evidence_tier=COALESCE(judge_tier, evidence_tier),
                       skeptic_tier=NULL, skeptic_agrees=NULL, skeptic_note=NULL, red_flags=NULL,
-                      disputed=0, dispute_reason=NULL
+                      disputed=0, dispute_reason=NULL, skeptic_tier_raw=NULL, verify_version=NULL
                     WHERE state='matched'""")
     conn.commit()
 
 
 def set_ruled_tier(conn, item_id: int, tier: str) -> None:
     """Owner ruling: the item's study takes this tier (it covers every source of the study)."""
-    conn.execute("UPDATE items SET evidence_tier=? WHERE id=?", (tier, item_id))
+    conn.execute("UPDATE items SET evidence_tier=?, ruled_tier=? WHERE id=?", (tier, tier, item_id))
     conn.execute("""UPDATE studies SET evidence_tier=?
                     WHERE id=(SELECT study_id FROM items WHERE id=?)""", (tier, item_id))
     conn.commit()
+
+
+REGRADE_STATES = ("matched", "verified", "embedded", "reported")
+
+
+def items_with_stale_caps(conn, caps_hash: str) -> list[dict]:
+    """Graded items whose stored caps hash is missing or differs: the code-only re-cap pass."""
+    rows = conn.execute("SELECT * FROM items WHERE judge_tier IS NOT NULL "
+                        "AND (caps_hash IS NULL OR caps_hash != ?) ORDER BY id", (caps_hash,))
+    return [dict(r) for r in rows]
+
+
+def set_recap(conn, item_id: int, *, judge_tier, skeptic_tier, final_tier, capped_from, cap_reasons: list,
+              disputed: bool, dispute_reason, caps_hash: str) -> None:
+    """Re-capped tiers of an item (code only). The study takes the final tier only when this item
+    created it (set_blind_grade rule); the item's state is never touched."""
+    item = get_item(conn, item_id)
+    conn.execute(
+        """UPDATE items SET judge_tier=?, skeptic_tier=?, evidence_tier=?, capped_from=?, cap_reasons=?,
+           disputed=?, dispute_reason=?, caps_hash=? WHERE id=?""",
+        (judge_tier, skeptic_tier, final_tier, capped_from, json.dumps(list(cap_reasons)), int(disputed),
+         dispute_reason, caps_hash, item_id))
+    if item["study_id"] is not None:
+        conn.execute("UPDATE studies SET evidence_tier=? WHERE created_by_item=? AND id=?",
+                     (final_tier, item_id, item["study_id"]))
+    conn.commit()
+
+
+def items_to_regrade(conn, rules_hash: str) -> list[dict]:
+    """Items that created a study (not merged away), from `matched` onward, graded under other rules
+    (or none: NULL) and not marked unavailable. Oldest first."""
+    marks = ",".join("?" * len(REGRADE_STATES))
+    rows = conn.execute(
+        f"""SELECT i.* FROM items i JOIN studies s ON s.id = i.study_id AND s.created_by_item = i.id
+            WHERE s.merged_into IS NULL AND i.state IN ({marks})
+              AND (i.graded_rules IS NULL OR (i.graded_rules != ? AND i.graded_rules != ?))
+            ORDER BY i.id""", (*REGRADE_STATES, rules_hash, grading.REGRADE_UNAVAILABLE))
+    return [dict(r) for r in rows]
+
+
+def set_regrade(conn, item_id: int, *, raw_tier: str, judge_tier: str, capped_from, cap_reasons: list,
+                facts_update: dict, graded_rules: str, caps_hash: str, judge_version: str) -> None:
+    """A re-grade: the three grading facts, the judge's raw and capped tier and the rule stamps.
+    evidence_tier, disputed, findings, quotes, match, question and state stay; verify_version is
+    cleared (the reverify marker)."""
+    item = get_item(conn, item_id)
+    facts = {**_loads(item["facts"]), **facts_update}
+    conn.execute(
+        """UPDATE items SET facts=?, study_type=?, peer_review=?, text_basis=?, judge_tier_raw=?,
+           judge_tier=?, capped_from=?, cap_reasons=?, graded_rules=?, caps_hash=?, judge_version=?,
+           verify_version=NULL WHERE id=?""",
+        (json.dumps(facts), facts.get("study_type"), facts.get("peer_review"), facts.get("text_basis"),
+         raw_tier, judge_tier, capped_from, json.dumps(list(cap_reasons)), graded_rules, caps_hash,
+         judge_version, item_id))
+    if item["study_id"] is not None:
+        conn.execute("UPDATE studies SET study_type=?, peer_review=?, text_basis=? "
+                     "WHERE created_by_item=? AND id=?",
+                     (facts.get("study_type"), facts.get("peer_review"), facts.get("text_basis"),
+                      item_id, item["study_id"]))
+    conn.commit()
+
+
+def mark_regrade_unavailable(conn, item_id: int) -> None:
+    conn.execute("UPDATE items SET graded_rules=? WHERE id=?", (grading.REGRADE_UNAVAILABLE, item_id))
+    conn.commit()
+
+
+REVERIFY_STATES = ("verified", "embedded", "reported")
+
+
+def items_to_reverify(conn, rules_hash: str) -> list[dict]:
+    """Study-creating items re-graded under the current rules whose skeptic has not graded them since
+    (set_regrade clears verify_version). `matched` items are verify's. Oldest first."""
+    marks = ",".join("?" * len(REVERIFY_STATES))
+    rows = conn.execute(
+        f"""SELECT i.* FROM items i JOIN studies s ON s.id = i.study_id AND s.created_by_item = i.id
+            WHERE s.merged_into IS NULL AND i.state IN ({marks})
+              AND i.graded_rules = ? AND i.verify_version IS NULL
+            ORDER BY i.id""", (*REVERIFY_STATES, rules_hash))
+    return [dict(r) for r in rows]
+
+
+def clear_graded_rules(conn) -> int:
+    """reset --stage regrade: every item (marked unavailable ones too) is queued for a re-grade again."""
+    count = conn.execute("UPDATE items SET graded_rules=NULL WHERE graded_rules IS NOT NULL").rowcount
+    conn.commit()
+    return count
+
+
+def rearm_regrade(conn, study_id: int) -> dict:
+    """Queue one study for a re-grade: its creating item's graded_rules goes back to NULL."""
+    study = get_study(conn, study_id)
+    if study is None:
+        raise ConfigError(f"no study s{study_id}")
+    if study["merged_into"] is not None:
+        raise ConfigError(f"s{study_id} is merged into s{study['merged_into']}; re-grade that study")
+    if study["created_by_item"] is None:
+        raise ConfigError(f"s{study_id} has no creating item, so there is nothing to re-grade")
+    conn.execute("UPDATE items SET graded_rules=NULL WHERE id=?", (study["created_by_item"],))
+    conn.commit()
+    return {"study": study_id}
+
+
+def regrade_counts(conn, rules_hash: str, since: str | None) -> dict:
+    """{"done": studies re-graded by regrade runs logged after `since`, "pending": still queued}."""
+    if since is None:
+        rows = conn.execute("SELECT detail FROM runs WHERE stage='regrade'").fetchall()
+    else:
+        rows = conn.execute("SELECT detail FROM runs WHERE stage='regrade' AND started_at > ?",
+                            (since,)).fetchall()
+    done = sum(int(r[0]) for r in rows if (r[0] or "").isdigit())
+    return {"done": done, "pending": len(items_to_regrade(conn, rules_hash))}
 
 
 def save_vector(conn, item_id: int, model: str, vector: bytes) -> None:
@@ -1747,9 +2036,11 @@ def merge_metrics(conn, slug: str, into: str) -> dict:
     metric, target = _active_metric_or_error(conn, slug), _active_metric_or_error(conn, into)
     moved = conn.execute("UPDATE studies SET metric_id=? WHERE metric_id=?",
                          (target["id"], metric["id"])).rowcount
+    moved_findings = conn.execute("UPDATE findings SET metric_id=? WHERE metric_id=?",
+                                  (target["id"], metric["id"])).rowcount
     conn.execute("UPDATE metrics SET merged_into=? WHERE id=?", (target["id"], metric["id"]))
     conn.commit()
-    return {"merged": slug, "into": into, "moved_studies": moved}
+    return {"merged": slug, "into": into, "moved_studies": moved, "moved_findings": moved_findings}
 
 
 def set_study_metric(conn, study_id: int, slug: str) -> dict:
@@ -2279,6 +2570,29 @@ def _settle(conn, proposal_id: int) -> bool:
     return False
 
 
+def _move_findings_side(conn, source_id: int, dest_id: int, moved: set) -> None:
+    """Findings mode follows an accepted subtopic split: a moved study's findings subtopic, when it is the
+    source, and each findings question of the source whose findings all belong to moved studies."""
+    def in_source(subtopic_id) -> bool:
+        found = resolve_subtopic(conn, subtopic_id) if subtopic_id is not None else None
+        return found is not None and found["id"] == source_id
+
+    for sid in moved:
+        row = conn.execute("SELECT findings_subtopic_id FROM studies WHERE id=?", (sid,)).fetchone()
+        if row and in_source(row[0]):
+            conn.execute("UPDATE studies SET findings_subtopic_id=? WHERE id=?", (dest_id, sid))
+    owners: dict = {}
+    for f in conn.execute("SELECT question_id, study_id FROM findings WHERE question_id IS NOT NULL").fetchall():
+        question = resolve_question(conn, f["question_id"])
+        if question is not None:
+            owners.setdefault(question["id"], set()).add(f["study_id"])
+    for q in conn.execute("SELECT id, subtopic_id FROM questions WHERE mode='findings' "
+                          "AND merged_into IS NULL").fetchall():
+        studies = owners.get(q["id"])
+        if studies and studies <= moved and in_source(q["subtopic_id"]):
+            conn.execute("UPDATE questions SET subtopic_id=? WHERE id=?", (dest_id, q["id"]))
+
+
 def accept_split_group(conn, group_id: int) -> dict:
     """Accept one proposed part: its split name becomes confirmed and the moves that still hold are
     applied (an owner pin does not block them: the owner accepted the move)."""
@@ -2299,6 +2613,9 @@ def accept_split_group(conn, group_id: int) -> dict:
                     conn.execute("UPDATE studies SET subtopic_id=? WHERE id=?", (dest["id"], sid))
             for sid in plan["studies"]:
                 conn.execute("UPDATE studies SET subtopic_id=? WHERE id=?", (dest["id"], sid))
+            if source is not None:
+                _move_findings_side(conn, source["id"], dest["id"],
+                                    {s for _, m in plan["questions"] for s in m} | set(plan["studies"]))
         else:
             for sid in plan["studies"]:
                 conn.execute("UPDATE studies SET metric_id=? WHERE id=?", (dest["id"], sid))
@@ -2703,8 +3020,10 @@ def get_question_explanation(conn, question_id: int) -> dict | None:
     return _decode_question_explanation(row) if row else None
 
 
-def clear_question_explanations(conn) -> int:
-    count = conn.execute("DELETE FROM question_explanations").rowcount
+def clear_question_explanations(conn, mode: str) -> int:
+    """Drop the explanations of one grouping mode's questions (quotes mode has none of its own)."""
+    count = conn.execute("DELETE FROM question_explanations WHERE question_id IN "
+                         "(SELECT id FROM questions WHERE mode=?)", (mode,)).rowcount
     conn.commit()
     return count
 
@@ -2837,13 +3156,24 @@ def _check_kind(kind: str | None, comparison: str | None) -> str | None:
     return _clean_text(comparison, "comparison", knowledge.QUESTION_COMPARISON_MAX)
 
 
+QUESTION_MODES = ("questions", "findings")
+
+
+def question_mode(grouping_mode: str) -> str:
+    """The mode of the questions a grouping mode works with: findings mode has its own, all others share."""
+    return "findings" if grouping_mode == "findings" else "questions"
+
+
 def create_question(conn, subtopic_id: int, text: str, measure: str, kind: str | None = None,
-                    comparison: str | None = None) -> int:
+                    comparison: str | None = None, mode: str = "questions") -> int:
+    if mode not in QUESTION_MODES:
+        raise ValueError(f"mode must be one of {', '.join(QUESTION_MODES)}")
     text = _clean_text(text, "text", knowledge.QUESTION_TEXT_MAX)
     measure = _clean_text(measure, "measure", knowledge.QUESTION_MEASURE_MAX)
     comparison = _check_kind(kind, comparison)
-    cur = conn.execute("""INSERT INTO questions (subtopic_id, text, measure, kind, comparison, created_at)
-                          VALUES (?,?,?,?,?,?)""", (subtopic_id, text, measure, kind, comparison, _now()))
+    cur = conn.execute("""INSERT INTO questions (subtopic_id, text, measure, kind, comparison, created_at, mode)
+                          VALUES (?,?,?,?,?,?,?)""",
+                       (subtopic_id, text, measure, kind, comparison, _now(), mode))
     conn.commit()
     return cur.lastrowid
 
@@ -2865,13 +3195,25 @@ def resolve_question(conn, question_id) -> dict | None:
     return dict(row) if row else None
 
 
-def list_questions(conn) -> list[dict]:
-    return [dict(r) for r in conn.execute("SELECT * FROM questions ORDER BY id")]
+def list_questions(conn, mode: str | None = None) -> list[dict]:
+    if mode is None:
+        return [dict(r) for r in conn.execute("SELECT * FROM questions ORDER BY id")]
+    return [dict(r) for r in conn.execute("SELECT * FROM questions WHERE mode=? ORDER BY id", (mode,))]
 
 
 def _check_direction(direction: str) -> None:
     if direction not in knowledge.QUESTION_DIRECTIONS:
         raise ValueError(f"direction must be one of {', '.join(knowledge.QUESTION_DIRECTIONS)}")
+
+
+def _check_direction_rules(question: dict, direction: str | None) -> None:
+    if direction is None:
+        if question["kind"] == "difference":
+            raise ValueError("a direction is required under a difference question")
+    else:
+        _check_direction(direction)
+        if question["kind"] in ("level", "capability"):
+            raise ValueError(f"q{question['id']} is a {question['kind']} question; it has no direction")
 
 
 def set_study_question(conn, study_id: int, question_id: int, direction: str | None, version: str, *,
@@ -2881,13 +3223,9 @@ def set_study_question(conn, study_id: int, question_id: int, direction: str | N
     question = resolve_question(conn, question_id) if get_question(conn, question_id) else None
     if question is None:
         raise ValueError(f"no question q{question_id}")
-    if direction is None:
-        if question["kind"] == "difference":
-            raise ValueError("a direction is required under a difference question")
-    else:
-        _check_direction(direction)
-        if question["kind"] in ("level", "capability"):
-            raise ValueError(f"q{question['id']} is a {question['kind']} question; it has no direction")
+    if question["mode"] == "findings":
+        raise ValueError(f"q{question['id']} is a findings-mode question; studies are not filed under it")
+    _check_direction_rules(question, direction)
     subtopic = resolve_subtopic(conn, question["subtopic_id"])
     conn.execute("""UPDATE studies SET question_id=?, question_direction=?, grouped_version=?,
                     question_by_owner=?, subtopic_id=COALESCE(?, subtopic_id) WHERE id=?""",
@@ -2925,7 +3263,16 @@ def _clear_directions(conn, question_id: int) -> int:
     for sid in _studies_of(conn, question_id):
         cleared += conn.execute("UPDATE studies SET question_direction=NULL WHERE id=? "
                                 "AND question_direction IS NOT NULL", (sid,)).rowcount
+    for fid in _findings_of(conn, question_id):
+        cleared += conn.execute("UPDATE findings SET direction=NULL WHERE id=? "
+                                "AND direction IS NOT NULL", (fid,)).rowcount
     return cleared
+
+
+def _findings_of(conn, question_id: int) -> list[int]:
+    """Finding ids whose question resolves to this question."""
+    return [r["id"] for r in conn.execute("SELECT id, question_id FROM findings WHERE question_id IS NOT NULL")
+            if (resolve_question(conn, r["question_id"]) or {}).get("id") == question_id]
 
 
 def _studies_of(conn, question_id: int) -> list[int]:
@@ -2985,11 +3332,23 @@ def merge_questions(conn, question_id: int, into: int) -> dict:
         raise ValueError("a question cannot be merged into itself")
     source = _active_question_or_error(conn, question_id)
     target = _active_question_or_error(conn, into)
+    if source["mode"] != target["mode"]:
+        raise ValueError(f"q{question_id} and q{into} belong to different grouping modes")
     if source["kind"] and target["kind"] and source["kind"] != target["kind"]:
         raise ValueError(f"q{question_id} is a {source['kind']} question, q{into} a {target['kind']} question")
     _active_subtopic_of_question(conn, source)
     subtopic = _active_subtopic_of_question(conn, target)
     moved = _studies_of(conn, question_id)
+    moved_findings = _findings_of(conn, question_id)
+    if moved_findings:      # two findings of one study never share a question
+        stay = _findings_of(conn, into)
+        marks = lambda ids: ",".join("?" * len(ids))
+        both = [r["study_id"] for r in conn.execute(
+            f"SELECT DISTINCT study_id FROM findings WHERE id IN ({marks(moved_findings)}) AND study_id IN "
+            f"(SELECT study_id FROM findings WHERE id IN ({marks(stay)}))",
+            [*moved_findings, *stay])] if stay else []
+        if both:
+            raise ValueError(f"s{min(both)} has findings under both q{question_id} and q{into}")
     if target["kind"] is None and source["kind"] is not None:
         conn.execute("UPDATE questions SET kind=?, comparison=? WHERE id=?",
                      (source["kind"], source["comparison"], into))
@@ -2999,12 +3358,21 @@ def merge_questions(conn, question_id: int, into: int) -> dict:
         for sid in moved + _studies_of(conn, into):
             cleared += conn.execute("UPDATE studies SET question_direction=NULL WHERE id=? "
                                     "AND question_direction IS NOT NULL", (sid,)).rowcount
+        for fid in moved_findings + _findings_of(conn, into):
+            cleared += conn.execute("UPDATE findings SET direction=NULL WHERE id=? "
+                                    "AND direction IS NOT NULL", (fid,)).rowcount
     elif target["kind"] == "difference" and not _same_comparison(source["comparison"], target["comparison"]):
         for sid in moved:
             cleared += conn.execute("UPDATE studies SET question_direction=NULL WHERE id=? "
                                     "AND question_direction IS NOT NULL", (sid,)).rowcount
+        for fid in moved_findings:
+            cleared += conn.execute("UPDATE findings SET direction=NULL WHERE id=? "
+                                    "AND direction IS NOT NULL", (fid,)).rowcount
     for sid in moved:
         conn.execute("UPDATE studies SET subtopic_id=? WHERE id=?", (subtopic["id"], sid))
+    for fid in moved_findings:      # a position-1 finding's study follows into the target's subtopic
+        conn.execute("UPDATE studies SET findings_subtopic_id=? WHERE id=(SELECT study_id FROM findings "
+                     "WHERE id=? AND position=1)", (subtopic["id"], fid))
     conn.execute("UPDATE questions SET merged_into=? WHERE id=?", (into, question_id))
     conn.execute("UPDATE questions SET owner_touched=1 WHERE id=?", (into,))
     conn.commit()
@@ -3019,6 +3387,8 @@ def move_study(conn, study_id: int, question_id: int) -> dict:
     final = resolve_question(conn, question_id)
     if final is None:
         raise ValueError(f"no question q{question_id}")
+    if final["mode"] == "findings":
+        raise ValueError(f"q{final['id']} is a findings-mode question; studies are not moved into it")
     subtopic = _active_subtopic_of_question(conn, final)
     conn.execute("""UPDATE studies SET question_id=?, question_direction=NULL, question_by_owner=1,
                     subtopic_id=? WHERE id=?""", (final["id"], subtopic["id"], study_id))
@@ -3050,7 +3420,108 @@ def clear_grouping(conn) -> int:
     return count
 
 
-GROUP_VERSION = "group-2"     # the group stage's prompt version; a test asserts group.PROMPT_VERSION equals it
+def get_finding(conn, finding_id: int) -> dict | None:
+    row = conn.execute("SELECT * FROM findings WHERE id=?", (finding_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def _finding_question_check(conn, finding: dict, question_id: int) -> dict:
+    """The findings-mode question an id resolves to, when this finding may join it."""
+    question = resolve_question(conn, question_id) if get_question(conn, question_id) else None
+    if question is None:
+        raise ValueError(f"no question q{question_id}")
+    if question["mode"] != "findings":
+        raise ValueError(f"q{question['id']} is a questions-mode question; findings are not filed under it")
+    for other in conn.execute("SELECT id, question_id FROM findings WHERE study_id=? AND id<>? "
+                              "AND question_id IS NOT NULL", (finding["study_id"], finding["id"])):
+        if (resolve_question(conn, other["question_id"]) or {}).get("id") == question["id"]:
+            raise ValueError(f"f{finding['id']}: s{finding['study_id']} already has a finding "
+                             f"under q{question['id']}")
+    return question
+
+
+def _follow_position_one(conn, finding: dict, question: dict) -> None:
+    if finding["position"] == 1:
+        subtopic = resolve_subtopic(conn, question["subtopic_id"])
+        conn.execute("UPDATE studies SET findings_subtopic_id=? WHERE id=?",
+                     (subtopic["id"] if subtopic else None, finding["study_id"]))
+
+
+def set_finding_question(conn, finding_id: int, question_id: int, direction: str | None, version: str, *,
+                         by_owner: bool = False) -> None:
+    """File a finding under a findings-mode question. Direction rules as for studies. Two findings of one
+    study never share a question. The study's position-1 finding also sets studies.findings_subtopic_id;
+    studies.question_id is never touched."""
+    finding = get_finding(conn, finding_id)
+    if finding is None:
+        raise ValueError(f"no finding f{finding_id}")
+    question = _finding_question_check(conn, finding, question_id)
+    _check_direction_rules(question, direction)
+    conn.execute("UPDATE findings SET question_id=?, direction=?, grouped_version=?, by_owner=? WHERE id=?",
+                 (question_id, direction, version, 1 if by_owner else 0, finding_id))
+    _follow_position_one(conn, finding, question)
+    conn.commit()
+
+
+def set_finding_direction(conn, finding_id: int, direction: str | None, version: str) -> None:
+    if direction is not None:
+        _check_direction(direction)
+    conn.execute("UPDATE findings SET direction=?, grouped_version=? WHERE id=?",
+                 (direction, version, finding_id))
+    conn.commit()
+
+
+def is_finding_pinned(conn, finding: dict) -> bool:
+    """The owner placed the finding, or its question is one the owner renamed or merged into."""
+    if finding["by_owner"]:
+        return True
+    question = resolve_question(conn, finding["question_id"]) if finding["question_id"] is not None else None
+    return bool(question and question["owner_touched"])
+
+
+def move_finding(conn, finding_id: int, question_id: int) -> dict:
+    """Owner: put a finding under a findings-mode question of an active subtopic; pins it, clears its
+    direction."""
+    finding = get_finding(conn, finding_id)
+    if finding is None:
+        raise ValueError(f"no finding f{finding_id}")
+    question = _finding_question_check(conn, finding, question_id)
+    _active_subtopic_of_question(conn, question)
+    conn.execute("UPDATE findings SET question_id=?, direction=NULL, by_owner=1 WHERE id=?",
+                 (question["id"], finding_id))
+    _follow_position_one(conn, finding, question)
+    conn.commit()
+    return {"moved": f"f{finding_id}", "into": f"q{question['id']}"}
+
+
+def clear_finding_grouping(conn) -> int:
+    """Unpinned findings go back to ungrouped (question, direction and version cleared)."""
+    count = 0
+    for row in conn.execute("SELECT * FROM findings WHERE question_id IS NOT NULL "
+                            "OR direction IS NOT NULL OR grouped_version IS NOT NULL").fetchall():
+        finding = dict(row)
+        if is_finding_pinned(conn, finding):
+            continue
+        conn.execute("UPDATE findings SET question_id=NULL, direction=NULL, grouped_version=NULL WHERE id=?",
+                     (finding["id"],))
+        if finding["position"] == 1:
+            conn.execute("UPDATE studies SET findings_subtopic_id=NULL WHERE id=?", (finding["study_id"],))
+        count += 1
+    conn.commit()
+    return count
+
+
+def study_subtopic(conn, study: dict, mode: str) -> dict | None:
+    """The subtopic a study sits under for a grouping mode. Findings mode: its findings subtopic when that
+    resolves to an active subtopic, else its own; other modes: its own."""
+    if mode == "findings" and study.get("findings_subtopic_id") is not None:
+        found = resolve_subtopic(conn, study["findings_subtopic_id"])
+        if found is not None and found["status"] in ("seeded", "confirmed"):
+            return found
+    return resolve_subtopic(conn, study["subtopic_id"]) if study.get("subtopic_id") is not None else None
+
+
+GROUP_VERSION = "group-3"     # the group stage's prompt version; a test asserts group.PROMPT_VERSION equals it
 
 
 def studies_to_group(conn) -> list[dict]:
@@ -3078,3 +3549,142 @@ def studies_to_group(conn) -> list[dict]:
         elif gap:
             out.append({**study, "fixed_question": question["id"]})
     return sorted(out, key=lambda s: -s["id"])
+
+
+FINDINGS_GROUP_VERSION = "group-f1"   # findings mode's group prompt version; a test asserts group.FINDINGS_PROMPT_VERSION equals it
+
+
+def findings_to_group(conn) -> list[dict]:
+    """Findings (of counting studies whose findings subtopic is active) that the group stage should
+    answer in findings mode, newest study first, then position. Each is the finding row plus `study`,
+    `subtopic_id` and `fixed_question`, under the rules of studies_to_group applied to the finding."""
+    from evidence_echo.core import knowledge
+    placed, _ = knowledge.placed_studies(conn)
+    by_study = findings_by_study(conn)
+    out = []
+    for study, _, _ in placed:
+        findings = by_study.get(study["id"])
+        if not findings:
+            continue
+        subtopic = study_subtopic(conn, study, "findings")
+        if subtopic is None or subtopic["status"] not in SUBTOPIC_ACTIVE:
+            continue
+        for finding in findings:
+            question = resolve_question(conn, finding["question_id"]) if finding["question_id"] is not None else None
+            if question is not None:
+                home = resolve_subtopic(conn, question["subtopic_id"])
+                if question["mode"] != "findings" or home is None or home["status"] not in SUBTOPIC_ACTIVE:
+                    question = None
+            gap = question is not None and (question["kind"] is None or (
+                question["kind"] == "difference" and finding["direction"] is None))
+            base = {**finding, "study": study, "subtopic_id": subtopic["id"]}
+            if question is None:
+                out.append({**base, "fixed_question": None})
+            elif is_finding_pinned(conn, finding):
+                if gap:
+                    out.append({**base, "fixed_question": question["id"]})
+            elif finding["grouped_version"] != FINDINGS_GROUP_VERSION:
+                out.append({**base, "fixed_question": None})
+            elif gap:
+                out.append({**base, "fixed_question": question["id"]})
+    return sorted(out, key=lambda f: (-f["study_id"], f["position"]))
+
+
+def item_findings(item: dict) -> list | None:
+    """The judge's findings stored on an item; None when it was judged before step 16."""
+    raw = item.get("findings")
+    if not raw:
+        return None
+    try:
+        value = json.loads(raw)
+    except ValueError:
+        return None
+    return value if isinstance(value, list) else None
+
+
+def write_findings(conn, study_id: int, item_id: int, findings: list[dict], version: str) -> int:
+    """Replace the study's findings with `findings` (positions 1..n) and stamp its findings_version.
+    A finding is {"text", "quote", "quote_checked", "metric" (a slug or None), "measure"}."""
+    conn.execute("DELETE FROM findings WHERE study_id=?", (study_id,))
+    for position, f in enumerate(findings, 1):
+        metric = metric_for_slug(conn, f.get("metric"))
+        conn.execute(
+            """INSERT INTO findings (study_id, item_id, position, text, quote, quote_checked, metric_id,
+                   measure, version) VALUES (?,?,?,?,?,?,?,?,?)""",
+            (study_id, item_id, position, f["text"], f["quote"], int(bool(f.get("quote_checked"))),
+             metric["id"] if metric else None, f.get("measure"), version))
+    conn.execute("UPDATE studies SET findings_version=? WHERE id=?", (version, study_id))
+    conn.commit()
+    return len(findings)
+
+
+def _finding_rows(conn, where: str, params: tuple) -> list[dict]:
+    out = []
+    for row in conn.execute(f"SELECT * FROM findings {where} ORDER BY study_id, position", params):
+        f = dict(row)
+        metric = resolve_metric(conn, f["metric_id"]) if f["metric_id"] is not None else None
+        f["metric_slug"] = metric["slug"] if metric else None
+        f["metric_name"] = metric["name"] if metric and metric["slug"] != OTHER_METRIC else None
+        out.append(f)
+    return out
+
+
+def study_findings(conn, study_id: int) -> list[dict]:
+    """The study's findings by position; each carries metric_slug and metric_name (merges resolved,
+    None name for Other)."""
+    return _finding_rows(conn, "WHERE study_id=?", (study_id,))
+
+
+def findings_by_study(conn) -> dict[int, list[dict]]:
+    out: dict[int, list[dict]] = {}
+    for f in _finding_rows(conn, "", ()):
+        out.setdefault(f["study_id"], []).append(f)
+    return out
+
+
+def mark_findings_rejected(conn, study_id: int, version: str) -> bool:
+    """A rejected answer: the first call marks the study `<version>:rejected` and returns False; a
+    second one, while the mark stands, marks it `<version>:failed` and returns True."""
+    row = conn.execute("SELECT findings_version FROM studies WHERE id=?", (study_id,)).fetchone()
+    failed = bool(row) and row[0] == f"{version}:rejected"
+    conn.execute("UPDATE studies SET findings_version=? WHERE id=?",
+                 (f"{version}:failed" if failed else f"{version}:rejected", study_id))
+    conn.commit()
+    return failed
+
+
+def mark_findings_failed(conn, study_id: int, version: str) -> None:
+    conn.execute("UPDATE studies SET findings_version=? WHERE id=?", (f"{version}:failed", study_id))
+    conn.commit()
+
+
+def _counting_studies(conn) -> list[dict]:
+    marks = ",".join("?" * len(STUDY_ITEM_STATES))
+    return [dict(r) for r in conn.execute(
+        "SELECT * FROM studies s WHERE s.merged_into IS NULL AND EXISTS "
+        f"(SELECT 1 FROM items i WHERE i.study_id = s.id AND i.state IN ({marks})) "
+        "ORDER BY s.id DESC", STUDY_ITEM_STATES)]
+
+
+def studies_without_findings(conn, version: str) -> list[dict]:
+    """Counting studies the findings stage still owes an answer, newest first: no findings_version, or
+    one that is not `version` and not a `:failed` mark (so a `:rejected` study is asked again)."""
+    return [s for s in _counting_studies(conn)
+            if s["findings_version"] is None
+            or (s["findings_version"] != version and not s["findings_version"].endswith(":failed"))]
+
+
+def findings_progress(conn, version: str) -> dict:
+    return {"done": sum(1 for s in _counting_studies(conn) if s["findings_version"] == version),
+            "pending": len(studies_without_findings(conn, version))}
+
+
+def clear_findings(conn, study_id: int | None = None) -> dict:
+    """Delete the findings (all studies, or one) and unset their findings_version, so the stage asks
+    again. Returns {"studies": n, "findings": m}."""
+    where, params = ("WHERE id=?", (study_id,)) if study_id is not None else ("", ())
+    studies = conn.execute(f"UPDATE studies SET findings_version=NULL {where}", params).rowcount
+    fwhere = "WHERE study_id=?" if study_id is not None else ""
+    deleted = conn.execute(f"DELETE FROM findings {fwhere}", params).rowcount
+    conn.commit()
+    return {"studies": studies, "findings": deleted}

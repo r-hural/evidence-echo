@@ -47,7 +47,7 @@ def test_step13_on_a_step12_database(tmp_path):
 
 def test_fresh_database_has_entity_schema(tmp_path):
     conn = store.connect(tmp_path / "echo.db")
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION == 14
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION == 18
     assert TABLES <= _tables(conn)
     assert {r["name"] for r in conn.execute("PRAGMA table_info(entities)")} == {
         "id", "slug", "name", "status", "merged_into", "created_at"}

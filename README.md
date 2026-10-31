@@ -15,17 +15,52 @@ See what it produces: [sample reports](#sample-reports) below.
 - **Gives you:** a short report per run (Markdown and HTML), a list of everything rejected and
   why, and a topic page, "What the evidence says", that groups studies by question and puts
   conflicting results side by side. Optionally Obsidian notes.
+- **Answers questions:** ask about the evidence in any Claude Code session and get the graded
+  studies behind the answer; when a topic has little on a question, search the web for studies on
+  it, graded the same way, and keep only the ones you want.
 
-### Use it for
+### In plain words
 
-| Template | For | Typical evidence |
-|---|---|---|
-| `seo` | SEO practitioners | SEO experiments, SEO case studies, ranking and AI-search data studies |
-| `ai-coding` | engineering leads choosing AI coding tools | productivity studies, SWE-bench-style benchmarks, code quality and security of AI code |
-| `cro` | growth and CRO marketers | published A/B tests, checkout and UX studies, experimentation methods |
-| `exercise` | evidence-minded coaches and trainees | training studies, RCTs and meta-analyses on strength, endurance, recovery |
+There is more to read than anyone has time for: blogs, newsletters, news sites, research pages
+and LinkedIn posts, each in its own format. Little of it measures anything, and the coverage that
+does mention research often bends it: numbers get rounded up, results get reversed, or one
+cherry-picked finding stands in for the whole study. Evidence Echo reads it all for you, keeps
+the posts that report measured results, rates each one on a simple levels-of-evidence scale,
+checks it against the original study, and shows you where the studies disagree.
 
-Any other topic starts blank: describe it in your own words and pick its sources.
+- **SEO leads** (template `seo`). Every week brings a new magic bullet: a hot take on AI
+  Overviews, a trick that worked once on one site. SEO news mixes real data with opinion, rumours
+  and speculation, and vendor case studies are shaped by what the vendor sells, so findings you
+  could actually replicate are easy to miss. Evidence Echo cuts through the noise: it keeps the
+  case studies, SEO experiments and A/B tests that report real numbers, so you find replicable case studies and ideas for your next experiment.
+  Data-driven SEO, without reading every newsletter.
+- **Engineering leads choosing AI coding tools** (template `ai-coding`). Launch posts quote LLM
+  benchmarks, vendors quote their own productivity gains, and developers often feel faster than
+  the stopwatch says they are. Evidence Echo separates controlled trials and large surveys from
+  press releases, reads SWE-bench and other AI coding benchmarks with their caveats, and gives you
+  an AI productivity study you can defend in a budget meeting.
+- **Growth and CRO marketers** (template `cro`). Most published A/B testing examples are winners
+  with no sample size and a suspiciously large lift. Evidence Echo keeps the A/B testing case
+  studies and CRO case studies that report their numbers, tags cherry-picked metrics, and puts
+  tests on the same question side by side, so you have priors before you choose the next test.
+- **Anyone who trains, from beginners to coaches** (template `exercise`). Fitness advice is
+  drowning in noise: opinions sold as proven recipes, programmes that promise a new body in six
+  weeks, influencers who cite studies loosely. Even careful science-based lifting content
+  can rest on a single small, short study. Evidence Echo follows strength training
+  research, RCTs and meta-analyses, grades each study and lines up every result on a question, so
+  you know what the evidence says before you change your training. Evidence-based training,
+  without the hype.
+- **Any other field.** Name a topic in your own words, pick its sources, and get the same
+  evidence-based research digest. Each topic is graded by rules that fit its field, because a lab
+  study in sports science is not a split test in SEO: the templates ship with their own rules, and
+  for a new topic setup drafts a set that you review and adjust before the first report.
+
+**Reality check.** Grades, summaries and explanations come from a language model, and it can be
+wrong, so open the linked article before you rely on a result. The articles belong to their
+authors. Evidence Echo tracks published research and gives no advice of any kind: not medical,
+health, nutrition or fitness advice, and not financial, legal, safety or other professional
+advice. Before making a decision in any of these areas, ask a qualified professional who knows
+your situation.
 
 ### Sample reports
 

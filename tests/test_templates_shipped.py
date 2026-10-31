@@ -29,3 +29,25 @@ def test_template_is_complete(tid):
 def test_health_templates_say_not_advice(tid):
     data = json.loads((TEMPLATES / f"{tid}.json").read_text(encoding="utf-8"))
     assert re.search(r"Research tracking only, not [a-z, ]*advice", data["scope"])
+
+
+@pytest.mark.parametrize("tid", topics.template_ids(TEMPLATES))
+def test_template_grading_block_valid(tid):
+    from evidence_echo.core import grading
+    data = json.loads((TEMPLATES / f"{tid}.json").read_text(encoding="utf-8"))
+    block = data.get("grading")
+    assert grading.rules_errors(block) == []
+    if tid in HEALTH:
+        assert block["disclaimer"] and block["caps"]["study_type"]["animal"]
+
+
+@pytest.mark.parametrize("tid", topics.template_ids(TEMPLATES))
+def test_overlay_grading_blocks_equal(tid):
+    overlay = PLUGIN_DIR.parents[1] / "release" / "overlay" / "plugins" / "evidence-echo" / "templates"
+    if not overlay.is_dir():
+        pytest.skip("no release/overlay in the public tree")
+    if not (overlay / f"{tid}.json").exists():
+        pytest.skip("template not in the overlay")
+    private = json.loads((TEMPLATES / f"{tid}.json").read_text(encoding="utf-8"))
+    public = json.loads((overlay / f"{tid}.json").read_text(encoding="utf-8"))
+    assert public.get("grading") == private.get("grading")

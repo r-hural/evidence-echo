@@ -13,8 +13,12 @@ STATE_FILE = "state.json"
 VERSION = 1
 MAX_HORIZON_DAYS = 3650
 CLASSIFY_BATCH_MAX = 500
+REGRADE_BATCH_MAX = 500
+FINDINGS_BATCH_MAX = 500
+GROUPING_MODES = ("questions", "quotes", "findings")
 FETCH_CACHE_MAX_MINUTES = 10080  # one week
 OVERVIEW_STUDIES_MAX = 100
+SEARCH_MAX_CANDIDATES_MAX = 50
 
 GLOBAL_DEFAULTS = {"reports_dir": None, "triage_backend": "auto",
                    "judgment_backend": "auto", "embedder": "auto",
@@ -23,10 +27,13 @@ GLOBAL_DEFAULTS = {"reports_dir": None, "triage_backend": "auto",
                    "adaptive_fetch": "off", "html_reports": "on", "md_reports": "on",
                    "rejections_report": "off",
                    "obsidian_dir": None,
-                   "relate": "on", "primary_check": "on", "classify_batch": 40,
-                   "fetch_cache_minutes": 60, "overview_studies": 10}
+                   "relate": "on", "primary_check": "on", "classify_batch": 40, "regrade_batch": 40,
+                   "grouping_mode": "questions", "findings_batch": 40,
+                   "fetch_cache_minutes": 60, "overview_studies": 10,
+                   "search_max_candidates": 15}
 OVERRIDES = ("reports_dir", "output_language", "fetch_horizon_days", "scan_depth",
-             "adaptive_fetch", "html_reports", "rejections_report", "relate", "primary_check", "classify_batch")
+             "adaptive_fetch", "html_reports", "rejections_report", "relate", "primary_check", "classify_batch",
+             "regrade_batch", "grouping_mode", "findings_batch")
 CHOICES = {"triage_backend": ("auto", "api", "session"),
            "judgment_backend": ("auto", "api", "session"),
            "embedder": ("auto", "voyage", "none"),
@@ -37,7 +44,8 @@ CHOICES = {"triage_backend": ("auto", "api", "session"),
            "md_reports": ("on", "off"),
            "rejections_report": ("off", "on"),
            "relate": ("on", "off"),
-           "primary_check": ("on", "off")}
+           "primary_check": ("on", "off"),
+           "grouping_mode": GROUPING_MODES}
 # Renamed once in existing files (migrate). When several old keys map to one new key, the first
 # listed here wins; an existing new key beats them all.
 RETIRED = {"research_horizon_days": "fetch_horizon_days", "lookback_days": "fetch_horizon_days",
@@ -78,6 +86,24 @@ def _classify_batch(value, where: str) -> int:
     return number
 
 
+def _regrade_batch(value, where: str) -> int:
+    number = int(value) if isinstance(value, int) and not isinstance(value, bool) else (
+        int(value) if isinstance(value, str) and value.isascii() and value.isdigit() else None)
+    if number is None or not 0 <= number <= REGRADE_BATCH_MAX:
+        raise ConfigError(f"{where}: field 'regrade_batch' must be a whole number from 0 to "
+                          f"{REGRADE_BATCH_MAX} (0 = off), got '{value}'")
+    return number
+
+
+def _findings_batch(value, where: str) -> int:
+    number = int(value) if isinstance(value, int) and not isinstance(value, bool) else (
+        int(value) if isinstance(value, str) and value.isascii() and value.isdigit() else None)
+    if number is None or not 0 <= number <= FINDINGS_BATCH_MAX:
+        raise ConfigError(f"{where}: field 'findings_batch' must be a whole number from 0 to "
+                          f"{FINDINGS_BATCH_MAX} (0 = off), got '{value}'")
+    return number
+
+
 def _fetch_cache_minutes(value, where: str) -> int:
     number = int(value) if isinstance(value, int) and not isinstance(value, bool) else (
         int(value) if isinstance(value, str) and value.isascii() and value.isdigit() else None)
@@ -96,6 +122,15 @@ def _overview_studies(value, where: str) -> int:
     return number
 
 
+def _search_max_candidates(value, where: str) -> int:
+    number = int(value) if isinstance(value, int) and not isinstance(value, bool) else (
+        int(value) if isinstance(value, str) and value.isascii() and value.isdigit() else None)
+    if number is None or not 1 <= number <= SEARCH_MAX_CANDIDATES_MAX:
+        raise ConfigError(f"{where}: field 'search_max_candidates' must be a whole number from 1 to "
+                          f"{SEARCH_MAX_CANDIDATES_MAX}, got '{value}'")
+    return number
+
+
 def check_value(key: str, value, where: str):
     if key in CHOICES:
         if value not in CHOICES[key]:
@@ -106,10 +141,16 @@ def check_value(key: str, value, where: str):
         return _horizon(value, where)
     if key == "classify_batch":
         return _classify_batch(value, where)
+    if key == "regrade_batch":
+        return _regrade_batch(value, where)
+    if key == "findings_batch":
+        return _findings_batch(value, where)
     if key == "fetch_cache_minutes":
         return _fetch_cache_minutes(value, where)
     if key == "overview_studies":
         return _overview_studies(value, where)
+    if key == "search_max_candidates":
+        return _search_max_candidates(value, where)
     if key == "output_language":
         if not isinstance(value, str) or not value.strip():
             raise ConfigError(f"{where}: field 'output_language' must be a language "

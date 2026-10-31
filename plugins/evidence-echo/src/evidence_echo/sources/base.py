@@ -354,5 +354,28 @@ def optional_site_url(value) -> str | None:
     return None
 
 
+MAX_SEARCH_QUESTION = 300
+
+
+def optional_found_by(value) -> str | None:
+    return None if value in (None, "search") else 'found_by must be "search"'
+
+
+def optional_search_run(value) -> str | None:
+    from evidence_echo.core import config   # config reads topics, which load source kinds on use
+    if value is None:
+        return None
+    return None if isinstance(value, str) and config.RUN_ID_RE.match(value) else "search_run must be a search run id"
+
+
+def optional_search_question(value) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not 1 <= len(value.strip()) <= MAX_SEARCH_QUESTION:
+        return f"search_question must be 1-{MAX_SEARCH_QUESTION} characters"
+    return None
+
+
 COMMON_FIELDS = {"scan_depth": optional_scan_depth, "fetch_every": optional_fetch_every,
-                 "site_url": optional_site_url}
+                 "site_url": optional_site_url, "found_by": optional_found_by,
+                 "search_run": optional_search_run, "search_question": optional_search_question}

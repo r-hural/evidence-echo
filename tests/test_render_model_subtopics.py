@@ -38,7 +38,8 @@ def test_topic_model_appends_evidence_and_waiting(subtopiced, topic):
     assert by_id[a].subtopic["question"] == "Does X raise Y?" and by_id[a].subtopic["label"] is None
     assert by_id[b].subtopic["question"] is None
     names = [f.name for f in dataclasses.fields(model.Topic)]
-    assert names[-4:] == ["evidence", "waiting", "reports", "metrics"]     # append-only
+    assert names[-10:-5] == ["evidence", "waiting", "reports", "metrics", "disclaimer"]     # append-only
+    assert names[-5:-2] == ["mode", "findings", "finding_count"]
     subtopic_field = {f.name: f for f in dataclasses.fields(model.Entry)}["subtopic"]
     assert subtopic_field.default is None
 

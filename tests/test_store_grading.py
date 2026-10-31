@@ -186,3 +186,75 @@ def test_reset_verify_after_pre_sp2_grade_keeps_the_judge_tier(workspace):
         assert item["disputed"] == 1 and item["dispute_reason"] == "grade_gap"
         assert item["evidence_tier"] == "A"
         assert store.get_study(db, sid)["evidence_tier"] == "A"
+
+
+# ---- schema step 15: grading facts, raw tiers, cap reasons, rule stamps, rulings ----
+FACTS15 = {"what_was_tested": "T", "findings": "F", "study_type": "animal", "peer_review": "reviewed",
+           "text_basis": "full"}
+STAMPS15 = {"graded_rules": "h", "caps_hash": "c", "judge_version": "judge-2"}
+
+
+def _judged15(conn):
+    iid = store.insert_item(conn, make_item(url="https://example.com/g15"))
+    store.set_verdict(conn, iid, True, "C", dict(FACTS15), None, capped_from="A", raw_tier="A",
+                      cap_reasons=["animal"], stamps=STAMPS15)
+    return iid
+
+
+def test_set_verdict_stores_grading_facts_and_stamps(db):
+    iid = _judged15(db)
+    it = store.get_item(db, iid)
+    assert (it["study_type"], it["peer_review"], it["text_basis"]) == ("animal", "reviewed", "full")
+    assert it["judge_tier_raw"] == "A" and json.loads(it["cap_reasons"]) == ["animal"]
+    assert (it["graded_rules"], it["caps_hash"], it["judge_version"]) == ("h", "c", "judge-2")
+    sid = store.create_study(db, "C", dict(FACTS15), None, created_by_item=iid)
+    st = store.get_study(db, sid)
+    assert (st["study_type"], st["peer_review"], st["text_basis"]) == ("animal", "reviewed", "full")
+
+
+def test_failing_verdict_clears_step15_columns(db):
+    iid = _judged15(db)
+    db.execute("UPDATE items SET skeptic_tier_raw='B', verify_version='verify-2', ruled_tier='C' WHERE id=?",
+               (iid,))
+    store.set_verdict(db, iid, False, None, {}, None, reason="no")
+    it = store.get_item(db, iid)
+    for col, _ in store.STEP15_ITEM_COLUMNS:
+        assert it[col] is None, col
+
+
+def test_set_blind_grade_keep_state(db):
+    iid = _judged15(db)
+    db.execute("UPDATE items SET state='reported' WHERE id=?", (iid,))
+    store.set_blind_grade(db, iid, "C", [], "n", "C", False, None, raw_tier="B",
+                          capped_from="B", cap_reasons=["animal"], verify_version="verify-2",
+                          keep_state=True)
+    it = store.get_item(db, iid)
+    assert it["state"] == "reported" and it["skeptic_tier_raw"] == "B"
+    assert it["verify_version"] == "verify-2" and it["capped_from"] == "B"
+    assert json.loads(it["cap_reasons"]) == ["animal"]
+    store.set_blind_grade(db, iid, "C", [], "n", "C", False, None)
+    it = store.get_item(db, iid)
+    assert it["state"] == "verified" and json.loads(it["cap_reasons"]) == ["animal"]   # not told: kept
+
+
+def test_set_skeptic_keeps_reported_state(db):
+    iid = _judged15(db)
+    db.execute("UPDATE items SET state='reported', disputed=1 WHERE id=?", (iid,))
+    store.set_skeptic(db, iid, True, "B", "ok", resolved=True)
+    assert store.get_item(db, iid)["state"] == "reported"
+    store.set_ruled_tier(db, iid, "B")
+    it = store.get_item(db, iid)
+    assert it["ruled_tier"] == "B" and it["evidence_tier"] == "B"
+    db.execute("UPDATE items SET state='matched' WHERE id=?", (iid,))
+    store.set_skeptic(db, iid, False, "A", "no")
+    assert store.get_item(db, iid)["state"] == "verified"
+
+
+def test_clear_blind_grades_clears_raw_and_version(db):
+    iid = _judged15(db)
+    db.execute("UPDATE items SET state='matched' WHERE id=?", (iid,))
+    store.set_blind_grade(db, iid, "C", [], "n", "C", False, None, raw_tier="B", verify_version="verify-2")
+    db.execute("UPDATE items SET state='matched' WHERE id=?", (iid,))
+    store.clear_blind_grades(db)
+    it = store.get_item(db, iid)
+    assert it["skeptic_tier_raw"] is None and it["verify_version"] is None

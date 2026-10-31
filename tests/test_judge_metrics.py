@@ -16,7 +16,7 @@ def test_judge_prompt_lists_metrics_without_direction(db, topic):
     assert text.index("- clicks: Clicks") < text.rindex("- other: Other")
     rule = "Pick the most specific subtopic and metric that fits; a broad one only when no narrower one does."
     assert rule in text and rule in judge.PROMPT.format(
-        domain="d", scope="s", tier_rules="", classify_rules=judge.CLASSIFY_RULES, pass_rule=judge.PASS_RULE,
+        domain="d", scope="s", tier_rules="", classify_rules=judge.CLASSIFY_RULES, findings_rules="", pass_rule=judge.PASS_RULE,
         subtopics="", metrics="", entities="", published="", title="", full_text="")
     assert "metric is required when pass is true" in text
     for blob in (text, judge.PROMPT, judge.INSTRUCTIONS, judge.CLASSIFY_RULES, judge.PASS_RULE):

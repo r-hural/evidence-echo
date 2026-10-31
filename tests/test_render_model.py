@@ -237,16 +237,18 @@ def test_model_field_order_is_the_contract():
         "Entry": ["study_id", "title", "summary", "tier", "disputed", "skeptic_tiers",
                   "no_quote_only", "dispute_reason", "skeptic_notes", "view", "series", "editions",
                   "research_timeframe", "published", "primary_url", "coverage", "canonical_name",
-                      "subtopic"],
+                      "subtopic", "findings", "findings_state", "found_by_search",
+                      "found_by_search_run"],
         "SeenEntry": ["study_id", "first_title", "first_reported", "coverage", "disputed",
                       "skeptic_tiers", "skeptic_notes"],
         "Report": ["topic_id", "topic_name", "date", "new", "disputed", "seen", "source_warnings",
-                   "label"],
+                   "label", "disclaimer", "mode"],
         "TopicStudy": ["entry", "first_reported", "last_reported", "reported_on", "reports"],
         "SourceSummary": ["name", "study_ids", "disputes", "red_flags"],
         "SeriesSummary": ["name", "editions"],
         "Topic": ["topic_id", "topic_name", "generated_at", "studies", "sources", "series",
-                  "evidence", "waiting", "reports", "metrics"],
+                  "evidence", "waiting", "reports", "metrics", "disclaimer", "mode", "findings",
+                  "finding_count", "searches", "search_sources"],
     }
 
 

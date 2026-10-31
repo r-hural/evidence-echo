@@ -1,5 +1,6 @@
 """Questions: the group stage - selection, payload, apply checks, API mode, reset, CLI."""
 import json
+from pathlib import Path
 
 import pytest
 
@@ -63,7 +64,25 @@ def test_selection_skips_unsorted_and_pinned(subtopiced):
 
 
 def test_prompt_version_matches_store():
-    assert group.PROMPT_VERSION == store.GROUP_VERSION == "group-2"
+    assert group.PROMPT_VERSION == store.GROUP_VERSION == "group-3"
+
+
+def test_group_rules_keep_the_study_s_words():
+    assert "hydrogen-rich water" in group.RULES and "gets a new question" in group.RULES
+    skill = (Path(group.__file__).parents[3] / "skills" / "report" / "SKILL.md").read_text(encoding="utf-8")
+    assert "hydrogen-rich water" in skill and "gets a new question" in skill
+
+
+def test_group_3_reselects_unpinned_only(subtopiced):
+    qid = q(subtopiced)
+    old = add(subtopiced, question=qid, by="A")
+    pinned = add(subtopiced, question=qid, by="B")
+    subtopiced.execute("UPDATE studies SET grouped_version='group-2' WHERE id IN (?, ?)", (old, pinned))
+    subtopiced.commit()
+    store.move_study(subtopiced, pinned, qid)
+    waiting = {s["id"]: s for s in store.studies_to_group(subtopiced)}
+    assert old in waiting and waiting[old]["fixed_question"] is None
+    assert waiting[pinned]["fixed_question"] == qid      # gaps only (direction cleared)
 
 
 def test_regroup_selects_group1_studies_once(subtopiced):
@@ -214,7 +233,7 @@ def test_apply_existing_question_and_new_question_by_key(subtopiced):
     sa, sb, sc = (store.get_study(subtopiced, s) for s in (a, b, c))
     assert sa["question_id"] == sb["question_id"] != sc["question_id"] == existing
     assert (sa["question_direction"], sb["question_direction"], sc["question_direction"]) == ("up", "down", "mixed")
-    assert sa["grouped_version"] == "group-2" and sa["question_by_owner"] == 0
+    assert sa["grouped_version"] == "group-3" and sa["question_by_owner"] == 0
     groups = knowledge.evidence(subtopiced)[0].questions
     assert [(g.independent, g.label) for g in groups] == [(2, "contested")]
 
@@ -323,7 +342,7 @@ def test_api_mode_same_rules(subtopiced, topic):
     legacy = q(subtopiced, text="Legacy?", kind=None)
     add(subtopiced, question=level, by="X", direction=None)
     y = add(subtopiced, question=legacy, by="Y", direction=None)
-    subtopiced.execute("UPDATE studies SET grouped_version='group-2' WHERE id IN (1, ?)", (y,))
+    subtopiced.execute("UPDATE studies SET grouped_version='group-3' WHERE id IN (1, ?)", (y,))
     subtopiced.commit()
     a, b, c = (add(subtopiced, by=n) for n in "ABC")
     backend = FakeBackend([
@@ -336,7 +355,7 @@ def test_api_mode_same_rules(subtopiced, topic):
     assert store.get_question(subtopiced, legacy)["kind"] == "level"
     assert f"q{legacy} [none yet]" in backend.prompts[0] and f"q{level} [level]" in backend.prompts[0]
     assert f"q{legacy} [level]" in backend.prompts[3]
-    assert ids(store.studies_to_group(subtopiced)) == [c, b] and store.get_study(subtopiced, y)["grouped_version"] == "group-2"
+    assert ids(store.studies_to_group(subtopiced)) == [c, b] and store.get_study(subtopiced, y)["grouped_version"] == "group-3"
 
 
 def test_run_api_rejection_keeps_the_study_waiting(subtopiced, topic):

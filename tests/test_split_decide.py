@@ -499,3 +499,31 @@ def test_reset_split_keeps_accepted_part_drops_undecided_one(db, world):
     assert out == {"proposals": 0, "closed": 1, "groups": 1, "names": 1}
     assert [r[0] for r in db.execute("SELECT id FROM split_groups WHERE proposal_id=?", (pid,))] == [g1]
     assert store.get_subtopic(db, "geo-tactics") is None and _status(db, "what-ai-cites") == "confirmed"
+
+
+def _findings_of(db, sid, n=1):
+    item = db.execute("SELECT id FROM items WHERE study_id=?", (sid,)).fetchone()[0]
+    store.write_findings(db, sid, item, [{"text": f"f{i}", "quote": f"q{i}", "quote_checked": True}
+                                         for i in range(n)], "findings-1")
+    return [f["id"] for f in store.study_findings(db, sid)]
+
+
+def test_accept_moves_findings_subtopic_and_findings_questions(db, world):
+    source = store.get_subtopic(db, "ai-search")["id"]
+    moved, stays = world["a"][0], world["b"][0]
+    (fa,) = _findings_of(db, moved)
+    (fb,) = _findings_of(db, stays)
+    own = store.create_question(db, source, "Own?", "m", "level", mode="findings")
+    store.set_finding_question(db, fa, own, None, "group-3")
+    shared = store.create_question(db, source, "Shared?", "m", "level", mode="findings")
+    (fa2,) = _findings_of(db, world["a"][1])
+    store.set_finding_question(db, fa2, shared, None, "group-3")
+    store.set_finding_question(db, fb, shared, None, "group-3")
+    pid = _propose(db, world)
+    g1, _ = _gids(db, pid)
+    store.accept_split_group(db, g1)
+    dest = store.get_subtopic(db, "what-ai-cites")["id"]
+    assert store.study_subtopic(db, store.get_study(db, moved), "findings")["id"] == dest
+    assert store.study_subtopic(db, store.get_study(db, stays), "findings")["id"] == source
+    assert store.resolve_subtopic(db, store.get_question(db, own)["subtopic_id"])["id"] == dest
+    assert store.resolve_subtopic(db, store.get_question(db, shared)["subtopic_id"])["id"] == source

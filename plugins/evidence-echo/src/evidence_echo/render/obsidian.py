@@ -13,7 +13,7 @@ from pathlib import Path
 
 from evidence_echo.core import knowledge
 from evidence_echo.render import evidence_text as et
-from evidence_echo.render.markdown import (NOTE_MAX, TITLE_MAX, _cut, counts_text, fact_pairs, metric_text,
+from evidence_echo.render.markdown import (NOTE_MAX, UNCHECKED_NOTE, TITLE_MAX, _cut, cap_note, counts_text, fact_pairs, metric_text,
                                            quote_text, research_pairs, subtopic_lines)
 from evidence_echo.render.markdown import web_url as _web
 from evidence_echo.render.model import SeriesSummary, SourceSummary, Topic, TopicStudy
@@ -181,15 +181,25 @@ def _study_alias(sid: int, by_id: dict) -> str:
     return by_id[sid].entry.title if sid in by_id else f"s{sid}"
 
 
+def _quote_line(finding) -> list[str]:
+    """Findings mode: the finding's quote as an indented blockquote under its list item (marked with
+    UNCHECKED_NOTE when it is not in the article); nothing without a finding."""
+    if not finding:
+        return []
+    return [f"  > “{_md(finding['quote'])}”" + ("" if finding["quote_checked"] else f" {UNCHECKED_NOTE}")]
+
+
 def _row_items(g, names: _Names, by_id: dict) -> list[str]:
     """The question's studies newest first, as Markdown list items, then its change lines."""
     lines = ["", "Studies, newest first:", ""]
     for r in g.rows:
         title = by_id[r.study_id].entry.title if r.study_id in by_id else r.name
         edition = et.edition_text(r)
-        parts = [_md(et.date_text(r)), names.link('studies', r.study_id, title), _md(et.headline_text(r))]
+        shown = r.finding["text"] if getattr(r, "finding", None) else et.headline_text(r)   # findings mode: the finding
+        parts = [_md(et.date_text(r)), names.link('studies', r.study_id, title), _md(shown)]
         parts.append(_md(r.tier or '?'))
         lines.append("- " + " · ".join(parts) + (f" ({_md(edition)})" if edition else ""))
+        lines += _quote_line(r.finding)
     if g.changes:
         lines.append("")
         lines += [_md(et.change_text(x)) + "  " for x in g.changes]
@@ -239,9 +249,43 @@ def _subtopic_note(sub, names: _Names, by_id: dict) -> str:
         for o in sub.others:
             title = by_id[o.row.study_id].entry.title if o.row.study_id in by_id else o.row.name
             lines.append(f"- {names.link('studies', o.row.study_id, title)}"
-                         + ("" if sub.key == knowledge.UNSORTED else f" · {_md(o.question) or _md(et.NOT_GROUPED)}"))
+                         + ("" if sub.key == knowledge.UNSORTED else f" · {_md(o.question) or _md(et.NOT_GROUPED)}")
+                         + (f" · {_md(o.row.finding['text'])}" if o.row.finding else ""))
+            lines += _quote_line(o.row.finding)
+        lines.append("")
+    if sub.waiting:   # findings mode: studies whose findings are not grouped yet
+        lines += ["## Waiting to be split", ""]
+        for r in sub.waiting:
+            title = by_id[r.study_id].entry.title if r.study_id in by_id else r.name
+            lines.append(f"- {names.link('studies', r.study_id, title)}")
         lines.append("")
     return "\n".join(lines).rstrip("\n") + "\n"
+
+
+def _findings_subtopic_note(sub, names: _Names, by_id: dict) -> str:
+    """Quotes mode: a subtopic note lists each finding with its study and, under it, the quote."""
+    lines = [GENERATED, "", f"# {_md(sub.name) or 'Subtopic'}", ""]
+    for r in sub.rows:
+        title = by_id[r.study_id].entry.title if r.study_id in by_id else r.name
+        study = names.link("studies", r.study_id, title)
+        f = r.finding
+        if f is None:
+            lines.append(f"- {study}" + (" · findings waiting" if r.state == "waiting" else ""))
+            continue
+        lines.append(f"- {study} · {_md(f.text)}" + (f" · {_md(f.metric_name)}" if f.metric_name else ""))
+        lines.append(f"  > “{_md(f.quote)}”" + ("" if f.quote_checked else f" {UNCHECKED_NOTE}"))
+    return "\n".join(lines).rstrip("\n") + "\n"
+
+
+def _findings_section(e) -> list[str]:
+    """A study note's ## Findings (quotes mode), the Markdown report's lines through _md."""
+    if e.findings_state == "waiting":
+        return ["## Findings", "", "Findings: waiting", ""]
+    if not e.findings:
+        return []
+    return ["## Findings", ""] + [
+        f"- {_md(f.text)}: “{_md(f.quote)}”" + ("" if f.quote_checked else f" {UNCHECKED_NOTE}")
+        for f in e.findings] + [""]
 
 
 def _subtopic_lines(e, names: _Names) -> list[str]:
@@ -251,6 +295,9 @@ def _subtopic_lines(e, names: _Names) -> list[str]:
     pairs = subtopic_lines(t)
     echo = f" · {_md(t['echo'])}" if t.get("echo") else ""
     subtopic = f"Subtopic: {names.link('subtopics', t['key'], t['name'])}"
+    if "questions" in t:   # findings mode: every question the study's findings joined
+        out = [subtopic + "  "] + [f"Question: {_md(v)}  " for _, v in pairs[1:]]
+        return out + (["Findings: waiting to be split  "] if t.get("waiting") else [])
     if len(pairs) == 1:
         return [subtopic + echo + "  "]
     return [subtopic + "  ", f"Question: {_md(pairs[1][1])}{echo}  "]
@@ -263,8 +310,9 @@ def _label(e) -> str:
         tier = (f"{tier} / skeptic: {_md(', '.join(e.skeptic_tiers))}" if e.skeptic_tiers
                 else f"{tier} / skeptic: disputed")
     relation = (e.view.get("provenance") or {}).get("relation")
-    extras = [_md(relation) if relation and relation != "unknown" else None,
-              f"capped from {_md(e.view['capped_from'])}" if e.view.get("capped_from") else None,
+    extras = [*(_md(x) for x in e.view.get("grade_labels") or []),
+              _md(relation) if relation and relation != "unknown" else None,
+              _md(cap_note(e.view)) if e.view.get("capped_from") else None,
               None if e.disputed or not e.view.get("gap_note") else _md(e.view["gap_note"])]
     return " · ".join([tier] + [x for x in extras if x])
 
@@ -304,11 +352,15 @@ def _study_note(ts: TopicStudy, topic: Topic, names: _Names) -> str:
     grading = [_md(line) + "  " for line in grading_lines(e.view)]
     if grading:
         lines += grading + [""]
+    if e.findings is not None and "questions" not in (e.subtopic or {}):   # quotes mode
+        lines += _findings_section(e)
     if e.series:
         lines.append(f"Series: {names.link('series', e.series, e.series)}  ")
     lines += [f"*{name}: {_md(value)}*  " for name, value in research_pairs(e)]
     if _web(e.primary_url):
         lines.append(f"Primary source: <{_web(e.primary_url)}>  ")
+    if e.found_by_search:
+        lines.append(f"Found by search: {_md(e.found_by_search)}  ")
     for c in e.coverage:
         source, url = names.link("sources", c.name, c.name), _web(c.url)
         lines.append(f"Coverage: {source}: <{url}>  " if url else f"Coverage: {source}  ")
@@ -337,6 +389,8 @@ def _source_note(s: SourceSummary, names: _Names, by_id: dict) -> str:
 
 def _index_note(topic: Topic, names: _Names) -> str:
     lines = [GENERATED, "", f"# {_md(topic.topic_name)} — Evidence Echo", ""]
+    if topic.disclaimer:
+        lines += [f"*{_md(topic.disclaimer)}*", ""]
     if not topic.studies:
         lines += ["*No studies reported yet.*", ""]
     groups = {tier: [] for tier in (*TIERS, None)}
@@ -347,9 +401,10 @@ def _index_note(topic: Topic, names: _Names) -> str:
             lines += [f"## Tier {tier}" if tier else "## Ungraded", ""]
             lines += [f"- {names.link('studies', ts.entry.study_id, ts.entry.title)}"
                       for ts in members] + [""]
-    if topic.evidence:
+    listed = topic.findings if topic.mode == "quotes" else topic.evidence
+    if listed:
         lines += ["## Subtopics", ""] + [f"- {names.link('subtopics', sub.key, sub.name)}"
-                                      for sub in topic.evidence] + [""]
+                                      for sub in listed] + [""]
     if topic.series:
         lines += ["## Series", ""] + [f"- {names.link('series', s.name, s.name)}"
                                       for s in topic.series] + [""]
@@ -366,7 +421,7 @@ def render_notes(topic: Topic, folder: str) -> dict[str, str]:
     names = _Names(base=f"{ROOT_NAME}/{folder}", studies=_study_stems(topic),
                    series=unique_names([s.name for s in topic.series], "series"),
                    sources=unique_names([s.name for s in topic.sources], "source"),
-                   subtopics=_subtopic_stems(topic.evidence))
+                   subtopics=_subtopic_stems(topic.findings if topic.mode == "quotes" else topic.evidence))
     by_id = {ts.entry.study_id: ts for ts in topic.studies}
     notes = {f"{folder}/_index.md": _index_note(topic, names)}
     for ts in topic.studies:
@@ -375,8 +430,9 @@ def render_notes(topic: Topic, folder: str) -> dict[str, str]:
         notes[f"{folder}/series/{names.series[s.name]}.md"] = _series_note(s, names)
     for s in topic.sources:
         notes[f"{folder}/sources/{names.sources[s.name]}.md"] = _source_note(s, names, by_id)
-    for sub in topic.evidence:
-        notes[f"{folder}/subtopics/{names.subtopics[sub.key]}.md"] = _subtopic_note(sub, names, by_id)
+    for sub in (topic.findings if topic.mode == "quotes" else topic.evidence):
+        make = _findings_subtopic_note if topic.mode == "quotes" else _subtopic_note
+        notes[f"{folder}/subtopics/{names.subtopics[sub.key]}.md"] = make(sub, names, by_id)
     return notes
 
 

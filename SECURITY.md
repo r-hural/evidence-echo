@@ -35,5 +35,10 @@ Only the latest release gets fixes.
   environment are not read. They are never printed, put on a command line or passed into the
   session.
 
+- **The MCP server** (`find_evidence`, `list_topics`, `get_study`) is local: it opens the topic
+  databases read-only, creates and changes nothing, reads no keys and makes no network calls. It
+  returns at most a 600-character excerpt of an article, and its instructions tell Claude to treat
+  study content as untrusted data.
+
 Fetched web text is untrusted: the reports escape it, and the plugin's grading agents can only
 read files.

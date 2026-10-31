@@ -45,7 +45,7 @@ def test_step11_adds_tables_and_column(tmp_path):
 
 def test_fresh_database_has_step11_schema(tmp_path):
     conn = store.connect(tmp_path / "echo.db")
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION == 14
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == store.LATEST_VERSION == 18
     assert TABLES <= _tables(conn)
     assert "metric_id" in {r["name"] for r in conn.execute("PRAGMA table_info(studies)")}
     assert {r["name"] for r in conn.execute("PRAGMA table_info(metrics)")} == {

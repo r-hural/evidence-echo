@@ -10,7 +10,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
-from evidence_echo import api
+from evidence_echo import api, query, search
 from evidence_echo.core import config, contracts
 from evidence_echo.core.settings import ConfigError
 
@@ -18,6 +18,8 @@ from evidence_echo.core.settings import ConfigError
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="evidence-echo", description="Evidence Echo pipeline")
     p.add_argument("--topic", metavar="ID", help="topic to work on (needed with several topics)")
+    p.add_argument("--search", metavar="RUN",
+                   help="run the grading stages on an open search run's scratch database (see `ev search`)")
     sub = p.add_subparsers(dest="cmd", required=True)
     fp = sub.add_parser("fetch")
     fp.add_argument("--all", dest="fetch_all", action="store_true")
@@ -34,6 +36,18 @@ def _parser() -> argparse.ArgumentParser:
             sr.add_argument("group", type=int); sr.add_argument("name")
             ss = sa.add_parser("source")
             ss.add_argument("proposal", type=int); ss.add_argument("choice", metavar="keep|retire")
+        if name == "findings":   # `ev findings` is the stage; list and move are the owner's tools
+            fa = sp.add_subparsers(dest="action")
+            fl = fa.add_parser("list")
+            fl.add_argument("--study", metavar="s<id>")
+            fl.add_argument("--question", metavar="q<id>")
+            fm = fa.add_parser("move")
+            fm.add_argument("fid", metavar="f<id>")
+            fm.add_argument("qid", nargs="?", metavar="q<id>")
+            fm.add_argument("--new", metavar="TEXT", help="put the finding in a new question with this text")
+            fm.add_argument("--measure", help="with --new: the new question's measure")
+            fm.add_argument("--kind", help="with --new: difference, level or capability")
+            fm.add_argument("--comparison", help="with --new --kind difference: what A is compared with")
     sub.add_parser("extract")
     bf = sub.add_parser("backfill")
     bf.add_argument("--source", metavar="NAME")
@@ -58,6 +72,7 @@ def _parser() -> argparse.ArgumentParser:
     rs = sub.add_parser("reset")
     rs.add_argument("--stage", required=True, choices=[*api.RESET_STAGES, "primary"])
     rs.add_argument("--url", help="with --stage primary: only this original")
+    rs.add_argument("--study", metavar="s<id>", help="with --stage findings: only this study")
     il = sub.add_parser("import-legacy")
     il.add_argument("cache_file")
     sub.add_parser("templates")
@@ -72,6 +87,7 @@ def _parser() -> argparse.ArgumentParser:
     ta.add_argument("--domain")
     ta.add_argument("--scope")
     tp.add_parser("show").add_argument("id")
+    tp.add_parser("grading").add_argument("id")
     ts = tp.add_parser("set")
     ts.add_argument("id"); ts.add_argument("key"); ts.add_argument("value")
     tr = tp.add_parser("remove")
@@ -100,12 +116,20 @@ def _parser() -> argparse.ArgumentParser:
     st = sub.add_parser("studies").add_subparsers(dest="action", required=True)
     st.add_parser("list").add_argument("--all", dest="include_merged", action="store_true")
     st.add_parser("show").add_argument("id", type=int)
-    st.add_parser("duplicates").add_argument("--count", dest="count_only", action="store_true")
+    sd = st.add_parser("duplicates")
+    sd.add_argument("--count", dest="count_only", action="store_true")
+    sd.add_argument("--all", dest="include_hidden", action="store_true",
+                    help="also list the pairs the duplicate check or the owner found different")
+    sdi = st.add_parser("distinct", help="mark two studies as different: the pair leaves the duplicate review")
+    sdi.add_argument("a", type=int)
+    sdi.add_argument("b", type=int)
+    sdi.add_argument("--undo", action="store_true")
     st.add_parser("similarity")
     sm = st.add_parser("merge")
     sm.add_argument("keep", type=int)
     sm.add_argument("other", type=int)
     st.add_parser("unmerge").add_argument("other", type=int)
+    st.add_parser("regrade").add_argument("sid")
     sk = st.add_parser("metric")
     sk.add_argument("sid"); sk.add_argument("slug")
     se = st.add_parser("entity")
@@ -162,6 +186,9 @@ def _parser() -> argparse.ArgumentParser:
     qm.add_argument("--measure", help="with --new: the new question's measure")
     qm.add_argument("--kind", help="with --new: difference, level or capability")
     qm.add_argument("--comparison", help="with --new --kind difference: what A is compared with")
+    for owner_cmd in qs.choices.values():
+        owner_cmd.add_argument("--mode", choices=["questions", "findings"],
+                               help="the questions of this grouping mode (default: the topic's current one)")
 
     sub.add_parser("setup").add_argument("action", choices=["status"])
     cp = sub.add_parser("config").add_subparsers(dest="action", required=True)
@@ -171,6 +198,37 @@ def _parser() -> argparse.ArgumentParser:
     ex = sub.add_parser("export").add_subparsers(dest="target", required=True)
     ex.add_parser("obsidian").add_argument("--topic", dest="export_topic", metavar="ID",
                                            help="one topic (default: every topic)")
+    fnd = sub.add_parser("find", help="search the graded studies of the topics (read-only)")
+    fnd.add_argument("question")
+    fnd.add_argument("--topic", dest="find_topic", metavar="ID", help="one topic (default: every topic)")
+    fnd.add_argument("--limit", type=int, default=query.DEFAULT_LIMIT, metavar="N",
+                     help=f"studies to return (1-{query.MAX_LIMIT}, default {query.DEFAULT_LIMIT})")
+    sch = sub.add_parser("search", help="search the web for studies on one question (scratch run)")
+    sa = sch.add_subparsers(dest="action", required=True)
+    ss = sa.add_parser("start", help="start a run: a scratch database seeded from the topic")
+    ss.add_argument("--question", required=True)
+    ss.add_argument("--topic", dest="search_topic", metavar="ID", help="the topic the question belongs to")
+    sd = sa.add_parser("add", help="fetch candidate URLs into the run's scratch database")
+    sd.add_argument("run")
+    sd.add_argument("urls", nargs="*", metavar="url")
+    sd.add_argument("--urls-file", metavar="FILE",
+                    help="the candidate URLs, one per line (keeps web text off the command line)")
+    sd.add_argument("--query", action="append", default=[], help="a web query used (repeatable)")
+    sd.add_argument("--topic", dest="search_topic", metavar="ID", help="the topic the run belongs to")
+    sr = sa.add_parser("render", help="write the run's answer page (a kept or dropped run: write it again)")
+    sr.add_argument("run")
+    sr.add_argument("--summary", metavar="FILE", help="the 'what these say' text (max 200 words)")
+    sr.add_argument("--writeups", metavar="FILE", help="the report write-ups of the run's studies")
+    sr.add_argument("--topic", dest="search_topic", metavar="ID", help="the topic the run belongs to")
+    sk = sa.add_parser("keep", help="add the run's graded studies to the topic (one-time sources)")
+    sk.add_argument("run")
+    sk.add_argument("--only", metavar="IDS", help="keep only these studies, e.g. s1,s3 (default: all)")
+    sk.add_argument("--topic", dest="search_topic", metavar="ID", help="the topic the run belongs to")
+    sx = sa.add_parser("drop", help="discard the run's scratch database (the answer page stays)")
+    sx.add_argument("run")
+    sx.add_argument("--topic", dest="search_topic", metavar="ID", help="the topic the run belongs to")
+    sl = sa.add_parser("list", help="list the search runs (all topics without --topic)")
+    sl.add_argument("--topic", dest="search_topic", metavar="ID", help="one topic")
     return p
 
 
@@ -178,9 +236,32 @@ def _read(path: str) -> str:
     return Path(path).read_text(encoding="utf-8")
 
 
+SEARCH_COMMANDS = {"triage", "extract", "judge", "match", "verify", "primary", "fetch-fallback",
+                   "apply", "report"}
+SEARCH_APPLY_STAGES = ("triage", "judge", "match", "verify", "primary", "fetch")
+
+
+def _search_guard(args) -> None:
+    """With --search only the grading stages run, and only against the scratch database."""
+    allowed = (f"{', '.join(sorted(SEARCH_COMMANDS - {'apply', 'report'}))}; "
+               f"apply --stage {'|'.join(SEARCH_APPLY_STAGES)}; report (emit only)")
+    if args.cmd not in SEARCH_COMMANDS:
+        raise ConfigError(f"{args.cmd} does not run on a search (allowed: {allowed})")
+    if args.cmd == "apply" and args.stage not in SEARCH_APPLY_STAGES:
+        raise ConfigError(f"apply --stage {args.stage} does not run on a search (allowed: {allowed})")
+    if args.cmd == "report" and (args.render or args.rejections):
+        raise ConfigError(f"report --render does not run on a search (allowed: {allowed})")
+
+
 def _dispatch(args):
+    if args.search:  # before any workspace or topic call
+        _search_guard(args)
     if args.cmd == "templates":  # works before setup
         return api.list_templates()
+    if args.cmd == "find":  # read-only: no folder, no migration, any number of topics
+        return query.find_evidence(config.read_paths(), args.question,
+                                   args.find_topic or args.topic or os.environ.get("EV_ECHO_TOPIC", "").strip()
+                                   or None, args.limit)
     if args.cmd == "setup":  # works before setup and with an invalid config.json
         ws, error = config.workspace_lenient()
         return api.setup_status(ws, error)
@@ -204,6 +285,8 @@ def _dispatch(args):
             return api.topic_add(ws, args.id, args.template, args.name, args.domain, args.scope)
         if args.action == "show":
             return api.topic_show(ws, args.id)
+        if args.action == "grading":
+            return api.topic_grading(ws, args.id)
         if args.action == "set":
             return api.topic_set(ws, args.id, args.key, args.value)
         return api.topic_remove(ws, args.id, args.delete_data)
@@ -229,15 +312,44 @@ def _dispatch(args):
     if args.cmd == "export":  # "obsidian" is the only target; it needs setup (exit 4) and
         # picks its topics itself: --topic (either position), EV_ECHO_TOPIC, else every topic
         return api.export_obsidian(config.workspace(), args.export_topic or args.topic)
+    if args.cmd == "search":
+        if args.action == "add":   # config.load refuses an unknown or closed run
+            cfg = config.load(args.search_topic or args.topic, args.run)
+            urls = list(args.urls)
+            if args.urls_file:
+                urls += [line.strip() for line in _read(args.urls_file).splitlines()
+                         if line.strip() and not line.lstrip().startswith("#")]
+            if not urls:
+                raise ConfigError("search add needs URLs: --urls-file <file> (one per line) or url arguments")
+            return search.add(cfg, args.run, urls, args.query)
+        if args.action == "render":
+            cfg = config.load(args.search_topic or args.topic)
+            if args.summary is None and args.writeups is None and search.is_closed(cfg, args.run):
+                return search.render_closed(cfg, args.run)   # a page that failed after keep or drop
+            cfg = config.load(args.search_topic or args.topic, args.run)   # refuses an unknown or closed run
+            if args.summary is None or args.writeups is None:
+                raise ConfigError("search render needs --summary and --writeups")
+            return search.render(cfg, args.run, _read(args.summary), _read(args.writeups))
+        if args.action in ("keep", "drop"):   # config.load refuses an unknown or closed run
+            cfg = config.load(args.search_topic or args.topic, args.run)
+            if args.action == "drop":
+                return search.drop(cfg, args.run)
+            return search.keep(cfg, args.run, None if args.only is None else search.parse_only(args.only))
+        if args.action == "list":
+            return search.list_runs(config.workspace().data_dir, args.search_topic or args.topic)
+        cfg = config.load(args.search_topic or args.topic)
+        return search.start(cfg, args.question)
     # everything above works before setup; everything below needs config.json and a topic (exit 4)
-    cfg = config.load(args.topic)
+    cfg = config.load(args.topic, args.search)
     if args.cmd == "studies":
         if args.action == "list":
             return api.studies_list(cfg, args.include_merged)
         if args.action == "show":
             return api.studies_show(cfg, args.id)
         if args.action == "duplicates":
-            return api.studies_duplicates(cfg, args.count_only)
+            return api.studies_duplicates(cfg, args.count_only, args.include_hidden)
+        if args.action == "distinct":
+            return api.studies_distinct(cfg, args.a, args.b, args.undo)
         if args.action == "similarity":
             return api.studies_similarity(cfg)
         if args.action == "merge":
@@ -248,6 +360,8 @@ def _dispatch(args):
             if args.entity_op == "add":
                 return api.studies_entity_add(cfg, args.sid, args.value)
             return api.studies_entity_remove(cfg, args.sid, args.value)
+        if args.action == "regrade":
+            return api.studies_regrade(cfg, args.sid)
         return api.studies_unmerge(cfg, args.other)
     if args.cmd == "entities":
         if args.action == "list":
@@ -287,19 +401,24 @@ def _dispatch(args):
         return api.subtopics_merge(cfg, args.slug, args.into)
     if args.cmd == "questions":
         if args.action == "list":
-            return api.questions_list(cfg, args.subtopic)
+            return api.questions_list(cfg, args.subtopic, args.mode)
         if args.action == "rename":
-            return api.questions_rename(cfg, args.qid, args.text, args.measure, args.kind, args.comparison)
+            return api.questions_rename(cfg, args.qid, args.text, args.measure, args.kind, args.comparison,
+                                       args.mode)
         if args.action == "merge":
-            return api.questions_merge(cfg, args.qid, args.into)
+            return api.questions_merge(cfg, args.qid, args.into, args.mode)
         return api.questions_move(cfg, args.sid, args.qid, args.new, args.measure, args.kind,
-                                 args.comparison)
+                                  args.comparison, args.mode)
     if args.cmd == "fetch":
         return api.fetch(cfg, args.fetch_all, args.fresh)
     if args.cmd == "backfill":
         return api.backfill(cfg, args.source, args.days, args.max_items)
     if args.cmd == "fetch-fallback":
         return api.fallback_emit(cfg)
+    if args.cmd == "findings" and getattr(args, "action", None):
+        if args.action == "list":
+            return api.findings_list(cfg, args.study, args.question)
+        return api.findings_move(cfg, args.fid, args.qid, args.new, args.measure, args.kind, args.comparison)
     if args.cmd == "split" and getattr(args, "action", None):
         if args.action == "list":
             return api.split_list(cfg)
@@ -343,7 +462,7 @@ def _dispatch(args):
             return api.reset_primary(cfg, args.url)
         if args.url is not None:
             raise ConfigError("--url goes only with --stage primary")
-        return api.reset(cfg, args.stage)
+        return api.reset(cfg, args.stage, args.study)
     return api.import_legacy(cfg, args.cache_file)  # "import-legacy"
 
 

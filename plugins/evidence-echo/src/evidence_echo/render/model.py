@@ -5,7 +5,7 @@ dataclasses and never touch the database. Field names and order are a contract b
 branches: extend a dataclass only append-only (a new field with a default, at the end).
 """
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 
@@ -47,6 +47,41 @@ class Entry:                      # one study as shown in a report or on the top
     coverage: list[Link]          # source name + item url, one per item
     canonical_name: str = ""      # SP5a-0 append-only extension: studies.canonical_name (Obsidian slug)
     subtopic: dict | None = None     # append-only extension: knowledge.study_questions() of its subtopic and question
+    findings: list | None = None     # quotes mode: FindingView list (None in questions mode)
+    findings_state: str | None = None   # quotes mode: "done" | "waiting" | "failed"
+    found_by_search: str | None = None  # the search question, when an item came from a search source
+    found_by_search_run: str | None = None  # that search's run id: the card links its answer page
+
+
+@dataclass(frozen=True)
+class FindingView:               # one finding of a study (quotes mode)
+    position: int
+    text: str
+    quote: str
+    quote_checked: bool
+    metric_slug: str | None
+    metric_name: str | None
+    measure: str | None
+
+
+@dataclass(frozen=True)
+class FindingRow:                # one line of the quotes-mode findings list
+    study_id: int
+    name: str
+    tier: str | None
+    labels: list      # grade labels (texts), the topic's order
+    date: str | None
+    reported: bool       # True when `date` is a first-reported fallback
+    finding: FindingView | None   # None: the study has no findings (yet)
+    state: str           # "done" | "waiting" | "failed"
+
+
+@dataclass(frozen=True)
+class FindingsSubtopic:
+    key: str                   # the subtopic's slug, or knowledge.UNSORTED
+    subtopic_id: int | None
+    name: str
+    rows: list
 
 
 @dataclass(frozen=True)
@@ -70,6 +105,8 @@ class Report:
     seen: list[SeenEntry]
     source_warnings: list[str]    # the strings the Markdown footer joins
     label: str = ""                # append-only: this report's name in the topic's report list
+    disclaimer: str | None = None  # append-only: the topic's grading disclaimer
+    mode: str = "questions"        # append-only: the topic's grouping mode
 
 
 @dataclass(frozen=True)
@@ -114,6 +151,12 @@ class Topic:
     waiting: int = 0              # questions: studies that wait to be grouped
     reports: list = field(default_factory=list)   # ReportLink, newest first
     metrics: list = field(default_factory=list)   # metrics: (slug, name) of the topic's active metrics, list order
+    disclaimer: str | None = None  # append-only: the topic's grading disclaimer
+    mode: str = "questions"       # append-only: the topic's grouping mode
+    findings: list = field(default_factory=list)   # quotes mode: FindingsSubtopic, display order
+    finding_count: int = 0        # quotes mode: findings listed on the page
+    searches: list = field(default_factory=list)   # search.list_runs rows of the topic, newest first
+    search_sources: frozenset = frozenset()   # names of the "found by search" sources that have studies
 
 
 def report_labels(rows: list[dict]) -> dict[int, str]:
@@ -173,12 +216,14 @@ def primary_view(group: list[dict], checks: dict) -> dict | None:
 
 
 def grading_view(study: dict, group: list[dict], checks: dict | None = None, metric: dict | None = None,
-                 entities: list[dict] | None = None) -> dict:
+                 entities: list[dict] | None = None, rules: dict | None = None) -> dict:
     """What SP2 recorded for a study, from its items: shared by every renderer and report emit.
     checks: item id -> primary_checks row (SP3b-P); without it "primary" is None.
     metric: the study's resolved active metric (store.study_metric); metric_slug is its slug, metric_name
     its name unless it is Other (the card then shows the free text alone).
-    entities: the study's entity rows (store.study_entities); the view lists (slug, name) pairs."""
+    entities: the study's entity rows (store.study_entities); the view lists (slug, name) pairs.
+    rules: the topic's effective grading block (grading.rules_of); grade_labels are its labels for the
+    study's study_type, peer_review and text_basis; cap_reasons are the creating item's, as display text."""
     codes = {c for g in group for c in _json(g.get("red_flags"), [])}
     quote_checks = [g["quote_check"] for g in group if g.get("quote_check")]
     graded_from = [g["judged_from"] for g in group if g.get("judged_from")]
@@ -194,18 +239,24 @@ def grading_view(study: dict, group: list[dict], checks: dict | None = None, met
     # never set the study's tier (none for a legacy study without a creating item)
     creator = next((g for g in group if g["id"] == study.get("created_by_item")), None)
     gap_note = capped_from = None
+    cap_reasons: list[str] = []
     if creator:
         capped_from = creator.get("capped_from")
+        reasons = _json(creator.get("cap_reasons"), [])
+        cap_reasons = [grading.cap_text([r]) for r in reasons if isinstance(r, str)] if capped_from else []
         jt, st = creator.get("judge_tier"), creator.get("skeptic_tier")
         if (not creator.get("disputed") and jt and st and jt != st
                 and abs(grading.TIERS.index(jt) - grading.TIERS.index(st)) < 2):  # >=2: a ruling
             gap_note = f"judge: {jt}" if creator["evidence_tier"] != jt else f"skeptic: {st}"
     return {
-        "flags": [c for c in grading.RED_FLAGS if c in codes],
+        "flags": [c for c in grading.ALL_RED_FLAGS if c in codes],
         "provenance": {k: study.get(k) for k in ("conducted_by", "relation", "conflict_of_interest")},
         "quote_check": max(quote_checks, key=_QC_ORDER.get) if quote_checks else None,
         "missing_numbers": missing,
         "capped_from": capped_from,
+        "cap_reasons": cap_reasons,
+        "grade_labels": grading.grade_labels({f: study.get(f) for f in grading.FACT_VALUES},
+                                             rules or grading.generic()),
         "judged_from": (None if not graded_from else
                         "excerpt" if all(j == "excerpt" for j in graded_from) else "full_text"),
         "metric": study.get("metric"),
@@ -264,12 +315,25 @@ def not_checked_view(conn, study: dict, group: list[dict], checks: dict) -> dict
     return None
 
 
+def search_questions(topic) -> dict[str, str]:
+    """Source name -> the search question, for the topic's sources a search added (found_by "search")."""
+    return {s["name"]: s.get("search_question") or "" for s in getattr(topic, "sources", [])
+            if s.get("found_by") == "search"}
+
+
+def search_runs(topic) -> dict[str, str]:
+    """Source name -> the run id of the search that added it (found_by "search")."""
+    return {s["name"]: s["search_run"] for s in getattr(topic, "sources", [])
+            if s.get("found_by") == "search" and s.get("search_run")}
+
+
 def entry(conn, study: dict, group: list[dict], title: str, summary: str,
-          subtopic: dict | None = None) -> Entry:
+          subtopic: dict | None = None, rules: dict | None = None,
+          search_questions: dict[str, str] | None = None, search_runs: dict[str, str] | None = None) -> Entry:
     disputed = [g for g in group if g["disputed"]]
     checks = store.primary_checks_for(conn, [g["id"] for g in group])
     view = grading_view(study, group, checks, store.study_metric(conn, study),
-                        store.study_entities(conn, study["id"]))
+                        store.study_entities(conn, study["id"]), rules)
     if view["primary"] is None:
         view["primary"] = not_checked_view(conn, study, group, checks)
     return Entry(
@@ -286,7 +350,11 @@ def entry(conn, study: dict, group: list[dict], title: str, summary: str,
         published=group[0]["published"] if group else None,
         primary_url=study["primary_url"],
         coverage=[Link(g["source_name"], g["url"]) for g in group],
-        canonical_name=study["canonical_name"] or "", subtopic=subtopic)
+        canonical_name=study["canonical_name"] or "", subtopic=subtopic,
+        found_by_search=next((search_questions[g["source_name"]] for g in group
+                              if g["source_name"] in (search_questions or {})), None),
+        found_by_search_run=next((search_runs[g["source_name"]] for g in group
+                                  if g["source_name"] in (search_runs or {})), None))
 
 
 def entry_order(e: Entry) -> tuple:
@@ -304,18 +372,28 @@ def source_warnings(conn, topic) -> list[str]:
     return failing + erring
 
 
-def build_report(conn, topic, entries_by_study: dict, now: datetime) -> Report:
+def build_report(conn, topic, entries_by_study: dict, now: datetime, mode: str = "questions") -> Report:
     """Today's report. entries_by_study: study id -> the accepted {"title", "summary"} entry;
-    a study without one shows its canonical name and findings."""
+    a study without one shows its canonical name and findings. In quotes mode every entry carries
+    its findings and no question."""
     new, seen, first = split(conn)
-    subtopics = knowledge.study_questions(knowledge.evidence(conn))
+    quotes = mode != "questions"
+    if mode == "findings":
+        subtopics = findings_mode_subtopics(conn, knowledge.evidence(conn, "findings"))
+    else:
+        subtopics = quotes_subtopics(conn) if quotes else knowledge.study_questions(knowledge.evidence(conn))
+    by_study = store.findings_by_study(conn) if quotes else {}
+    rules = grading.rules_of(topic)
+    asked, runs = search_questions(topic), search_runs(topic)
     built = []
     for study_id, group in new.items():
         study = store.get_study(conn, study_id)
         e = entries_by_study.get(study_id)
         title = e["title"] if e else (study["canonical_name"] or "(untitled)")
         summary = e["summary"] if e else (study["findings"] or "")
-        built.append(entry(conn, study, group, title, summary, subtopics.get(study_id)))
+        built.append(with_findings(entry(conn, study, group, title, summary, subtopics.get(study_id), rules, asked, runs),
+                                   study, by_study) if quotes else
+                     entry(conn, study, group, title, summary, subtopics.get(study_id), rules, asked, runs))
     built.sort(key=entry_order)
     seen_entries = [SeenEntry(
         study_id=sid, first_title=first[sid]["title"],
@@ -328,7 +406,95 @@ def build_report(conn, topic, entries_by_study: dict, now: datetime) -> Report:
     return Report(topic_id=topic.id, topic_name=topic.name, date=clock.local_date(now), label=label,
                   new=[e for e in built if not e.disputed],
                   disputed=[e for e in built if e.disputed],
-                  seen=seen_entries, source_warnings=source_warnings(conn, topic))
+                  seen=seen_entries, source_warnings=source_warnings(conn, topic),
+                  disclaimer=rules.get("disclaimer"), mode=mode)
+
+
+# --- quotes mode: findings instead of questions ---------------------------------------------------
+def findings_state(study: dict, rows: list) -> str:
+    """"done" when the study has findings, "failed" when the stage gave up on it, else "waiting"."""
+    if rows:
+        return "done"
+    return "failed" if str(study.get("findings_version") or "").endswith(":failed") else "waiting"
+
+
+def finding_view(row: dict) -> FindingView:
+    return FindingView(position=row["position"], text=row["text"], quote=row["quote"],
+                       quote_checked=bool(row["quote_checked"]), metric_slug=row["metric_slug"],
+                       metric_name=row["metric_name"], measure=row["measure"])
+
+
+def with_findings(e: Entry, study: dict, by_study: dict) -> Entry:
+    rows = by_study.get(study["id"], [])
+    return replace(e, findings=[finding_view(r) for r in rows], findings_state=findings_state(study, rows))
+
+
+def quotes_subtopics(conn) -> dict[int, dict]:
+    """study id -> the subtopic line a card shows in quotes mode (no question); Unsorted studies have none."""
+    out = {}
+    placed, _ = knowledge.placed_studies(conn)
+    for study, subtopic, _question in placed:
+        if subtopic is not None:
+            out[study["id"]] = {"key": subtopic["slug"], "name": subtopic["name"], "question": None,
+                                "label": None, "independent": 0, "echo": None}
+    return out
+
+
+def findings_mode_subtopics(conn, evidence: list) -> dict[int, dict]:
+    """study id -> the subtopic line a card shows in findings mode: the study's findings subtopic (its
+    position-1 finding's), no single question, and `questions`, one entry per question its findings joined
+    (knowledge.finding_questions); `waiting` is True while some finding is not grouped yet."""
+    asked = knowledge.finding_questions(evidence)
+    waiting = {r.study_id for e in evidence for r in e.waiting}
+    out = {}
+    for s in store.active_studies(conn):
+        own = store.study_subtopic(conn, s, "findings")
+        questions = asked.get(s["id"], [])
+        if own is None and not questions:
+            continue
+        key, name = (own["slug"], own["name"]) if own else (knowledge.UNSORTED, knowledge.UNSORTED_NAME)
+        out[s["id"]] = {"key": key, "name": name, "question": None, "label": None, "independent": 0,
+                        "echo": None, "questions": questions, "waiting": s["id"] in waiting}
+    return out
+
+
+def findings_subtopics(conn, rules: dict | None = None) -> list[FindingsSubtopic]:
+    """Every counting study in its study-level subtopic (the subtopic order of knowledge.evidence, Unsorted
+    last, empty ones left out); one row per finding, or one row with finding=None and the study's state.
+    Studies newest first by the row date (undated last, then study id descending)."""
+    rules = rules or grading.generic()
+    placed, _ = knowledge.placed_studies(conn)
+    by_study = store.findings_by_study(conn)
+    published, reported = store.study_first_published(conn), store.first_reports(conn)
+    buckets: dict = {}
+    for study, subtopic, _question in placed:
+        bucket = buckets.setdefault(subtopic["slug"] if subtopic else knowledge.UNSORTED,
+                                    {"subtopic": subtopic, "studies": []})
+        bucket["studies"].append(study)
+    out = []
+    for key, bucket in sorted(buckets.items(), key=lambda e: (2, 0) if e[1]["subtopic"] is None
+                              else store.subtopic_order(e[1]["subtopic"])):
+        subtopic = bucket["subtopic"]
+        dated = []
+        for s in bucket["studies"]:
+            date, is_reported = knowledge.row_date(s, published, reported)
+            dated.append((s, date, is_reported))
+        with_date = sorted([d for d in dated if d[1]], key=lambda d: (d[1], d[0]["id"]), reverse=True)
+        undated = sorted([d for d in dated if not d[1]], key=lambda d: d[0]["id"], reverse=True)
+        rows = []
+        for s, date, is_reported in with_date + undated:
+            labels = grading.grade_labels({f: s.get(f) for f in grading.FACT_VALUES}, rules)
+            found = by_study.get(s["id"], [])
+            state = findings_state(s, found)
+            base = dict(study_id=s["id"], name=s["canonical_name"] or "", tier=s.get("evidence_tier"),
+                        labels=labels, date=date, reported=is_reported, state=state)
+            if found:
+                rows += [FindingRow(finding=finding_view(f), **base) for f in found]
+            else:
+                rows.append(FindingRow(finding=None, **base))
+        out.append(FindingsSubtopic(key=key, subtopic_id=subtopic["id"] if subtopic else None,
+                                    name=subtopic["name"] if subtopic else knowledge.UNSORTED_NAME, rows=rows))
+    return out
 
 
 def _series_editions(studies: list[TopicStudy]) -> list[SeriesSummary]:
@@ -347,13 +513,22 @@ def _series_editions(studies: list[TopicStudy]) -> list[SeriesSummary]:
             for name, rows in sorted(by_name.items())]
 
 
-def build_topic(conn, topic, now: datetime) -> Topic:
-    """Every study a report showed, resolved through merges; see the SP5a spec, The model."""
+def build_topic(conn, topic, now: datetime, mode: str = "questions", searches=()) -> Topic:
+    """Every study a report showed, resolved through merges; see the SP5a spec, The model.
+    In quotes mode the page lists findings: no evidence, no waiting studies, no questions. In findings
+    mode it lists questions built from findings (each study under every question its findings joined)."""
+    quotes = mode != "questions"
     history: dict[int, list[dict]] = {}
     for row in store.report_history(conn):
         history.setdefault(store.resolve_study(conn, row["study_id"]), []).append(row)
-    evidence = knowledge.evidence(conn)
-    subtopics = knowledge.study_questions(evidence)
+    evidence = knowledge.evidence(conn, "findings") if mode == "findings" else [] if quotes else knowledge.evidence(conn)
+    if mode == "findings":
+        subtopics = findings_mode_subtopics(conn, evidence)
+    else:
+        subtopics = quotes_subtopics(conn) if quotes else knowledge.study_questions(evidence)
+    rules = grading.rules_of(topic)
+    asked, runs = search_questions(topic), search_runs(topic)
+    by_study = store.findings_by_study(conn) if quotes else {}
     ranked, groups = [], {}
     for sid, rows in history.items():
         study = store.get_study(conn, sid)
@@ -366,7 +541,8 @@ def build_topic(conn, topic, now: datetime) -> Topic:
         else:
             title, summary = rows[-1]["title"], study["findings"] or ""
         dates = list(dict.fromkeys(clock.local_date(r["rendered_at"]) for r in rows))
-        ts = TopicStudy(entry=entry(conn, study, group, title, summary, subtopics.get(sid)),
+        e = entry(conn, study, group, title, summary, subtopics.get(sid), rules, asked, runs)
+        ts = TopicStudy(entry=with_findings(e, study, by_study) if quotes else e,
                         first_reported=dates[0], last_reported=dates[-1], reported_on=dates,
                         reports=len({r["report_id"] for r in rows}))
         ranked.append(((rows[-1]["rendered_at"], rows[-1]["report_id"], sid), ts))
@@ -381,8 +557,18 @@ def build_topic(conn, topic, now: datetime) -> Topic:
             s["flags"] += 1 if _json(g.get("red_flags"), []) else 0
     sources = [SourceSummary(name, sorted(v["ids"]), v["disputes"], v["flags"])
                for name, v in sorted(by_source.items())]
+    listed = findings_subtopics(conn, rules) if mode == "quotes" else []
+    if mode == "findings":
+        count = sum(len(by_study.get(ts.entry.study_id, [])) for ts in studies)
+    else:
+        count = sum(1 for s in listed for r in s.rows if r.finding is not None)
+    waiting = (0 if mode == "quotes" else knowledge.waiting_count(conn, "findings") if mode == "findings"
+               else knowledge.waiting_count(conn))
     return Topic(topic_id=topic.id, topic_name=topic.name, generated_at=now.isoformat(),
                  studies=studies, sources=sources, series=_series_editions(studies),
-                 evidence=evidence, waiting=knowledge.waiting_count(conn),
+                 evidence=evidence, waiting=waiting,
                  reports=report_links(store.list_reports(conn)),
-                 metrics=[(m["slug"], m["name"]) for m in store.active_metrics(conn)])
+                 metrics=[(m["slug"], m["name"]) for m in store.active_metrics(conn)],
+                 disclaimer=rules.get("disclaimer"), mode=mode,
+                 findings=listed, finding_count=count, searches=list(searches),
+                 search_sources=frozenset(v.name for v in sources if v.name in asked))

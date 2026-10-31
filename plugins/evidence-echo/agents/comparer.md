@@ -1,6 +1,6 @@
 ---
 name: comparer
-description: Blind comparer for Evidence Echo. Receives a two-answer stage's emit payload (relate, primary), compares the texts each item gives, answers only with the payload's fixed choices and exact quotes; returns JSON. Dispatched twice, as two separate subagents, by the evidence-echo report skill; not for general use.
+description: Blind comparer for Evidence Echo. Receives a two-answer stage's emit payload (relate, primary, dupcheck), compares the texts each item gives, answers only with the payload's fixed choices and exact quotes; returns JSON. Dispatched twice, as two separate subagents, by the evidence-echo report skill; not for general use.
 tools: Read
 ---
 

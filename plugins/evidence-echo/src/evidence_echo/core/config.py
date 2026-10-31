@@ -26,6 +26,8 @@ KEYS_DIR = "keys"        # hooks/session_env.py writes keys/<EV_ECHO_KEYS_ID>.js
 _KEYS_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 NOT_SET_UP = "Evidence Echo is not set up — run the setup (/evidence-echo:setup)"
 NO_TOPICS = "no topics yet — run the setup (/evidence-echo:setup)"
+SEARCHES_DIR = "searches"  # <data>/searches/<topic>/<run id>/: scratch runs of `ev search`, not topics
+RUN_ID_RE = re.compile(r"^\d{8}-\d{4}-[a-z0-9][a-z0-9-]{0,39}(?:-\d+)?\Z")
 
 
 class SetupRequired(Exception):
@@ -69,8 +71,13 @@ class Config:
     relate: str
     primary_check: str
     classify_batch: int = 40
+    regrade_batch: int = 40
+    grouping_mode: str = "questions"
+    findings_batch: int = 40
     fetch_cache_minutes: int = 60
     md_dir: Path | None = None   # where the Markdown report goes; None: reports_dir
+    search_run: str | None = None   # an open `ev search` run: db_path is its scratch database
+    search_max_candidates: int = 15
 
 
 def _env(var: str) -> str:
@@ -89,8 +96,8 @@ def _inside(path: Path, root: Path) -> bool:
     return path == root or root in path.parents
 
 
-def _data_dir() -> Path:
-    raw = _env("EV_ECHO_DATA_DIR")
+def _data_dir(raw: str | None = None) -> Path:
+    raw = _env("EV_ECHO_DATA_DIR") if raw is None else raw
     if not raw:
         return HOME_DATA_DIR
     chosen = settings.expand_path(raw, "EV_ECHO_DATA_DIR")
@@ -129,6 +136,55 @@ def workspace() -> Workspace:
     return Workspace(data_dir=data_dir, plugin_data_dir=plugin_data,
                      topics_dir=data_dir / "topics",
                      settings=settings.load_global(data_dir))
+
+
+@dataclass(frozen=True)
+class TopicPaths:
+    """One topic as the read-only evidence server sees it: where its database and pages are."""
+    id: str
+    topic: Topic | None       # None: topic.json could not be read (see error)
+    error: str | None
+    db_path: Path
+    reports_dir: Path | None
+    grouping_mode: str
+    disclaimer: str | None
+
+
+@dataclass(frozen=True)
+class ReadPaths:
+    data_dir: Path
+    topics: list
+
+
+def read_paths() -> ReadPaths:
+    """Where every topic's data lives, for readers that must never write: creates no folder, migrates
+    nothing, reads no keys. A topic whose topic.json is broken is listed with its error."""
+    raw = _env("EV_ECHO_DATA_DIR")
+    data_dir = _data_dir("" if "${" in raw else raw)  # an unexpanded ${user_config...} is unset
+    if not data_dir.is_dir() or not (data_dir / settings.CONFIG_FILE).exists():
+        raise SetupRequired(NOT_SET_UP)
+    ws = Workspace(data_dir, _plugin_data_dir(data_dir), data_dir / "topics", settings.load_global(data_dir))
+    found = []
+    for tid in topics.topic_ids(ws.topics_dir):
+        db_path = ws.topics_dir / tid / "echo.db"
+        try:
+            topic = topics.load_topic(ws.topics_dir, tid, check_sources=False)
+            found.append(TopicPaths(
+                id=tid, topic=topic, error=None, db_path=db_path,
+                reports_dir=_reports_dirs(ws, topic)[0],
+                grouping_mode=_setting("grouping_mode", ws, topic),
+                disclaimer=topic.grading.get("disclaimer")))
+        except ConfigError as exc:
+            found.append(TopicPaths(tid, None, str(exc), db_path, None,
+                                    str(settings.GLOBAL_DEFAULTS["grouping_mode"]), None))
+    return ReadPaths(data_dir, found)
+
+
+def search_dir(data_dir: Path, topic_id: str, run_id: str) -> Path:
+    """The folder of one search run; no path is built from a run id that does not match RUN_ID_RE."""
+    if not isinstance(run_id, str) or not RUN_ID_RE.match(run_id):
+        raise ConfigError(f"not a search run id: {run_id!r}")
+    return data_dir / SEARCHES_DIR / topic_id / run_id
 
 
 def select_topic(ws: Workspace, requested: str | None) -> str:
@@ -223,7 +279,25 @@ def _reports_dirs(ws: Workspace, topic: Topic) -> tuple[Path, Path]:
     return base / topic.id, base
 
 
-def load(topic_id: str | None = None) -> Config:
+def _search_db(data_dir: Path, topic_id: str, run_id: str) -> Path:
+    """The scratch database of an open search run of this topic; ConfigError for any other run."""
+    from evidence_echo import search   # search.py imports this module
+    run_dir = search_dir(data_dir, topic_id, run_id)
+    if not (run_dir / search.META).is_file():
+        raise ConfigError(f"no search '{run_id}' in topic '{topic_id}'")
+    meta = search.read_meta(run_dir)
+    if meta.get("status") != "open":
+        raise ConfigError(f"search '{run_id}' is {meta.get('status')}; its page is "
+                          f"{meta.get('page') or '(none was written)'}")
+    scratch = run_dir / search.SCRATCH_DB
+    if not scratch.is_file():
+        raise ConfigError(f"search '{run_id}' has no scratch database")
+    return scratch
+
+
+def load(topic_id: str | None = None, search_run: str | None = None) -> Config:
+    """The effective configuration of one topic. With `search_run`, db_path is that run's scratch
+    database; everything else (settings, grading rules, lists) stays the topic's."""
     ws = workspace()
     if not ws.configured:
         raise SetupRequired(NOT_SET_UP)
@@ -239,10 +313,11 @@ def load(topic_id: str | None = None) -> Config:
         return auto if value == "auto" else value
 
     topic_dir = ws.topics_dir / topic.id
+    db_path = topic_dir / "echo.db" if search_run is None else _search_db(ws.data_dir, topic.id, search_run)
     html_reports = _setting("html_reports", ws, topic)
     return Config(
         data_dir=ws.data_dir, plugin_data_dir=ws.plugin_data_dir, topic=topic,
-        topic_dir=topic_dir, db_path=topic_dir / "echo.db",
+        topic_dir=topic_dir, db_path=db_path,
         reports_dir=reports_dir, overview_dir=overview_dir,
         triage_backend=choice("triage_backend", llm_default),
         judgment_backend=choice("judgment_backend", llm_default),
@@ -259,6 +334,11 @@ def load(topic_id: str | None = None) -> Config:
         relate=_setting("relate", ws, topic),
         primary_check=_setting("primary_check", ws, topic),
         classify_batch=_setting("classify_batch", ws, topic),
+        regrade_batch=_setting("regrade_batch", ws, topic),
+        grouping_mode=_setting("grouping_mode", ws, topic),
+        findings_batch=_setting("findings_batch", ws, topic),
         fetch_cache_minutes=_setting("fetch_cache_minutes", ws, topic),
         md_dir=markdown_dir(ws, reports_dir, html_reports, topic.id),
+        search_run=search_run,
+        search_max_candidates=_setting("search_max_candidates", ws, topic),
     )

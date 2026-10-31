@@ -19,6 +19,7 @@ class TopicSummary:
     report: dict | None = None
     error: str | None = None
     recent: dict | None = None   # store.recent_studies(...); None: derive from the report's entries
+    disclaimer: str | None = None   # the topic's grading disclaimer
 
 
 def rank(entries: list[dict], limit: int = 3) -> list[dict]:
@@ -55,15 +56,18 @@ def _link(path: Path, out_dir: Path) -> str:
 
 
 def _section(s: TopicSummary, out_dir: Path) -> list[str]:
+    note = [f"*{s.disclaimer}*", ""] if s.disclaimer else []
     if s.error:
-        return [f"## {s.name}  ·  setup error: {s.error}", ""]
+        return [f"## {s.name}  ·  setup error: {s.error}", ""] + note
     if not s.report:
-        return [f"## {s.name}  ·  not run yet", ""]
+        return [f"## {s.name}  ·  not run yet", ""] + note
     link = _link(Path(s.report["path"]), out_dir)
     latest, earlier, more = select(s)
     n = len(latest) + more
     lines = [f"## {s.name}  ·  last run {clock.local_date(s.report['rendered_at'])}  ·  "
              f"{n} new finding{'' if n == 1 else 's'}"]
+    if s.disclaimer:
+        lines += ["", f"*{s.disclaimer}*", ""]
 
     def line(e):
         return f"- **[{e.get('tier') or '?'}]** {e['title']} — [report]({_link(Path(e['report_path']), out_dir)})"

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from evidence_echo.core import interfaces, store
+from evidence_echo.core import grading, interfaces, store
 from evidence_echo.core.topics import Topic
 from evidence_echo.stages import judge, match, report, triage, verify
 from tests.conftest import FakeBackend, PLUGIN_DIR, make_item, seed_new_study
@@ -10,7 +10,8 @@ from tests.test_judge import VERDICT, _seed_extracted
 CRO = Topic(id="cro", name="CRO Echo", domain="conversion rate optimization",
             scope="Landing pages, checkout flows and pricing pages.")
 TOPIC_BLOCK = {"id": "cro", "name": "CRO Echo", "domain": "conversion rate optimization",
-               "scope": "Landing pages, checkout flows and pricing pages.", "subtopics": []}
+               "scope": "Landing pages, checkout flows and pricing pages.", "subtopics": [],
+               "grading": grading.payload_rules(grading.generic())}
 
 
 def _judged(db):
