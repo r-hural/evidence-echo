@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.1
+
+- **Fix:** on Windows with Python 3.11, the scheduler could fail to record where `claude` is
+  installed when the project folder held a file named `claude.cmd`. The plugin now looks only in
+  the folders on your PATH (never the project folder) and finds it on every Python version.
+
 ## 0.18.0
 
 - **Scheduled reports:** `/evidence-echo:schedule` gives each topic a fetch schedule (hourly,

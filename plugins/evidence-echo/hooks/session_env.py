@@ -19,7 +19,6 @@ Values are never printed. Always exits 0: a failing hook must not block the sess
 import json
 import os
 import re
-import shutil
 import sys
 import time
 import uuid
@@ -148,18 +147,23 @@ def _absolute(path):
 def find_claude():
     """The absolute path of `claude` on PATH, never one from the current folder (the user's project):
     Windows looks there first unless NoDefaultCurrentDirectoryInExePath is set, and Python before
-    3.12 always does. None when only such a match exists."""
+    3.12 always does (shutil.which), so the PATH folders are walked here instead. None when no
+    absolute PATH folder other than the current one holds it."""
     os.environ["NoDefaultCurrentDirectoryInExePath"] = "1"
     cwd = os.path.normcase(os.path.abspath(os.getcwd()))
-    dirs = [d for d in os.environ.get("PATH", "").split(os.pathsep)
-            if d.strip() and d.strip() != "." and os.path.isabs(d)
-            and os.path.normcase(os.path.abspath(d)) != cwd]
-    found = shutil.which("claude", path=os.pathsep.join(dirs))
-    if not found or not _absolute(found):
-        return None
-    if os.path.normcase(os.path.dirname(os.path.abspath(found))) == cwd:
-        return None
-    return found
+    dirs = [d.strip() for d in os.environ.get("PATH", "").split(os.pathsep)
+            if d.strip() and os.path.isabs(d.strip()) and os.path.normcase(os.path.abspath(d.strip())) != cwd]
+    if sys.platform == "win32":
+        exts = [e for e in os.environ.get("PATHEXT", ".COM;.EXE;.BAT;.CMD").split(";") if e]
+        names = ["claude" + e.lower() for e in exts]
+    else:
+        names = ["claude"]
+    for folder in dirs:
+        for name in names:
+            path = os.path.join(folder, name)
+            if os.path.isfile(path) and (sys.platform == "win32" or os.access(path, os.X_OK)):
+                return path
+    return None
 
 
 def write_runtime(environ, data):

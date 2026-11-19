@@ -94,12 +94,12 @@ def test_runtime_keeps_runner_args_and_a_known_claude(tmp_path, monkeypatch):
     (tmp_path / "scheduling").mkdir()
     (tmp_path / "scheduling" / "runtime.json").write_text(
         json.dumps({"runner_args": ["--plugin-dir", "R"], "claude": "/old/claude"}), encoding="utf-8")
-    monkeypatch.setattr(session_env.shutil, "which", lambda name, **kw: None)
+    monkeypatch.setattr(session_env, "find_claude", lambda: None)
     session_env.write_runtime({"CLAUDE_PLUGIN_ROOT": "/new"}, tmp_path)
     runtime = json.loads((tmp_path / "scheduling" / "runtime.json").read_text(encoding="utf-8"))
     assert runtime["runner_args"] == ["--plugin-dir", "R"] and runtime["claude"] == "/old/claude"
     assert runtime["plugin_root"] == "/new"
-    monkeypatch.setattr(session_env.shutil, "which", lambda name, **kw: "/new/claude")
+    monkeypatch.setattr(session_env, "find_claude", lambda: "/new/claude")
     session_env.write_runtime({"CLAUDE_PLUGIN_ROOT": "/new"}, tmp_path)
     assert json.loads((tmp_path / "scheduling" / "runtime.json").read_text(encoding="utf-8"))["claude"] == "/new/claude"
 
@@ -169,3 +169,14 @@ def test_a_relative_claude_in_an_old_runtime_file_is_dropped(tmp_path, monkeypat
     monkeypatch.setattr(session_env, "find_claude", lambda: None)
     session_env.write_runtime({"CLAUDE_PLUGIN_ROOT": "/new"}, tmp_path)
     assert json.loads((tmp_path / "scheduling" / "runtime.json").read_text(encoding="utf-8"))["claude"] == ""
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="a Windows-form PATH entry is relative only on POSIX")
+def test_a_windows_form_path_entry_is_never_searched_on_posix(tmp_path, monkeypatch):
+    project = tmp_path / "project"; project.mkdir()
+    planted = project / "C:\tools"; planted.mkdir()
+    (planted / "claude").write_text("#!/bin/sh\necho planted", encoding="utf-8")
+    (planted / "claude").chmod(0o755)
+    monkeypatch.chdir(project)
+    monkeypatch.setenv("PATH", "C:\tools")
+    assert session_env.find_claude() is None
