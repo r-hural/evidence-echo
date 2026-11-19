@@ -10,6 +10,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -z \"$EV_ECHO_GUARD_DIR\" ] && exit 0; python \"${CLAUDE_PLUGIN_ROOT}/hooks/session_guard.py\" 2>/dev/null || py -3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_guard.py\" 2>/dev/null || python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_guard.py\" || { echo \"Evidence Echo: the session guard could not run, so this scheduled run may not use tools\" >&2; exit 2; }",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

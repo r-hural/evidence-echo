@@ -23,6 +23,7 @@ TEMPLATES_DIR = PLUGIN_ROOT / "templates"
 HOME_DATA_DIR = Path.home() / ".evidence-echo"
 KEYS_FILE = "keys.json"  # the shared keys file of 0.16.4 and earlier (and of tests)
 KEYS_DIR = "keys"        # hooks/session_env.py writes keys/<EV_ECHO_KEYS_ID>.json per session
+SCHEDULER_KEYS_FILE = "scheduler-keys.json"  # the same hook: delivery secrets for OS-started runs
 _KEYS_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 NOT_SET_UP = "Evidence Echo is not set up — run the setup (/evidence-echo:setup)"
 NO_TOPICS = "no topics yet — run the setup (/evidence-echo:setup)"
@@ -78,6 +79,8 @@ class Config:
     md_dir: Path | None = None   # where the Markdown report goes; None: reports_dir
     search_run: str | None = None   # an open `ev search` run: db_path is its scratch database
     search_max_candidates: int = 15
+    telegram_bot_token: str = ""   # delivery secrets (scheduled report messages)
+    smtp_password: str = ""
 
 
 def _env(var: str) -> str:
@@ -199,7 +202,7 @@ def select_topic(ws: Workspace, requested: str | None) -> str:
     return ids[0]
 
 
-KEY_NAMES = ("ANTHROPIC_API_KEY", "VOYAGE_API_KEY", "APIFY_API_TOKEN")
+KEY_NAMES = ("ANTHROPIC_API_KEY", "VOYAGE_API_KEY", "APIFY_API_TOKEN", "TELEGRAM_BOT_TOKEN", "SMTP_PASSWORD")
 
 
 def _keys_path(plugin_data: Path) -> Path | None:
@@ -211,7 +214,18 @@ def _keys_path(plugin_data: Path) -> Path | None:
 
 def _read_keys(plugin_data: Path) -> dict:
     """Keys the SessionStart hook wrote from this session's plugin settings (never exported)."""
-    path = _keys_path(plugin_data)
+    return _load_keys(_keys_path(plugin_data))
+
+
+def delivery_keys(plugin_data: Path) -> dict:
+    """The keys for sending messages. A session uses its own; a run the OS started has no session
+    and falls back on the delivery secrets the SessionStart hook keeps for it."""
+    if _env("EV_ECHO_KEYS_ID"):
+        return _read_keys(plugin_data)
+    return {**_load_keys(plugin_data / SCHEDULER_KEYS_FILE), **_read_keys(plugin_data)}
+
+
+def _load_keys(path: Path | None) -> dict:
     if path is None or not path.exists():
         return {}
     try:
@@ -341,4 +355,6 @@ def load(topic_id: str | None = None, search_run: str | None = None) -> Config:
         md_dir=markdown_dir(ws, reports_dir, html_reports, topic.id),
         search_run=search_run,
         search_max_candidates=_setting("search_max_candidates", ws, topic),
+        telegram_bot_token=_key("TELEGRAM_BOT_TOKEN", keys),
+        smtp_password=_key("SMTP_PASSWORD", keys),
     )

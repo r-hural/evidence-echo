@@ -11,20 +11,27 @@
   "Data folder" setting is set, EV_ECHO_DATA_DIR (never a folder inside the
   plugin data, which is deleted on uninstall).
 - Until Evidence Echo is set up, the first session shows a one-line hint, once.
+- When scheduled runs exist (<data>/scheduling/), it refreshes runtime.json (where the plugin and
+  `claude` are now, for the OS task's launcher) and shows one reminder line from status.json when a
+  report is overdue, the last scheduled run failed or the scheduler seems stopped. Small files only.
 Values are never printed. Always exits 0: a failing hook must not block the session.
 """
 import json
 import os
 import re
+import shutil
 import sys
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-KEYS = ("ANTHROPIC_API_KEY", "VOYAGE_API_KEY", "APIFY_API_TOKEN")
+KEYS = ("ANTHROPIC_API_KEY", "VOYAGE_API_KEY", "APIFY_API_TOKEN", "TELEGRAM_BOT_TOKEN", "SMTP_PASSWORD")
 KEYS_FILE = "keys.json"   # the shared file of 0.16.4 and earlier; deleted
 KEYS_DIR = "keys"
 KEYS_KEEP_DAYS = 30
+SCHEDULER_KEYS = ("TELEGRAM_BOT_TOKEN", "SMTP_PASSWORD")
+SCHEDULER_KEYS_FILE = "scheduler-keys.json"
 HINT = ('Evidence Echo is installed but not set up — say "set up Evidence Echo" '
         'or run /evidence-echo:setup.')
 
@@ -122,6 +129,147 @@ def hint(environ, home=None):
     return HINT
 
 
+def _read_json(path):
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _absolute(path):
+    """The path when it is absolute (POSIX or Windows form), else ""."""
+    import ntpath
+    import posixpath
+    ok = isinstance(path, str) and (posixpath.isabs(path) or ntpath.isabs(path))
+    return path if ok else ""
+
+
+def find_claude():
+    """The absolute path of `claude` on PATH, never one from the current folder (the user's project):
+    Windows looks there first unless NoDefaultCurrentDirectoryInExePath is set, and Python before
+    3.12 always does. None when only such a match exists."""
+    os.environ["NoDefaultCurrentDirectoryInExePath"] = "1"
+    cwd = os.path.normcase(os.path.abspath(os.getcwd()))
+    dirs = [d for d in os.environ.get("PATH", "").split(os.pathsep)
+            if d.strip() and d.strip() != "." and os.path.isabs(d)
+            and os.path.normcase(os.path.abspath(d)) != cwd]
+    found = shutil.which("claude", path=os.pathsep.join(dirs))
+    if not found or not _absolute(found):
+        return None
+    if os.path.normcase(os.path.dirname(os.path.abspath(found))) == cwd:
+        return None
+    return found
+
+
+def write_runtime(environ, data):
+    """<data>/scheduling/runtime.json: what the OS task's launcher needs to find the engine. Only
+    when scheduling is in use (the folder exists); a hand-set `runner_args` is kept."""
+    folder = Path(data) / "scheduling"
+    if not folder.is_dir():
+        return
+    path = folder / "runtime.json"
+    old = _read_json(path)
+    runtime = {"plugin_root": environ.get("CLAUDE_PLUGIN_ROOT", "").strip(),
+               "plugin_data": environ.get("CLAUDE_PLUGIN_DATA", "").strip(),
+               "python": sys.executable, "claude": find_claude() or _absolute(old.get("claude")),
+               "runner_args": old.get("runner_args") if isinstance(old.get("runner_args"), list) else []}
+    if not runtime["plugin_root"]:
+        return   # not started by Claude Code: never overwrite a good file with an empty one
+    tmp = folder / "runtime.json.tmp"
+    tmp.write_text(json.dumps(runtime, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _when(raw):
+    try:
+        dt = datetime.fromisoformat(raw)
+    except (TypeError, ValueError):
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _ago(delta):
+    hours = int(delta.total_seconds() // 3600)
+    return "%d day%s" % (hours // 24, "" if hours // 24 == 1 else "s") if hours >= 48 else "%d hours" % hours
+
+
+RUNLOG_TAIL_BYTES = 16384
+
+
+def _scheduler_failure(data, last_wake):
+    """The newest launcher failure (kind "scheduler") in the run log's tail that is newer than the
+    last time run-due itself ran; None otherwise. The launcher writes it when it cannot start the
+    engine, so status.json is never refreshed in that case."""
+    try:
+        with open(data / "scheduling" / "runs.jsonl", "rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            fh.seek(max(0, fh.tell() - RUNLOG_TAIL_BYTES))
+            tail = fh.read().decode("utf-8", "replace").splitlines()
+    except OSError:
+        return None
+    for line in reversed(tail):
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(row, dict) or row.get("kind") != "scheduler":
+            continue
+        at = _when(row.get("finished") or row.get("started"))
+        if row.get("outcome") == "failed" and at and (last_wake is None or at > last_wake):
+            return str(row.get("error") or "unknown error")[:160]
+        return None
+    return None
+
+
+def reminder(data, now=None, detail=True):
+    """One reminder text from <data>/scheduling/status.json, or None. Without `detail` the error texts
+    are left out: they can echo web content, so they go to the user, never into the model's context. Reads one small file and does
+    no schedule math (status.json holds UTC timestamps), so it is fast and needs no zone data."""
+    status = _read_json(Path(data) / "scheduling" / "status.json")
+    if not status:
+        return None
+    now = now or datetime.now(timezone.utc)
+    topics = status.get("topics") if isinstance(status.get("topics"), dict) else {}
+    overdue, failed = [], []
+    for tid, info in sorted(topics.items()):
+        if not isinstance(info, dict):
+            continue
+        ok = _when(info.get("last_report_ok"))
+        due = _when(info.get("next_report"))
+        if due and now - due > timedelta(hours=12) and (ok is None or ok < due):
+            overdue.append((tid, now - due))
+        bad = info.get("last_failure") if isinstance(info.get("last_failure"), dict) else None
+        at = _when(bad.get("at")) if bad else None
+        kind = bad.get("kind") if bad and bad.get("kind") in ("fetch", "notify") else "report"
+        if at and (kind != "report" or ok is None or at > ok):
+            failed.append((tid, kind, str(bad.get("error") or "unknown error")[:160]))
+    lines = []
+    if len(overdue) == 1:
+        lines.append("Evidence Echo: %s report is %s overdue \u2014 run /evidence-echo:report?"
+                     % (overdue[0][0], _ago(overdue[0][1])))
+    elif overdue:
+        lines.append("Evidence Echo: %s reports are overdue \u2014 run /evidence-echo:report?"
+                     % ", ".join("%s (%s)" % (t, _ago(d)) for t, d in overdue))
+    for tid, kind, error in failed:
+        if kind == "notify":
+            lines.append("Evidence Echo: the %s report message could not be sent%s" % (tid, _detail(error, detail)))
+        else:
+            lines.append("Evidence Echo: last scheduled %s %s failed%s" % (tid, kind, _detail(error, detail)))
+    problem = _scheduler_failure(Path(data), _when(status.get("last_wake")))
+    if problem:
+        lines.append("Evidence Echo: the scheduler could not run%s" % _detail(problem, detail))
+    wake_due, last = _when(status.get("next_wake")), _when(status.get("last_wake"))
+    if (status.get("installed") and wake_due and now - wake_due > timedelta(hours=2)
+            and (last is None or last < wake_due)):
+        lines.append("Evidence Echo: the scheduler last ran %s" % (last.date().isoformat() if last else "never"))
+    return "\n".join(lines) or None
+
+
+def _detail(error, detail):
+    return ": %s" % error if detail else " (`ev schedule status` shows why)"
+
+
 def keys_id(session_id):
     """The session's keys file name: its session id reduced to safe characters, else random."""
     clean = re.sub(r"[^A-Za-z0-9_-]", "", str(session_id or ""))[:64]
@@ -160,12 +308,35 @@ def write_keys(environ, kid, now=None):
             path.unlink()
         return
     folder.mkdir(parents=True, exist_ok=True)
-    tmp = folder / (kid + ".json.tmp")
+    _write_private(path, keys)
+
+
+def _write_private(path, keys):
+    tmp = path.with_name(path.name + ".tmp")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
         json.dump(keys, fh)
     os.chmod(tmp, 0o600)  # in case the file already existed with wider bits
     os.replace(tmp, path)
+
+
+def write_scheduler_keys(environ):
+    """The delivery secrets for runs the OS starts, which have no session: only what a failure
+    message needs, refreshed by every session and removed once the settings hold none."""
+    data = environ.get("CLAUDE_PLUGIN_DATA", "").strip()
+    if not data:
+        return
+    keys = {}
+    for name in SCHEDULER_KEYS:
+        value = environ.get("CLAUDE_PLUGIN_OPTION_" + name, "").strip()
+        if value:
+            keys[name] = value
+    path = Path(data) / SCHEDULER_KEYS_FILE
+    if keys:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _write_private(path, keys)
+    elif path.exists():
+        path.unlink()
 
 
 def _session_id(stdin):
@@ -187,6 +358,10 @@ def main(environ=None, home=None, session_id=None):
     except Exception:
         pass  # never block the session, never echo values
     try:
+        write_scheduler_keys(environ)
+    except Exception:
+        pass
+    try:
         env_file = environ.get("CLAUDE_ENV_FILE", "")
         # exported even when writing failed: the engine then finds no session file and runs
         # without keys, never on the shared keys.json of older versions
@@ -198,11 +373,22 @@ def main(environ=None, home=None, session_id=None):
     except Exception:
         pass
     try:
-        text = hint(environ, home)
+        write_runtime(environ, _data_dir(environ, home))
+    except Exception:
+        pass
+    try:
+        first = hint(environ, home)
+        data = _data_dir(environ, home)
+        texts = [t for t in (first, reminder(data)) if t]
+        model = [t for t in (first, reminder(data, detail=False)) if t]
+    except Exception:
+        texts, model = [], []
+    try:
+        text = "\n".join(texts)
         if text:
             print(json.dumps({"systemMessage": text,
                               "hookSpecificOutput": {"hookEventName": "SessionStart",
-                                                     "additionalContext": text}}))
+                                                     "additionalContext": "\n".join(model)}}))
     except Exception:
         pass
     return 0

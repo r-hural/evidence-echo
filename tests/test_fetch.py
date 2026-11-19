@@ -293,13 +293,13 @@ LI = {"type": "linkedin", "name": "Person", "slug": "person"}
 
 def test_linkedin_gap_only_at_max_posts(db, kinds):
     kinds["linkedin"] = FakeKind([base.Entry("https://l.com/0", "x", published=NOW)])
-    fetch.run(db, _cfg([LI]), ctx=_ctx())                # first run
+    fetch.run(db, _cfg([LI]), ctx=_ctx(), apify_token="tok")                # first run
     few = [base.Entry(f"https://l.com/f{i}", "x", published=NOW) for i in range(29)]
     kinds["linkedin"] = FakeKind(few)
-    assert fetch.run(db, _cfg([LI]), ctx=_ctx())["possible_gaps"] == []
+    assert fetch.run(db, _cfg([LI]), ctx=_ctx(), apify_token="tok")["possible_gaps"] == []
     full = [base.Entry(f"https://l.com/g{i}", "x", published=NOW) for i in range(30)]
     kinds["linkedin"] = FakeKind(full)
-    assert fetch.run(db, _cfg([LI]), ctx=_ctx())["possible_gaps"] == ["Person"]
+    assert fetch.run(db, _cfg([LI]), ctx=_ctx(), apify_token="tok")["possible_gaps"] == ["Person"]
 
 
 def test_bad_stored_date_does_not_abort_fetch(db, kinds):

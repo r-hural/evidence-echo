@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "evidence-echo"
-version = "0.17.0"
+version = "0.18.0"
 description = "Evidence-based research digests from the feeds you follow (engine of the Evidence Echo Claude Code plugin)"
 requires-python = ">=3.11"
 license = "MIT"
@@ -17,6 +17,7 @@ dependencies = [
   "python-dateutil>=2.9",
   "trafilatura>=2.2",
   "numpy>=2.1",
+  "tzdata>=2024.1",
 ]
 
 [project.urls]

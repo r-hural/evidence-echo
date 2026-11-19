@@ -9,7 +9,7 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 
-from evidence_echo.core import grading, knowledge, store
+from evidence_echo.core import grading, knowledge, source_problems, store
 from evidence_echo.core.urls import canonical_url
 from evidence_echo.render import clock
 from evidence_echo.stages.judge import TEXT_LIMIT
@@ -362,17 +362,13 @@ def entry_order(e: Entry) -> tuple:
     return (e.series is None, e.series or "", e.study_id)
 
 
-def source_warnings(conn, topic) -> list[str]:
-    names = {s["name"] for s in getattr(topic, "sources", [])}
-    states = [s for s in store.all_source_states(conn) if s["name"] in names]
-    failing = [f"{s['name']} (failing since {(s['failing_since'] or '')[:10]} — check or remove)"
-               for s in states if s["consecutive_errors"] >= store.FAILING_AFTER]
-    erring = [f"{s['name']} ({(s['last_error'] or '')[:40]})" for s in states
-              if s["last_error"] and s["consecutive_errors"] < store.FAILING_AFTER]
-    return failing + erring
+def source_warnings(conn, topic, cfg=None) -> list[str]:
+    """One formatted line per problem group (reason: sources); cfg adds missing-key groups."""
+    return [source_problems.format_group(g) for g in source_problems.problems(conn, topic, cfg)]
 
 
-def build_report(conn, topic, entries_by_study: dict, now: datetime, mode: str = "questions") -> Report:
+def build_report(conn, topic, entries_by_study: dict, now: datetime, mode: str = "questions",
+                 cfg=None) -> Report:
     """Today's report. entries_by_study: study id -> the accepted {"title", "summary"} entry;
     a study without one shows its canonical name and findings. In quotes mode every entry carries
     its findings and no question."""
@@ -406,7 +402,7 @@ def build_report(conn, topic, entries_by_study: dict, now: datetime, mode: str =
     return Report(topic_id=topic.id, topic_name=topic.name, date=clock.local_date(now), label=label,
                   new=[e for e in built if not e.disputed],
                   disputed=[e for e in built if e.disputed],
-                  seen=seen_entries, source_warnings=source_warnings(conn, topic),
+                  seen=seen_entries, source_warnings=source_warnings(conn, topic, cfg),
                   disclaimer=rules.get("disclaimer"), mode=mode)
 
 

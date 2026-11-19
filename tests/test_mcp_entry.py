@@ -2,7 +2,6 @@ import json
 import os
 import subprocess
 from contextlib import closing
-from types import SimpleNamespace
 
 import pytest
 
@@ -16,16 +15,17 @@ from tests.test_read_paths import snapshot
 ev_mcp = load_script("scripts/ev_mcp.py")
 
 
-def test_mcp_json_has_both_entries():
+LAUNCHERS = PLUGIN_DIR / "scripts"
+
+
+def test_mcp_json_names_the_launcher_by_full_path():
     servers = json.loads((PLUGIN_DIR / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]
-    assert set(servers) == {"evidence-echo", "evidence-echo-py3"}
-    assert servers["evidence-echo"]["command"] == "python" and servers["evidence-echo-py3"]["command"] == "python3"
-    for entry in servers.values():
-        first = entry["args"][0]
-        assert first.startswith("${CLAUDE_PLUGIN_ROOT}") and first.endswith("scripts/ev_mcp.py")
-        assert entry["env"] == {"EV_ECHO_DATA_DIR": "${user_config.data_dir}"}
-    assert servers["evidence-echo"]["args"][1:] == []
-    assert servers["evidence-echo-py3"]["args"][1:] == ["--defer-to-python"]
+    assert set(servers) == {"evidence-echo"}
+    entry = servers["evidence-echo"]
+    # a bare name ("python") is looked up in the user's project folder first on Windows
+    assert entry["command"] == "${CLAUDE_PLUGIN_ROOT}/scripts/ev_mcp"
+    assert entry["args"] == []
+    assert entry["env"] == {"EV_ECHO_DATA_DIR": "${user_config.data_dir}"}
     manifest = next(p for p in (PLUGIN_DIR / ".claude-plugin").glob("*.json")
                     if json.loads(p.read_text(encoding="utf-8")).get("name") == "evidence-echo")
     text = (PLUGIN_DIR / ".mcp.json").read_text(encoding="utf-8")
@@ -33,12 +33,24 @@ def test_mcp_json_has_both_entries():
         assert (option in text) == (option == "data_dir")
 
 
-def fake_run(stdout=b"True", returncode=0, raises=None):
-    def run(cmd, **kwargs):
-        if raises:
-            raise raises
-        return SimpleNamespace(returncode=returncode, stdout=stdout)
-    return run
+def test_launchers_line_endings_and_lookup():
+    sh = (LAUNCHERS / "ev_mcp").read_bytes()
+    cmd = (LAUNCHERS / "ev_mcp.cmd").read_bytes()
+    LF, CR = bytes([10]), bytes([13])
+    assert sh.startswith(b"#!/bin/sh" + LF) and CR not in sh
+    assert cmd.count(LF) == cmd.count(CR + LF)          # CRLF only
+    assert b'set "NoDefaultCurrentDirectoryInExePath=1"' in cmd
+    assert cmd.index(b"NoDefaultCurrentDirectoryInExePath") < cmd.index(b"for %%P")
+    for text in (sh, cmd):
+        assert b"ev_mcp.py" in text and b"(3, 11)" in text
+
+
+def test_posix_launcher_is_executable_in_git():
+    done = subprocess.run(["git", "-C", str(PLUGIN_DIR), "ls-files", "-s", "scripts/ev_mcp"],
+                          capture_output=True, text=True)
+    if done.returncode != 0 or not done.stdout:
+        pytest.skip("not a git checkout")
+    assert done.stdout.startswith("100755 "), done.stdout
 
 
 @pytest.fixture
@@ -48,50 +60,15 @@ def served(monkeypatch):
     return calls
 
 
-def test_defer_when_python_works(served):
-    assert ev_mcp.main([ev_mcp.DEFER_FLAG], which=lambda name: "/usr/bin/python", run=fake_run(),
-                       stdin=object(), stdout=object()) == 0
-    assert served == []
-
-
-@pytest.mark.parametrize("which,run", [
-    (lambda name: None, fake_run()),
-    (lambda name: "/usr/bin/python", fake_run(raises=subprocess.TimeoutExpired("python", 5))),
-    (lambda name: "/usr/bin/python", fake_run(raises=FileNotFoundError())),
-    (lambda name: "/usr/bin/python", fake_run(stdout=b"False")),
-    (lambda name: "/usr/bin/python", fake_run(returncode=1)),
-])
-def test_serve_when_python_missing_or_broken(served, which, run):
+def test_main_serves(served):
     marker_in, marker_out = object(), object()
-    assert ev_mcp.main([ev_mcp.DEFER_FLAG], which=which, run=run, stdin=marker_in, stdout=marker_out) == 0
+    assert ev_mcp.main(stdin=marker_in, stdout=marker_out) == 0
     assert served == [(marker_in, marker_out)]
-
-
-def test_plain_entry_never_defers(served):
-    ev_mcp.main([], which=lambda name: "python", run=fake_run(), stdin=object(), stdout=object())
-    assert len(served) == 1
-
-
-def test_interpreter_found_in_the_current_folder_is_not_run(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    ran = []
-
-    def run(cmd, **kwargs):
-        ran.append(cmd)
-        return SimpleNamespace(returncode=0, stdout=b"True")
-
-    assert ev_mcp.python_is_usable(str(tmp_path / "python.exe"), run=run) is False
-    assert ran == []
-
-
-def test_python_is_usable_edges():
-    assert ev_mcp.python_is_usable(None) is False
-    assert ev_mcp.python_is_usable("/usr/bin/python", run=fake_run(stdout="True\n")) is True
 
 
 def test_old_python_exits_2(monkeypatch, capsys, served):
     monkeypatch.setattr(ev_mcp, "python_version", lambda: (3, 9))
-    assert ev_mcp.main([], stdin=object(), stdout=object()) == 2
+    assert ev_mcp.main(stdin=object(), stdout=object()) == 2
     captured = capsys.readouterr()
     assert "Evidence Echo needs Python 3.11+ (found 3.9" in captured.err and captured.out == ""
     assert served == []
@@ -178,3 +155,35 @@ def test_stdout_is_only_json(tmp_path, monkeypatch):
     done = run_session(workspace_for_session(tmp_path, monkeypatch))
     lines = done.stdout.decode("utf-8").splitlines()
     assert lines and all(json.loads(line)["jsonrpc"] == "2.0" for line in lines)
+
+
+def _start_launcher(cwd, stdin, env):
+    """Start the launcher the way Claude Code does (cross-spawn runs a .cmd through cmd.exe)."""
+    if os.name == "nt":
+        cmd = 'cmd.exe /d /s /c ""{}""'.format(LAUNCHERS / "ev_mcp.cmd")
+    else:
+        cmd = [str(LAUNCHERS / "ev_mcp")]
+    return subprocess.run(cmd, input=stdin, capture_output=True, cwd=cwd, env=env, timeout=120)
+
+
+def test_launcher_never_runs_an_interpreter_from_the_current_folder(tmp_path, monkeypatch):
+    if os.name != "nt" and not os.access(LAUNCHERS / "ev_mcp", os.X_OK):
+        pytest.skip("checkout without the exec bit")
+    data = workspace_for_session(tmp_path, monkeypatch)
+    project = tmp_path / "project"
+    project.mkdir()
+    marker = project / "shadow-ran.txt"
+    for name in ("python.bat", "python.cmd", "python3.bat", "py.bat"):
+        (project / name).write_bytes(b"@echo x> shadow-ran.txt\r\n")
+    for name in ("python", "python3"):
+        shadow = project / name
+        shadow.write_text("#!/bin/sh\necho x > shadow-ran.txt\n", encoding="utf-8", newline="\n")
+        shadow.chmod(0o755)
+    env = {k: v for k, v in os.environ.items() if k.lower() != "nodefaultcurrentdirectoryinexepath"}
+    env.update({"EV_ECHO_DATA_DIR": str(data), "PYTHONDONTWRITEBYTECODE": "1"})
+    stdin = b"".join(json.dumps(m).encode("utf-8") + b"\n" for m in SESSION[:3])
+    done = _start_launcher(project, stdin, env)
+    assert done.returncode == 0, done.stderr.decode("utf-8", "replace")
+    assert not marker.exists()
+    replies = [json.loads(line) for line in done.stdout.decode("utf-8").splitlines()]
+    assert [r["id"] for r in replies] == [1, 2]

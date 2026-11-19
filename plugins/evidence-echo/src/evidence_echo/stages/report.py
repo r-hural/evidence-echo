@@ -86,7 +86,8 @@ def _write_new(reports_dir: Path, date: str, text: str, md_dir: Path | None = No
 
 def render_with_model(conn, payload: str, reports_dir: Path, language: str,
                       topic, now: datetime | None = None,
-                      md_dir: Path | None = None, mode: str = "questions") -> tuple[dict, model.Report, str | None]:
+                      md_dir: Path | None = None, mode: str = "questions",
+                      cfg=None) -> tuple[dict, model.Report, str | None]:
     """Write today's Markdown report (into md_dir, default reports_dir); return render's output
     (`path`: the written file), the Report it was made from and the previous report's time (None
     for the first), read before this one is recorded. The report is recorded under its
@@ -101,7 +102,7 @@ def render_with_model(conn, payload: str, reports_dir: Path, language: str,
     accepted, rejected = contracts.check_payload("report", payload, set(new))
     entries = {e["study_id"]: e for e in accepted}  # rejected entries use default rendering
     now = now or datetime.now(timezone.utc)
-    rep = model.build_report(conn, topic, entries, now, mode)
+    rep = model.build_report(conn, topic, entries, now, mode, cfg)
 
     reports_dir.mkdir(parents=True, exist_ok=True)
     if md_dir:

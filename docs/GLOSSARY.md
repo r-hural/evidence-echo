@@ -34,11 +34,17 @@ to Shopify only when its subject is Shopify's platform or stores; otherwise Shop
 
 ## Terms A–Z
 
+**API spend limit** — the most real money one scheduled report run may spend on basis `api` (`--api-spend-limit-usd`, default 6). Does not cover the engine's own direct API calls. Code: `api_spend_limit_usd`.
+
+**API-equivalent cost** — Claude Code's estimate of a session's tokens at API prices. On a subscription it is a measure of size, never a charge; never call it spend or cost without "API-equivalent". Code: `api_equivalent_usd`.
+
 **Article** — one fetched publication (blog post, news item, page, document, LinkedIn post).
 Code: `item` (`items` table). Deprecated in prose: post, publication. *See also* entry.
 
 **Backfill** — the research spike: a one-time load of older articles for a new topic or source
 (`ev backfill`).
+
+**Billed API usage** — real money charged to an Anthropic API key.
 
 **Cap** — a code rule in a topic's grading rules that limits a tier when a study fact holds (an animal study never above C). Applied to both the judge's and the skeptic's grade; the report shows "capped from A: reason".
 
@@ -49,6 +55,8 @@ question.
 
 **Conducted by** — the organisation that ran a study. Provenance, shown next to the tier; never a
 grouping. Studies with the same `conducted_by` count as one independent study.
+
+**Context usage** — the tokens a session holds at one moment.
 
 **Corroboration** — independent studies (different `conducted_by`) agreeing. Opposite of echo.
 
@@ -183,10 +191,22 @@ Deprecated: issue.
 
 **Run** — one execution of the pipeline for a topic, ending in a report.
 
+**Fetch schedule** — when a topic is looked at for new studies on its own, between reports (`off`, `hourly`, `every 6h`, `daily 07:00`, `weekly mon 07:00`). A fetch run never makes a report; what it finds joins the next one. Code: `scheduling/spec.py`, `ev schedule set --fetch`.
+
+**Report schedule** — when a topic's report is made on its own (`per_run`, `daily`, `weekly`, `biweekly`, `monthly`, `off`). A report run fetches first. Code: `ev schedule set --report`.
+
+**Scheduled run** — a fetch or report run started by the scheduler (`ev run-due`) instead of by the user; a scheduled report run is unattended: it never asks a question.
+
 **Search** — one question looked up on the web with `/evidence-echo:search`; its candidate pages are graded by the usual chain in a scratch database, and nothing joins the topic until the owner keeps it. Kept studies come from one-time sources marked "found by search". Not a research spike (that is backfill).
+
+**Wake time** — a moment when the OS task starts `ev run-due`: by default exactly the slot times of the schedules, or a fixed interval (`ev schedule config --wake "every 6h"`). The engine, not the OS, decides what is due.
 
 **Series** — a study repeated over time (Stack Overflow developer survey 2023–2025);
 its members are editions.
+
+**Session ceiling** — a high API-equivalent backstop for a subscription run, for what the session guard cannot see (`--session-ceiling-usd`, default 40).
+
+**Session guard** — the hook that stops a stuck scheduled run on a subscription: it counts tool calls, repeated calls and total tokens processed. Code: `hooks/session_guard.py`.
 
 **Source** — a configured feed or page of a topic: kind `rss`, `page`, `once` or `linkedin`.
 Not the original of a study.
@@ -205,6 +225,8 @@ accepted subtopic split the owner chooses to keep the source for leftovers or re
 
 **Study type** — the kind of study a judge records (randomized trial, observational, animal ...), from the topic's own list; `other` is always allowed.
 
+**Subscription usage** — what a run takes from a Claude subscription's allowance. Not billed per run.
+
 **Subtopic** — a curated aspect of a topic ("AI Overviews & AI search"); seeded from the topic's
 list, the judge picks one or proposes a new one, the owner confirms. Statuses: seeded, confirmed,
 proposed, rejected, retired. Slug never changes. Code and CLI: `subtopic` (`ev subtopics`, `subtopics`
@@ -222,7 +244,11 @@ B large-scale, C case study, D practitioner anecdote.
 **Topic page** — the per-topic page across all runs (`<id>.html`), opening with "What the
 evidence says".
 
+**Total tokens processed** — all tokens a session's model calls read and wrote over the whole run. Context re-read on every turn counts every time, so a loop keeps raising it even after compaction.
+
 **Unsorted** — studies without a subtopic (none fits yet, proposal pending, or rejected).
+
+**Usage basis** — `api` or `subscription`: which login a scheduled report run uses. It decides which limits apply.
 
 **Varied** — the question label for directions that differ without being plainly up vs down
 (e.g. up + no change).

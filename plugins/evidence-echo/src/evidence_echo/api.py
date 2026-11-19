@@ -15,9 +15,10 @@ from pathlib import Path
 
 import numpy as np
 
-from evidence_echo.core import config, embedders, grading, interfaces, knowledge, legacy, llm_api, overview as overview_mod, settings, similarity, store, topics
+from evidence_echo.core import config, embedders, grading, interfaces, knowledge, legacy, llm_api, overview as overview_mod, settings, similarity, source_problems, store, topics
 from evidence_echo.core.settings import ConfigError
 from evidence_echo.core.urls import canonical_url
+from evidence_echo.notify import summary as notify_summary
 from evidence_echo.render import html as html_render
 from evidence_echo.render import model as render_model
 from evidence_echo.render import obsidian as obsidian_render
@@ -38,7 +39,7 @@ from evidence_echo.stages import findings as findings_stage
 from evidence_echo.stages import regrade, reverify
 from evidence_echo.stages import group as group_stage
 from evidence_echo.stages import fetch as fetch_stage
-from evidence_echo.stages import judge, match, relate, report, schedule, triage, verify
+from evidence_echo.stages import judge, match, relate, report, cadence, triage, verify
 from evidence_echo.stages import primary as primary_stage
 from evidence_echo.stages import split as split_stage
 
@@ -320,7 +321,8 @@ def render_report(cfg, payload: str, rejections: bool = False) -> dict:
         raise ConfigError("a search has no topic report; its answer page comes from `ev search render`")
     with _connect(cfg) as conn:
         out, rep, previous = report.render_with_model(conn, payload, cfg.reports_dir, cfg.output_language,
-                                            cfg.topic, md_dir=cfg.md_dir, mode=cfg.grouping_mode)
+                                            cfg.topic, md_dir=cfg.md_dir, mode=cfg.grouping_mode,
+                                            cfg=cfg)
     with _connect(cfg) as conn:   # re-grades since the previous report, and what is still queued
         out["regrade"] = store.regrade_counts(conn, grading.rules_hash(grading.rules_of(cfg.topic)),
                                               store.latest_report_time(conn) if out.get("skipped") else previous)
@@ -363,6 +365,7 @@ def render_report(cfg, payload: str, rejections: bool = False) -> dict:
             _write_rejections(cfg, out, previous)
         except FRONT_END_ERRORS as exc:   # FileExistsError included
             out["rejections_error"] = str(exc)
+    out["summary"] = notify_summary.from_report(rep, (out.get("html") or {}).get("report"), out["path"])
     return out
 
 
@@ -525,6 +528,19 @@ def status_all(ws) -> dict:
             out.append({"id": tid, "name": t.name, "states": {}, "last_run": None,
                         "error": f"{db}: {exc}"})
     return {"data_dir": str(ws.data_dir), "topics": out}
+
+
+def preflight(ws, topic_id: str | None) -> dict:
+    """Source problems known before fetching, per topic (every topic without topic_id)."""
+    ids = [topic_id] if topic_id else topics.topic_ids(ws.topics_dir)
+    out, total = {}, 0
+    for tid in ids:
+        cfg = config.load(tid)
+        with _connect(cfg) as conn:
+            groups = source_problems.problems(conn, cfg.topic, cfg)
+        out[cfg.topic.id] = [{"reason": g.reason, "sources": g.sources} for g in groups]
+        total += len(groups)
+    return {"topics": out, "problems": total}
 
 
 def _summaries(ws) -> list:
@@ -786,10 +802,10 @@ def _source_row(source: dict, state: dict | None, depth_setting: str,
     kind = get_kind(source["type"])
     depth = "full" if not kind.HAS_HEADLINES else source.get("scan_depth") or depth_setting
     st = state or {}
-    days, origin, capped = (schedule.interval(source, dates, schedule.interval_cap(source["type"], horizon_days))
+    days, origin, capped = (cadence.interval(source, dates, cadence.interval_cap(source["type"], horizon_days))
                             if dates is not None and source["type"] != "once"  # once is never skipped
                             else (None, None, False))
-    due = schedule.next_due(state, days)
+    due = cadence.next_due(state, days)
     row = {**source, "effective_scan_depth": depth, **{k: st.get(k) for k in _STATE_KEYS},
            "interval_days": round(days, 1) if days is not None else None, "interval_source": origin,
            "next_due": due.isoformat() if due else None}
@@ -837,7 +853,8 @@ def config_show(ws) -> dict:
     present = {n: bool(config._key(n, keys)) for n in config.KEY_NAMES}
     return {"settings": out, "data_dir": str(ws.data_dir), "plugin_data_dir": str(ws.plugin_data_dir),
             "keys": {"anthropic": present["ANTHROPIC_API_KEY"], "voyage": present["VOYAGE_API_KEY"],
-                     "apify": present["APIFY_API_TOKEN"]}}
+                     "apify": present["APIFY_API_TOKEN"],
+                     "telegram": present["TELEGRAM_BOT_TOKEN"], "smtp": present["SMTP_PASSWORD"]}}
 
 
 def config_set(ws, key, value) -> dict:

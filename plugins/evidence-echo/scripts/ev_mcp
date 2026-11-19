@@ -1,0 +1,12 @@
+#!/bin/sh
+# Evidence Echo MCP server launcher (macOS, Linux). Windows runs ev_mcp.cmd instead.
+# .mcp.json starts this file by its full path, so no bare interpreter name is resolved
+# by Claude Code. The first Python 3.11+ found on PATH runs ev_mcp.py.
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 2
+for py in python3 python; do
+    if "$py" -c 'import sys; sys.exit(sys.version_info < (3, 11))' </dev/null >/dev/null 2>&1; then
+        exec "$py" "$here/ev_mcp.py" "$@"
+    fi
+done
+echo "Evidence Echo needs Python 3.11+ as python3 or python on PATH" >&2
+exit 2

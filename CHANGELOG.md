@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.18.0
+
+- **Scheduled reports:** `/evidence-echo:schedule` gives each topic a fetch schedule (hourly,
+  every 6h, daily, weekly) and a report schedule (after every fetch, daily, weekly, biweekly,
+  monthly). One OS task (Windows Task Scheduler, launchd or a systemd user timer; no admin
+  rights) wakes at the schedules' times; a computer that was off catches up with one run, not
+  one per missed time. Fetch runs need no AI. Report runs work in the background without
+  asking questions, limited to an hour, under a strict tool policy: they can run only the
+  plugin's own engine (and cannot change settings, channels or sources), write only to their own
+  run folder and fetch only the pages the engine lists (SECURITY.md has the details). A session start shows one line when a report is
+  overdue, the last run failed or the scheduler seems stopped.
+- **Report messages by Telegram or email:** a scheduled report ends with a short summary (new
+  studies, best grade, the top five, decisions waiting for you, source errors) and a phone copy
+  of the HTML report attached. A report day always sends a message, "nothing new" too (you can
+  turn that off), so a missing message means something broke. The bot token and mail password
+  stay in the plugin settings.
+- **Usage limits for scheduled runs:** a run detects its login. With an API key it stops at a
+  spend limit (default $6); on a Claude subscription a guard stops a run that looks stuck in a
+  loop. Both limits are adjustable with `ev schedule config`.
+- **Review duplicates any time:** ask Claude to "review Evidence Echo duplicates" to decide the
+  possible duplicates waiting for you without running a report. A merge still needs your
+  confirmation.
+- **Source errors:** failing sources are grouped by reason in the report summary, sources
+  that need a missing key are skipped, and `ev preflight` lists known problems before a run.
+- **Fix:** the "Ask the evidence" connection starts through a small launcher that finds
+  Python 3.11+ by full path and never runs an interpreter from your project folder.
+
 ## 0.17.0
 
 - **Grading rules per topic:** each topic now grades by rules that fit its field: its own tier

@@ -107,6 +107,39 @@ def test_cleared_keys_remove_the_session_file(tmp_path):
     assert not _keys_file(tmp_path).exists()
 
 
+def _scheduler_keys(tmp_path):
+    return tmp_path / "plugin-data" / "scheduler-keys.json"
+
+
+def test_scheduler_keys_hold_only_the_delivery_secrets(tmp_path):
+    env = _env(tmp_path, CLAUDE_PLUGIN_OPTION_TELEGRAM_BOT_TOKEN="tg-secret",
+               CLAUDE_PLUGIN_OPTION_SMTP_PASSWORD="smtp-secret")
+    session_env.main(env, session_id=SID)
+    assert json.loads(_scheduler_keys(tmp_path).read_text(encoding="utf-8")) == {
+        "TELEGRAM_BOT_TOKEN": "tg-secret", "SMTP_PASSWORD": "smtp-secret"}
+
+
+def test_cleared_delivery_secrets_remove_the_scheduler_keys(tmp_path):
+    session_env.main(_env(tmp_path, CLAUDE_PLUGIN_OPTION_TELEGRAM_BOT_TOKEN="tg-secret"), session_id=SID)
+    session_env.main(_env(tmp_path), session_id="next")
+    assert not _scheduler_keys(tmp_path).exists()
+
+
+def test_scheduler_keys_outlive_the_session_file_pruning(tmp_path):
+    session_env.main(_env(tmp_path, CLAUDE_PLUGIN_OPTION_TELEGRAM_BOT_TOKEN="tg-secret"), session_id=SID)
+    month = session_env.KEYS_KEEP_DAYS * 86400
+    path = _scheduler_keys(tmp_path)
+    os.utime(path, (path.stat().st_mtime - month - 60,) * 2)
+    session_env.write_keys(_env(tmp_path), "other")
+    assert path.exists()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits")
+def test_scheduler_keys_are_owner_only(tmp_path):
+    session_env.main(_env(tmp_path, CLAUDE_PLUGIN_OPTION_TELEGRAM_BOT_TOKEN="tg-secret"), session_id=SID)
+    assert _scheduler_keys(tmp_path).stat().st_mode & 0o777 == 0o600
+
+
 def test_shared_keys_file_of_older_versions_is_deleted(tmp_path):
     write_plugin_keys(tmp_path / "plugin-data", ANTHROPIC_API_KEY="stale")
     session_env.main(_env(tmp_path, **_only()), session_id=SID)
@@ -284,11 +317,22 @@ def test_hooks_json_registers_session_start():
 def test_plugin_user_config():
     manifest = PLUGIN_DIR / ".claude-plugin" / "plugin.json"
     cfg = json.loads(manifest.read_text(encoding="utf-8"))["userConfig"]
-    assert set(cfg) == {"data_dir", "anthropic_api_key", "voyage_api_key", "apify_api_token"}
+    assert set(cfg) == {"data_dir", "anthropic_api_key", "voyage_api_key", "apify_api_token",
+                        "telegram_bot_token", "smtp_password"}
     assert cfg["data_dir"]["type"] == "directory" and "default" not in cfg["data_dir"]
     assert "cloud-synced" in cfg["data_dir"]["description"]
-    for key in ("anthropic_api_key", "voyage_api_key", "apify_api_token"):
+    for key in ("anthropic_api_key", "voyage_api_key", "apify_api_token", "telegram_bot_token",
+                "smtp_password"):
         assert cfg[key]["type"] == "string" and cfg[key]["sensitive"] is True
+    assert cfg["telegram_bot_token"]["description"].startswith("Optional; for scheduled report messages")
+
+
+def test_hook_writes_the_delivery_secrets(tmp_path):
+    env = _env(tmp_path, CLAUDE_PLUGIN_OPTION_TELEGRAM_BOT_TOKEN="123:tg-secret",
+               CLAUDE_PLUGIN_OPTION_SMTP_PASSWORD="smtp-secret")
+    session_env.write_keys(env, SID)
+    keys = json.loads(_keys_file(tmp_path).read_text(encoding="utf-8"))
+    assert keys["TELEGRAM_BOT_TOKEN"] == "123:tg-secret" and keys["SMTP_PASSWORD"] == "smtp-secret"
 
 
 def test_no_hint_when_old_data_in_home_folder(tmp_path):

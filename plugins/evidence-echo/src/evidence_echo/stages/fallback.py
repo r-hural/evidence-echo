@@ -4,7 +4,9 @@ emit lists flagged items (want text) and page sources whose index page was block
 links). apply accepts results only for listed ids; text passes the junk check, links pass
 the page kind's same-site filter. Returned content is untrusted data.
 """
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from evidence_echo.core import contracts, interfaces, store
 from evidence_echo.sources import base, get_kind
@@ -27,9 +29,23 @@ def _wanted(conn, topic) -> dict:
     return wanted
 
 
+ENV_GUARD_DIR = "EV_ECHO_GUARD_DIR"       # repeats scheduling/usage.py
+ALLOW_URLS_FILE = "webfetch-allow.txt"    # repeats hooks/session_guard.py; a test keeps them equal
+
+
+def _allow_for_guard(urls: list[str]) -> None:
+    """In a scheduled run the session guard lets WebFetch reach only these URLs."""
+    guard = os.environ.get(ENV_GUARD_DIR)
+    if not guard or not urls:
+        return
+    with open(Path(guard) / ALLOW_URLS_FILE, "a", encoding="utf-8") as fh:
+        fh.write("".join(u.strip() + "\n" for u in urls if "\n" not in u and "\r" not in u))
+
+
 def emit(conn, topic) -> str:
     items = [{"id": oid, "url": obj["url"], "want": want}
              for oid, (want, obj) in _wanted(conn, topic).items()]
+    _allow_for_guard([it["url"] for it in items])
     return interfaces.envelope("fetch", INSTRUCTIONS, items, topic)
 
 

@@ -367,10 +367,9 @@ def _ask_section() -> str:
 def test_readme_documents_ask_the_evidence():
     section = _ask_section()
     for needed in ("find_evidence", "list_topics", "get_study", "ev find", "read-only", "python3",
-                   "evidence-echo-py3", "/mcp"):
+                   "py -3", "scripts/ev_mcp.cmd", "/mcp", "project folder"):
         assert needed in section, needed
-    assert re.search(r"/mcp.*(failed|expected)", section, re.S)
-    assert "expected" in section and "failed" in section
+    assert "evidence-echo-py3" not in section
     assert "read-only" in README[README.index("## Cost and privacy"):README.index("## Install")]
 
 

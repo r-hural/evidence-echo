@@ -63,3 +63,14 @@ def test_text_for_full_mode_item_keeps_fetched_state(db):
     iid = _flagged(db, state="fetched")
     fallback.apply(db, TOPIC, json.dumps({"results": [{"id": f"i{iid}", "text": GOOD}]}))
     assert store.get_item(db, iid)["state"] == "fetched"
+
+
+def test_emit_in_a_scheduled_run_lists_the_urls_for_the_session_guard(db, tmp_path, monkeypatch):
+    _flagged(db)
+    store.record_fetch(db, "Blog", "page", new=0, error="HTTP 403", blocked=True)
+    fallback.emit(db, TOPIC)                                     # no guard folder: nothing written
+    assert not (tmp_path / fallback.ALLOW_URLS_FILE).exists()
+    monkeypatch.setenv(fallback.ENV_GUARD_DIR, str(tmp_path))
+    fallback.emit(db, TOPIC)
+    urls = (tmp_path / fallback.ALLOW_URLS_FILE).read_text(encoding="utf-8").splitlines()
+    assert set(urls) == {"https://e.com/blog/a-post-here", "https://e.com/blog/"}

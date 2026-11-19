@@ -54,7 +54,7 @@ def test_config_show_origins_and_keys(data, capsys, monkeypatch):
     assert s["fetch_horizon_days"] == {"value": 3, "origin": "env"}
     assert s["embedder"] == {"value": "auto", "origin": "default"}
     assert s["ask_on_disputes"] == {"value": "off", "origin": "default"}
-    assert out["keys"] == {"anthropic": True, "voyage": False, "apify": False}
+    assert out["keys"] == {"anthropic": True, "voyage": False, "apify": False, "telegram": False, "smtp": False}
     assert "sk-secret" not in json.dumps(out)
 
 

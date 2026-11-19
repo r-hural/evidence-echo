@@ -311,5 +311,5 @@ def report_markdown(report: Report) -> str:
     if report.seen:
         lines += ["---", "", MORE_COVERAGE, ""] + [seen_line(s) for s in report.seen] + [""]
     if report.source_warnings:
-        lines += ["---", "", "*Source warnings: " + ", ".join(report.source_warnings) + "*"]
+        lines += ["---", "", "## Source errors", "", *[f"- {w}" for w in report.source_warnings]]
     return "\n".join(lines)

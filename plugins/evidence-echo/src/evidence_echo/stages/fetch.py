@@ -4,11 +4,14 @@ import json
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
+from types import SimpleNamespace
+
 from evidence_echo.core import store
+from evidence_echo.core.source_problems import missing_key_reason
 from evidence_echo.core.urls import canonical_url
 from evidence_echo.sources import base, get_kind, linkedin
 from evidence_echo.sources import cache as fetch_cache
-from evidence_echo.stages import schedule
+from evidence_echo.stages import cadence
 
 FIRST_RUN_UNDATED = 20   # R1
 MAX_DATE_LOOKUPS = 20    # R6
@@ -88,7 +91,7 @@ def recent_dates(conn, source_name: str) -> list[datetime]:
     rows = conn.execute(
         """SELECT published FROM items WHERE source_name=? AND published IS NOT NULL
            AND date_unknown=0 ORDER BY published DESC LIMIT ?""",
-        (source_name, schedule.SAMPLE_SIZE * 4)).fetchall()  # text order only narrows the rows
+        (source_name, cadence.SAMPLE_SIZE * 4)).fetchall()  # text order only narrows the rows
     out = []
     for (raw,) in rows:
         try:
@@ -96,20 +99,20 @@ def recent_dates(conn, source_name: str) -> list[datetime]:
         except ValueError:
             continue  # one unreadable stored date must not stop the fetch
         out.append((dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).astimezone(timezone.utc))
-    return sorted(out, reverse=True)[:schedule.SAMPLE_SIZE]  # as dates: offsets differ in the text
+    return sorted(out, reverse=True)[:cadence.SAMPLE_SIZE]  # as dates: offsets differ in the text
 
 
 def _not_due(conn, source, state, now, horizon_days: int) -> dict | None:
     """The skipped-source entry when adaptive fetch says wait; None when the source is due."""
     if source["type"] == "once":
         return None  # once keeps its own rule (done or not)
-    days, origin, capped = schedule.interval(
+    days, origin, capped = cadence.interval(
         source, recent_dates(conn, source["name"]),
-        schedule.interval_cap(source["type"], horizon_days))
-    if schedule.is_due(state, days, now):
+        cadence.interval_cap(source["type"], horizon_days))
+    if cadence.is_due(state, days, now):
         return None
     out = {"type": source["type"], "skipped": "not due", "interval_days": round(days, 1),
-           "interval_source": origin, "next_due": schedule.next_due(state, days).isoformat()}
+           "interval_source": origin, "next_due": cadence.next_due(state, days).isoformat()}
     if capped:
         out["capped"] = True
     return out
@@ -283,6 +286,16 @@ def run(conn, cfg, apify_token: str = "", backfill=None, ctx=None, fetch_all: bo
             group = [s for s in group if s["name"] not in out["sources"]]
             if not group:
                 continue
+        keys = SimpleNamespace(apify_api_token=ctx.apify_token)
+        for source in list(group):   # a missing key is a skip, never a recorded error
+            reason = missing_key_reason(source["type"], keys)
+            if reason:
+                out["sources"][source["name"]] = {"type": source["type"], "skipped": "key missing",
+                                                  "reason": reason}
+                out["skipped"] += 1
+                group.remove(source)
+        if not group:
+            continue
         results = _list_new_isolated(kind, group, ctx)
         for source in group:
             result = results.get(source["name"], base.SourceResult())

@@ -90,10 +90,11 @@ Good to know:
 - The server only reads. It never writes, upgrades or fetches anything, and it needs no key. A
   topic whose database is older than the plugin is listed as needing an upgrade until your
   next report run upgrades it.
-- It needs `python` or `python3` (3.11 or newer) on your PATH; there is no `py -3` fallback
-  here. The plugin starts two entries, `evidence-echo` (`python`) and `evidence-echo-py3`
-  (`python3`); the second one yields when `python` works. `/mcp` may therefore show one of the
-  two as failed, and that is expected.
+- It needs Python 3.11 or newer on your PATH: `python`, `py -3` or `python3` on Windows,
+  `python3` or `python` on macOS and Linux. A small launcher in the plugin
+  (`scripts/ev_mcp.cmd` on Windows, `scripts/ev_mcp` elsewhere) picks it and never runs an
+  interpreter that sits in your project folder. If `/mcp` shows `evidence-echo` as failed,
+  check that one of these commands prints 3.11 or newer.
 - The server finds your data through the plugin's Data folder setting. A `EV_ECHO_DATA_DIR`
   set in your shell does not reach it.
 
@@ -136,6 +137,8 @@ Set in the plugin configuration (Claude Code asks on install; change later via
 | `anthropic_api_key` | — | Optional; enables faster unattended runs (backends `auto` then choose `api`) |
 | `voyage_api_key` | — | Optional; enables embeddings (embedder `auto` then chooses `voyage`); only study cards (the judge's short summary of each item and its title, never article text) are sent, and similar studies then join the match step as candidates |
 | `apify_api_token` | — | Optional; enables LinkedIn sources |
+| `telegram_bot_token` | — | Optional; for scheduled report messages by Telegram |
+| `smtp_password` | — | Optional; for scheduled report messages by email (a Gmail app password works) |
 
 A SessionStart hook passes the settings to the engine; keys never appear in
 prompts or command lines. At each session start the hook writes that session's
@@ -148,6 +151,43 @@ have been unused for 30 days and are removed; to remove every stored key at once
 (after rotating one, say), delete `<plugin data>/keys/`. Keys come
 only from the plugin settings: a key set in your shell's environment is never
 read. Never paste a key into the chat.
+
+## Scheduled reports
+
+`/evidence-echo:schedule` sets this up. Each topic gets a **fetch schedule** (when to look for new
+studies: `off`, `hourly`, `every 6h`, `daily 07:00`, `weekly mon 07:00`) and a **report schedule**
+(`per_run`, `daily`, `weekly`, `biweekly`, `monthly`, `off`); fetches between two reports join the
+next report. The schedules live in `<data folder>/scheduling/schedule.json` (time zone, wake setting,
+usage limits per report run, channels' non-secret fields). `ev schedule install` registers one OS task
+(Windows Task Scheduler, a launchd agent or a systemd user timer; no admin rights) that starts a
+launcher in the data folder at the schedules' times and after logon or a missed time. The engine
+decides what is due, so a computer that was off catches up with one run, not one per missed slot.
+Fetch runs need no keys and no AI. A report run starts `claude -p` in the background with the report
+skill in unattended mode (it never asks a question), limited to an hour
+and by usage limits (below), and ends by sending a short summary: the topic, the number of new studies, the best
+grade, the top five studies, decisions waiting for you and source errors, with the HTML report
+attached (Telegram and email; the copy leaves out links to files on your computer, which only work
+there, and lists any possible duplicates waiting for you) and its file name. A report day always ends in a message
+("nothing new this week" too; `ev schedule config --notify-when-empty off` or per topic turns that
+off), so a missing message means something broke. Possible duplicates waiting for you are listed in the attached report; decide them in Claude Code by asking it to "review Evidence Echo duplicates". A session start shows one reminder line when a report
+is overdue, the last scheduled run failed or the scheduler seems stopped.
+
+A scheduled report run detects its login and applies only that login's limits:
+
+- **API key:** the run is billed API usage, real money. The API spend limit is
+  `--api-spend-limit-usd` (default 6). A run that reaches it fails, and the message says how to raise it.
+  The limit does not cover the engine's own direct API calls (API mode with `ANTHROPIC_API_KEY`).
+- **Claude subscription:** the run is subscription usage, not billed per run. The session guard stops a run
+  that looks stuck in a loop, then the scheduler logs the failure and sends the message. Its limits are
+  `--session-max-total-tokens` (default 30000000), `--session-max-repeated-calls` (default 8) and
+  `--session-max-tool-calls` (default 500). `--session-ceiling-usd` (default 40) is a high backstop; the
+  dollar figure there is API-equivalent cost, not a charge.
+- If the login cannot be detected, the run counts as an API key run.
+
+The Telegram bot token and the SMTP password come only from the plugin settings. A run that cannot start
+`claude` (not logged in, plugin folder moved) writes the run log (`scheduling/runs.jsonl`) and nothing
+else. For one topic with a simple schedule, a Claude Desktop scheduled task with the prompt
+`/evidence-echo:report --topic <id> --unattended` works too (the schedule skill shows the steps).
 
 ## Topics and folders
 
@@ -554,6 +594,14 @@ topic, and with several topics it refuses (`several topics — pass --topic <id>
     ev [--topic ID] search start --question "<q>" | add <run> --urls-file F [--query Q] | render <run> --summary F --writeups F
     ev [--topic ID] search keep <run> [--only s1,s3] | drop <run> | list    search the web for studies on a question; keep or drop
     ev --topic ID --search <run> <triage|extract|judge|match|verify|primary|fetch-fallback|apply|report>   grade a search run in its scratch database
+    ev [--topic ID] preflight                source problems known before the run (missing keys, failing sources)
+    ev [--topic ID] schedule set [--fetch RULE] [--report RULE] [--notify telegram,email|none] [--notify-when-empty on|off|default] [--desktop-task on|off]
+    ev [--topic ID] schedule pause | resume | remove | begin | end --outcome ok|empty|failed [--error TEXT]
+    ev schedule show | status | install | uninstall | config [--timezone TZ] [--wake auto|"every Nh"] [--api-spend-limit-usd N] [--session-max-total-tokens N] [--session-max-repeated-calls N] [--session-max-tool-calls N] [--session-ceiling-usd N] [--notify-when-empty on|off]
+    ev schedule channel telegram --chat-id ID | email --host H --port P --user U --from F --to T [--security starttls|ssl] | remove <name>
+    ev [--topic ID] notify --render-output FILE | --empty | --failed TEXT      send the summary by the topic's channels
+    ev notify test telegram|email | telegram-chat-id
+    ev run-due                               what the OS task runs: start the fetch and report runs that are due
     ev [--topic ID] status | reset --stage <name>
     (`reset --stage classify` asks every study again; `reset --stage group` groups every study you did not place yourself again.)
 

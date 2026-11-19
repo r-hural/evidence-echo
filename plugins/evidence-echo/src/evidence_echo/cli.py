@@ -13,6 +13,9 @@ from pathlib import Path
 from evidence_echo import api, query, search
 from evidence_echo.core import config, contracts
 from evidence_echo.core.settings import ConfigError
+from evidence_echo.notify import commands as notify_commands
+from evidence_echo.scheduling import commands as schedule_commands
+from evidence_echo.scheduling import run_due
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -68,6 +71,9 @@ def _parser() -> argparse.ArgumentParser:
     rp.add_argument("--rejections", action="store_true",
                     help="with --render: also write the rejections report")
     sub.add_parser("status")
+    schedule_commands.add_parsers(sub)
+    notify_commands.add_parsers(sub)
+    sub.add_parser("preflight", help="source problems known before the run (missing keys, failing sources)")
     sub.add_parser("overview")
     rs = sub.add_parser("reset")
     rs.add_argument("--stage", required=True, choices=[*api.RESET_STAGES, "primary"])
@@ -269,6 +275,17 @@ def _dispatch(args):
         return api.status_all(config.workspace())
     if args.cmd == "overview":
         return api.overview(config.workspace())
+    if args.cmd == "run-due":   # never fails: the OS task must not report errors
+        return run_due.command(args)
+    if args.cmd == "schedule":
+        return schedule_commands.dispatch(args)
+    if args.cmd == "notify":
+        return notify_commands.dispatch(args)
+    if args.cmd == "preflight":
+        ws = config.workspace()
+        if not ws.configured:
+            raise config.SetupRequired(config.NOT_SET_UP)
+        return api.preflight(ws, args.topic or os.environ.get("EV_ECHO_TOPIC", "").strip() or None)
     if args.cmd == "config" and args.action == "set":
         # an invalid config.json is replaced: this is the setup skill's repair path
         ws, _ = config.workspace_lenient()

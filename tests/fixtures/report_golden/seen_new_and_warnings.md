@@ -23,4 +23,7 @@ Coverage: [Example Blog](https://example.com/g7)
 
 ---
 
-*Source warnings: Dead (failing since 2026-10-16 — check or remove), Flaky (timeout)*
+## Source errors
+
+- Failing for 5+ runs — check or remove: Dead (since 2026-10-16)
+- timeout: Flaky

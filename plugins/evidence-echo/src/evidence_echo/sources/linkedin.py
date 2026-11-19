@@ -1,4 +1,5 @@
 """linkedin kind: posts of LinkedIn profiles via an Apify actor (needs a token; costs money)."""
+import os
 import time
 
 import httpx
@@ -13,8 +14,18 @@ HAS_HEADLINES = False
 APIFY_POLL_INTERVAL_S = 5
 APIFY_TIMEOUT_S = 300
 NO_TOKEN = "Apify token missing (plugin settings)"   # fits the report's 40-char warning
+NEEDS_KEY = "apify_api_token"   # the Config field a fetch of this kind needs
+NO_KEY_REASON = NO_TOKEN
 NO_POSTS = "no posts returned; check the slug"   # Apify finishes fine on "Profile not found"
 MAX_POSTS = 30   # posts asked of a normal run (a full result may hide older ones)
+WINDOW_ENV = "EV_ECHO_LINKEDIN_WINDOW"   # set by a scheduled run: "month" for a biweekly / monthly report
+WINDOWS = ("week", "month")
+
+
+def window() -> str:
+    """How far back a normal run asks Apify for posts (the actor's postedLimit)."""
+    value = os.environ.get(WINDOW_ENV, "").strip().lower()
+    return value if value in WINDOWS else "week"
 
 
 def _parse_iso(s: str):
@@ -93,7 +104,7 @@ def list_new(sources: list[dict], ctx: base.FetchContext) -> dict:
     if not sources:
         return out
     max_posts = max(ctx.backfill.per_source.values() or [MAX_POSTS]) if ctx.backfill else MAX_POSTS
-    mode = f"backfill:{max_posts}" if ctx.backfill else "week"
+    mode = f"backfill:{max_posts}" if ctx.backfill else window()
     keys = {s["name"]: f"linkedin:{ctx.apify_actor}:{mode}:{s['slug'].lower()}" for s in sources}
     todo = []
     for s in sources:
@@ -124,7 +135,7 @@ def _run_apify(sources: list[dict], ctx: base.FetchContext, max_posts: int) -> d
         if ctx.backfill:
             body = {"targetUrls": profile_urls, "maxPosts": max_posts}
         else:
-            body = {"targetUrls": profile_urls, "maxPosts": max_posts, "postedLimit": "week"}
+            body = {"targetUrls": profile_urls, "maxPosts": max_posts, "postedLimit": window()}
         run_resp = httpx.post(
             f"https://api.apify.com/v2/acts/{ctx.apify_actor}/runs",
             headers=headers, json=body, timeout=30)

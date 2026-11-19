@@ -220,3 +220,25 @@ def test_number_check_matches_million_words_and_suffix_both_ways():
     assert primary.number_check(_facts("1.2 million"), "Reached 1.2M users.") == ("ok", [])
     assert primary.number_check(_facts("1.2M"), "Reached 1.2 million users.") == ("ok", [])
     assert primary.number_check(_facts("5 thousand"), "About 5,000 pages.") == ("ok", [])
+
+
+# --- scheduled runs ---
+
+def test_a_scheduled_run_fetches_only_an_original_the_article_cites(db, monkeypatch, tmp_path):
+    monkeypatch.setenv(primary.ENV_GUARD_DIR, str(tmp_path))
+    report_item(db)                                           # the article text does not name ORIGINAL_URL
+    calls = []
+    out = primary.prepare(db, fake_ctx({ORIGINAL_URL: original_html()}, calls))
+    assert calls == [] and out["deferred"] == 1 and primary.select(db)   # nothing saved: checked later
+    text = "Results 4.2% over 12000 sessions, method in the study: " + ORIGINAL_URL + " . " * 40
+    report_item(db, url="https://example.com/p2", text=text)
+    out = primary.prepare(db, fake_ctx({ORIGINAL_URL: original_html()}, calls))
+    assert calls == [ORIGINAL_URL] and out["deferred"] == 1
+
+
+def test_an_interactive_run_fetches_any_cited_original(db, monkeypatch):
+    monkeypatch.delenv(primary.ENV_GUARD_DIR, raising=False)
+    report_item(db)
+    calls = []
+    primary.prepare(db, fake_ctx({ORIGINAL_URL: original_html()}, calls))
+    assert calls == [ORIGINAL_URL]

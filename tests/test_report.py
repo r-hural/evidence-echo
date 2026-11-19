@@ -85,8 +85,9 @@ def test_report_flags_failing_sources(db, tmp_path, topic):
     seed_new_study(db)
     out = report.render(db, '{"results": []}', tmp_path, "en", t)
     text = Path(out["path"]).read_text(encoding="utf-8")
-    assert "Dead (failing since " in text and "check or remove" in text
-    assert "Flaky (timeout)" in text
+    assert "## Source errors" in text
+    assert "check or remove: Dead (since " in text
+    assert "- timeout: Flaky" in text
 
 
 def _verified(db, url, facts, primary=None):

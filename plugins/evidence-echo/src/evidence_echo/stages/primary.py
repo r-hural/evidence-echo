@@ -8,6 +8,7 @@ answers that agree and whose quotes are found in both texts (D4); otherwise noth
 A check never changes a tier; a misrepresentation adds the red flag misrepresented_primary.
 """
 import json
+import os
 import re
 from dataclasses import dataclass
 from decimal import Decimal
@@ -135,14 +136,30 @@ def _error(got: base.FullText) -> str:
     return "short" if got.status == "short" else f"{got.status}: {got.text[:200]}"
 
 
+ENV_GUARD_DIR = "EV_ECHO_GUARD_DIR"   # repeats scheduling/usage.py: set in scheduled runs
+
+
+def _cited_in_text(cand: Candidate) -> bool:
+    """The original's URL appears in the article's own text. In a scheduled run nobody watches, the
+    model-written primary_url is fetched only then: an injected article must not make the engine
+    request an address of its choosing."""
+    item = cand.item
+    text = " ".join(str(item[k] or "") for k in ("full_text", "excerpt") if k in item.keys())
+    return bool(cand.url) and cand.url.strip() in text
+
+
 def prepare(conn, ctx) -> dict:
     """Fetch each selected item's original at most once per run (cached per canonical URL). An
     original that fails for the third time gives its items an 'unreachable' check row."""
     restore_flags(conn)
     counts = {"selected": 0, "fetched": 0, "failed": 0, "unreachable": 0, "ready": 0}
     tried = set()
+    scheduled = bool(os.environ.get(ENV_GUARD_DIR))
     for cand in select(conn):
         counts["selected"] += 1
+        if scheduled and not _cited_in_text(cand):
+            counts["deferred"] = counts.get("deferred", 0) + 1   # checked in the next run someone watches
+            continue
         src = store.primary_source(conn, cand.canonical)
         if (src is None or src["status"] == "failed") and cand.canonical not in tried:
             tried.add(cand.canonical)

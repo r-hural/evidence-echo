@@ -2,7 +2,7 @@
   "name": "evidence-echo",
   "displayName": "Evidence Echo",
   "description": "Claude Code plugin for evidence-based research digests from the feeds you follow: keeps only articles with measured results, grades each study's level of evidence, checks quotes and the original study. Templates for SEO, AI coding, A/B testing and exercise science.",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "author": {
     "name": "r-hural"
   },
@@ -39,6 +39,18 @@
       "title": "Apify API token",
       "sensitive": true,
       "description": "Optional; enables LinkedIn sources"
+    },
+    "telegram_bot_token": {
+      "type": "string",
+      "title": "Telegram bot token",
+      "sensitive": true,
+      "description": "Optional; for scheduled report messages"
+    },
+    "smtp_password": {
+      "type": "string",
+      "title": "SMTP password",
+      "sensitive": true,
+      "description": "Optional; for scheduled report messages by email (a Gmail app password works)"
     }
   }
 }

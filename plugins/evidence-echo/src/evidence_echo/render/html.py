@@ -37,6 +37,72 @@ def link(url, text=None) -> str:
     return f"{esc(text)} ({esc(url)})" if url else esc(text)
 
 
+_ANCHOR = re.compile(r'<a\b([^>]*?)\bhref="([^"]*)"([^>]*)>(.*?)</a>', re.DOTALL)
+_PHONE_NAV = re.compile(r'<nav class="ee-links"[^>]*>.*?</nav>', re.DOTALL)
+_PHONE_KEPT = ("http:", "https:", "mailto:", "#")
+_PHONE_FINDING_MAX = 400
+_PHONE_CHECKS = {"same": "same study", "different": "different studies", "undecided": "undecided"}
+
+
+def _phone_study(study: dict) -> str:
+    study = study or {}
+    finding = str(study.get("findings") or "")
+    if len(finding) > _PHONE_FINDING_MAX:
+        finding = finding[:_PHONE_FINDING_MAX].rstrip() + "…"
+    head = f"<strong>Grade {esc(study.get('evidence_tier') or '?')}</strong> · study {esc(study.get('id'))}: " \
+           f"{esc(study.get('canonical_name'))}"
+    lines = [f"<div>{head}</div>"]
+    if finding:
+        lines.append(f"<div>{esc(finding)}</div>")
+    if study.get("research_timeframe"):
+        lines.append(f"<div>Data from: {esc(study['research_timeframe'])}</div>")
+    url = study.get("primary_url")
+    if isinstance(url, str) and _WEB_URL.fullmatch(url):
+        lines.append(f"<div>{link(url, 'Source')}</div>")
+    return '<div style="margin:6px 0">' + "".join(lines) + "</div>"
+
+
+def duplicates_section(pairs: list[dict]) -> str:
+    """The phone report's "possible duplicates" block; "" when nothing waits for the owner."""
+    if not pairs:
+        return ""
+    blocks = []
+    for p in pairs:
+        check = p.get("check")
+        if check:
+            text = "Automatic check: " + _PHONE_CHECKS.get(check.get("verdict"), str(check.get("verdict")))
+            if check.get("note"):
+                text += f" — {check['note']}"
+        else:
+            text = "Automatic check: not run"
+        blocks.append(
+            '<div style="border-top:1px solid #8884;padding:10px 0">'
+            + _phone_study(p.get("keep_study")) + _phone_study(p.get("other_study"))
+            + f"<div>Flagged because: {esc(p.get('rule'))}</div><div>{esc(text)}</div>"
+            "</div>")
+    return ('<section class="ee-duplicates" id="ee-duplicates" style="margin:24px 0">'
+            "<h2>Possible duplicates waiting for you</h2>" + "".join(blocks)
+            + "<p>To decide, ask Claude Code to review Evidence Echo duplicates.</p></section>")
+
+
+def phone_copy(page: str, pairs: list[dict]) -> str:
+    """A report page for a phone: local links become plain text, the page nav goes, duplicates are added."""
+    def unwrap(match):
+        if html.unescape(match.group(2)).strip().lower().startswith(_PHONE_KEPT):
+            return match.group(0)
+        return match.group(4)
+
+    out = _ANCHOR.sub(unwrap, _PHONE_NAV.sub("", page))
+    section = duplicates_section(pairs)
+    if not section:
+        return out
+    for marker in ("</main>", '<footer class="ee-foot"', "</body>"):
+        at = out.find(marker)
+        if at >= 0:
+            return out[:at] + section + out[at:]
+    return out + section
+
+
 def json_script(data, element_id: str) -> str:
     """Data for the page's JS. <, > and & are escaped, so the text can never close the tag."""
     text = (json.dumps(data, ensure_ascii=False)
@@ -422,8 +488,8 @@ def report_page(r: Report, topic_href: str, overview_href: str, sources_href: st
         body += ["<section>", "<h2>More coverage of earlier studies</h2>", '<ul class="seen">',
                  *[seen_item(s, topic_href) for s in r.seen], "</ul>", "</section>"]
     if r.source_warnings:
-        body.append(f'<footer><p class="warn">{esc("Source warnings: " + ", ".join(r.source_warnings))}'
-                    "</p></footer>")
+        body += ['<section class="source-errors">', "<h2>Source errors</h2>", "<ul>",
+                 *[f"<li>{esc(w)}</li>" for w in r.source_warnings], "</ul>", "</section>"]
     return page(title, "\n".join(body), mast=mast)
 
 

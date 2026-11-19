@@ -97,7 +97,8 @@ def test_build_report_source_warnings(db, topic):
                                             {"type": "rss", "name": "Flaky", "url": "https://f/"}])
     warnings = model.build_report(db, t, {}, NOW).source_warnings
     assert len(warnings) == 2
-    assert warnings[0].startswith("Dead (failing since ") and warnings[1] == "Flaky (timeout)"
+    assert warnings[0].startswith("Failing for 5+ runs — check or remove: Dead (since ")
+    assert warnings[1] == "timeout: Flaky"
 
 
 # --- what render records --------------------------------------------------------------------

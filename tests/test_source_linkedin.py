@@ -108,3 +108,11 @@ def test_profile_with_only_reposts_is_not_a_warning(monkeypatch):
     _fake_apify(monkeypatch, [_record("jane", author_slug="someone-else")])
     out = linkedin.list_new(LI_SOURCES, _ctx())
     assert out["Jane"].entries == [] and out["Jane"].error is None
+
+
+def test_window_follows_the_scheduled_run_env(monkeypatch):
+    assert linkedin.window() == "week"
+    monkeypatch.setenv("EV_ECHO_LINKEDIN_WINDOW", "month")
+    assert linkedin.window() == "month"
+    monkeypatch.setenv("EV_ECHO_LINKEDIN_WINDOW", "forever")
+    assert linkedin.window() == "week"

@@ -1,0 +1,3 @@
+# The MCP launchers run on the user's machine as they are checked out.
+scripts/ev_mcp text eol=lf
+scripts/ev_mcp.cmd text eol=crlf

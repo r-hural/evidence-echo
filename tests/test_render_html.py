@@ -249,14 +249,14 @@ def _sections(text, *markers):
 def test_report_page_sections_in_markdown_order(tmp_path):
     r = report(new=[entry(1)], disputed=[DISPUTED],
                seen=[seen(9, disputed=True, skeptic_tiers=["D"], skeptic_notes=["old data"])],
-               source_warnings=["Blog X (failing since 2026-10-01 — check or remove)"])
+               source_warnings=["Failing for 5+ runs — check or remove: Blog X (since 2026-10-01)"])
     out = html_render.report_page(r, "seo.html", "../overview.html")
     assert "<title>SEO Report - 2026-10-16</title>" in out
     assert "<h1>SEO Report - 2026-10-16</h1>" in out
     assert '<a href="seo.html">All studies</a>' in out and ">Overview</a>" not in out   # the crumb leads there
     _sections(out, "<h2>New studies</h2>", 'id="s1"',
               "<h2>Disputed (verdict and skeptic disagree; both grades shown)</h2>", 'id="s3"',
-              "<h2>More coverage of earlier studies</h2>", "Source warnings: Blog X")
+              "<h2>More coverage of earlier studies</h2>", "<h2>Source errors</h2>", "<li>Failing for 5+ runs — check or remove: Blog X")
     assert ('<li><a href="seo.html#s9">Earlier study 9</a> (first reported 2026-10-01): '
             '<a href="https://other.example/9" rel="noopener noreferrer">Other Blog</a>'
             " — disputed: skeptic says D; old data</li>") in out
@@ -265,7 +265,7 @@ def test_report_page_sections_in_markdown_order(tmp_path):
 def test_report_page_without_new_studies_and_optional_sections(tmp_path):
     out = html_render.report_page(report(new=[]), "seo.html", "../overview.html")
     assert '<p class="empty">No confirmed evidence-backed items this run.</p>' in out
-    for absent in ("Disputed (", "More coverage", "Source warnings"):
+    for absent in ("Disputed (", "More coverage", "Source errors"):
         assert absent not in out
 
 

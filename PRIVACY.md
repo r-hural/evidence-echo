@@ -10,6 +10,9 @@ and receives nothing: no account, no analytics, no telemetry.
   sources, the profile URLs; a short-lived cache of downloaded pages and LinkedIn posts.
 - **The reports folder** you choose in setup: reports, topic pages and the overview, which hold
   excerpts, quotes and author names. Also the Obsidian notes, if you turn that export on.
+- **The schedule files** (only with scheduled runs): `scheduling/` in the data folder holds your
+  schedules, the run log, a small status file, a copy of the last report sent by message and the
+  launcher the OS task starts; no secrets.
 - **The plugin's data folder** (managed by Claude Code): your API keys, one file per Claude Code
   session, written from the plugin settings and removed after 30 days unused; and the engine's
   Python environment.
@@ -26,6 +29,10 @@ Each service is contacted only when you have set it up.
   similar studies.
 - **Apify** (only with an Apify token and a LinkedIn source): the LinkedIn profile URLs of those
   sources.
+- **Telegram and your mail server** (only with scheduled report messages set up): a short summary
+  of a report (topic, study titles and links, counts) and a copy of the report's HTML file without
+  links to files on your computer, which also lists the possible duplicate studies waiting for
+  review (their names, findings and links), sent to your own chat or address and nowhere else. The bot token and the SMTP password stay in the plugin settings.
 - **PyPI:** on first use, the engine's Python packages.
 
 Each service's own privacy policy applies to what it receives.
